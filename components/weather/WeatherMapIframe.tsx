@@ -125,10 +125,13 @@ export function WeatherMapIframe({
       weatherContentHtml = `<div style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); color:#fff; font-size:14px;">Pilih lokasi untuk melihat cuaca.</div>`;
     }
 
+    // OpenWeatherMap API key - dalam production, ini harus disembunyikan
+    const OPENWEATHER_API_KEY = "b48e2782f52bd9c6783ef14a35856abc";
+
     return `<!DOCTYPE html>
       <html>
       <head>
-        <title>Peta Cuaca</title>
+        <title>Peta Cuaca dengan Overlay Awan</title>
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -136,47 +139,46 @@ export function WeatherMapIframe({
           body { margin: 0; padding: 0; font-family: Arial, sans-serif; background: #1a202c; overflow: hidden; }
           #map { height: 100% !important; width: 100% !important; background: #2d3748; }
           .leaflet-container { background: #2d3748; }
+          
           .weather-overlay {
             position: absolute;
             top: 10px;
             left: 10px;
             right: 10px;
-            background: rgba(0, 0, 0, 0.6);
+            background: rgba(0, 0, 0, 0.8);
             color: white;
-            padding: 8px 12px;
-            border-radius: 8px;
+            padding: 12px 16px;
+            border-radius: 12px;
             font-size: 12px;
             z-index: 1000;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
             display: flex;
             align-items: center;
             justify-content: space-between;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
           }
+          
           .weather-overlay .main-info {
               display: flex;
               align-items: center;
-              gap: 10px;
+              gap: 12px;
           }
+          
           .weather-overlay .temp {
-              font-size: 24px;
+              font-size: 28px;
               font-weight: bold;
-              color: #63b3ed; /* Light blue */
+              color: #63b3ed;
+              text-shadow: 0 2px 4px rgba(0,0,0,0.3);
           }
+          
           .weather-overlay .desc {
-              font-size: 12px;
-              color: #cbd5e0; /* Grayish white */
+              font-size: 13px;
+              color: #e2e8f0;
               text-transform: capitalize;
+              margin-top: 2px;
           }
-          /* Animasi spinner untuk loading */
-          .animate-spin {
-            animation: spin 1s linear infinite;
-          }
-          @keyframes spin {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-          }
+          
           .loading-overlay {
             position: absolute;
             top: 50%;
@@ -185,6 +187,66 @@ export function WeatherMapIframe({
             color: white;
             font-size: 14px;
             z-index: 2000;
+            background: rgba(0,0,0,0.7);
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+          }
+          
+          .weather-controls {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+          }
+          
+          .weather-control-btn {
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 11px;
+            cursor: pointer;
+            backdrop-filter: blur(5px);
+            transition: all 0.2s ease;
+          }
+          
+          .weather-control-btn:hover {
+            background: rgba(0, 0, 0, 0.9);
+            border-color: rgba(255, 255, 255, 0.4);
+          }
+          
+          .weather-control-btn.active {
+            background: rgba(59, 130, 246, 0.8);
+            border-color: rgba(59, 130, 246, 1);
+          }
+          
+          /* Animasi spinner untuk loading */
+          .animate-spin {
+            animation: spin 1s linear infinite;
+          }
+          
+          @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+          }
+          
+          /* Custom marker styles */
+          .weather-marker {
+            background: rgba(59, 130, 246, 0.9);
+            border: 2px solid white;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
           }
         </style>
       </head>
@@ -193,45 +255,178 @@ export function WeatherMapIframe({
         <div class="weather-overlay">
             ${weatherContentHtml}
         </div>
-        <div id="loading" class="loading-overlay">Memuat peta...</div>
+        <div id="loading" class="loading-overlay">
+          <div class="animate-spin" style="width: 20px; height: 20px; border: 2px solid #ffffff; border-top: 2px solid transparent; border-radius: 50%; margin: 0 auto 10px;"></div>
+          Memuat peta cuaca...
+        </div>
+        
+        <div class="weather-controls">
+          <button class="weather-control-btn active" onclick="toggleWeatherLayer('clouds')" id="clouds-btn">
+            ☁️ Awan
+          </button>
+          <button class="weather-control-btn" onclick="toggleWeatherLayer('precipitation')" id="precipitation-btn">
+            🌧️ Hujan
+          </button>
+          <button class="weather-control-btn" onclick="toggleWeatherLayer('pressure')" id="pressure-btn">
+            📊 Tekanan
+          </button>
+          <button class="weather-control-btn" onclick="toggleWeatherLayer('wind')" id="wind-btn">
+            💨 Angin
+          </button>
+          <button class="weather-control-btn" onclick="toggleWeatherLayer('temp')" id="temp-btn">
+            🌡️ Suhu
+          </button>
+        </div>
         
         <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
         <script>
+          let map;
+          let currentWeatherLayer = null;
+          let weatherLayers = {};
+          
+          // OpenWeatherMap weather layers
+          const weatherLayerConfigs = {
+            clouds: {
+              url: 'https://tile.openweathermap.org/map/clouds_new/{z}/{x}/{y}.png?appid=${OPENWEATHER_API_KEY}',
+              name: 'Awan',
+              opacity: 0.6
+            },
+            precipitation: {
+              url: 'https://tile.openweathermap.org/map/precipitation_new/{z}/{x}/{y}.png?appid=${OPENWEATHER_API_KEY}',
+              name: 'Presipitasi',
+              opacity: 0.7
+            },
+            pressure: {
+              url: 'https://tile.openweathermap.org/map/pressure_new/{z}/{x}/{y}.png?appid=${OPENWEATHER_API_KEY}',
+              name: 'Tekanan',
+              opacity: 0.6
+            },
+            wind: {
+              url: 'https://tile.openweathermap.org/map/wind_new/{z}/{x}/{y}.png?appid=${OPENWEATHER_API_KEY}',
+              name: 'Angin',
+              opacity: 0.6
+            },
+            temp: {
+              url: 'https://tile.openweathermap.org/map/temp_new/{z}/{x}/{y}.png?appid=${OPENWEATHER_API_KEY}',
+              name: 'Suhu',
+              opacity: 0.6
+            }
+          };
+          
+          function toggleWeatherLayer(layerType) {
+            try {
+              // Remove current weather layer
+              if (currentWeatherLayer) {
+                map.removeLayer(currentWeatherLayer);
+                currentWeatherLayer = null;
+              }
+              
+              // Update button states
+              document.querySelectorAll('.weather-control-btn').forEach(btn => {
+                btn.classList.remove('active');
+              });
+              
+              // Add new weather layer if different from current
+              if (weatherLayers[layerType]) {
+                currentWeatherLayer = weatherLayers[layerType];
+                map.addLayer(currentWeatherLayer);
+                document.getElementById(layerType + '-btn').classList.add('active');
+              } else if (weatherLayerConfigs[layerType]) {
+                // Create new layer
+                const config = weatherLayerConfigs[layerType];
+                const layer = L.tileLayer(config.url, {
+                  attribution: 'Weather data © OpenWeatherMap',
+                  opacity: config.opacity,
+                  maxZoom: 18
+                });
+                
+                weatherLayers[layerType] = layer;
+                currentWeatherLayer = layer;
+                map.addLayer(layer);
+                document.getElementById(layerType + '-btn').classList.add('active');
+                
+                console.log('Added weather layer:', layerType);
+              }
+            } catch(error) {
+              console.error('Error toggling weather layer:', error);
+            }
+          }
+          
           try {
-            console.log('Initializing map...');
+            console.log('Initializing weather map...');
             document.getElementById('loading').style.display = 'block';
             
-            var map = L.map('map', {
+            // Initialize map
+            map = L.map('map', {
               zoomControl: false,
-              attributionControl: false
+              attributionControl: true
             }).setView([${lat}, ${lng}], ${zoom});
             
-            var tileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            // Add base tile layer
+            const baseLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
               attribution: '© OpenStreetMap contributors',
               maxZoom: 18
             });
             
-            tileLayer.on('load', function() {
-              console.log('Tiles loaded successfully');
+            baseLayer.on('load', function() {
+              console.log('Base tiles loaded successfully');
               document.getElementById('loading').style.display = 'none';
             });
             
-            tileLayer.on('tileerror', function(e) {
-              console.error('Tile loading error:', e);
+            baseLayer.on('tileerror', function(e) {
+              console.error('Base tile loading error:', e);
             });
             
-            tileLayer.addTo(map);
+            baseLayer.addTo(map);
             
-            // Tambahkan marker jika lokasi dipilih
+            // Add default clouds layer
+            setTimeout(() => {
+              toggleWeatherLayer('clouds');
+            }, 1000);
+            
+            // Add location marker if coordinates are valid
             ${
               hasValidCoords
                 ? `
                 try {
-                  var marker = L.marker([${lat}, ${lng}]).addTo(map);
-                  marker.bindPopup('Lokasi Terpilih: ${locationName || "N/A"}');
-                  console.log('Marker added successfully');
+                  // Custom weather marker
+                  const weatherIcon = L.divIcon({
+                    className: 'weather-marker',
+                    html: '📍',
+                    iconSize: [30, 30],
+                    iconAnchor: [15, 15]
+                  });
+                  
+                  const marker = L.marker([${lat}, ${lng}], { icon: weatherIcon }).addTo(map);
+                  
+                  const popupContent = \`
+                    <div style="text-align: center; padding: 10px;">
+                      <h3 style="margin: 0 0 10px 0; color: #1e293b;">${locationName}</h3>
+                      <div style="display: flex; align-items: center; gap: 10px; justify-content: center;">
+                        ${currentWeatherData ? `
+                          <div style="font-size: 24px;">${currentWeatherData.icon.startsWith("01") ? "☀️" : currentWeatherData.icon.startsWith("09") || currentWeatherData.icon.startsWith("10") ? "🌧️" : currentWeatherData.icon.startsWith("11") ? "🌩️" : "☁️"}</div>
+                          <div>
+                            <div style="font-size: 18px; font-weight: bold; color: #3b82f6;">${Math.round(currentWeatherData.temperature)}°C</div>
+                            <div style="font-size: 12px; color: #64748b; text-transform: capitalize;">${currentWeatherData.description}</div>
+                          </div>
+                        ` : `
+                          <div style="color: #64748b;">Data cuaca tidak tersedia</div>
+                        `}
+                      </div>
+                      <div style="margin-top: 8px; font-size: 11px; color: #94a3b8;">
+                        Lat: ${lat.toFixed(4)}, Lng: ${lng.toFixed(4)}
+                      </div>
+                    </div>
+                  \`;
+                  
+                  marker.bindPopup(popupContent, {
+                    maxWidth: 250,
+                    className: 'weather-popup'
+                  });
+                  
+                  console.log('Weather marker added successfully');
                 } catch(markerError) {
-                  console.error('Error adding marker:', markerError);
+                  console.error('Error adding weather marker:', markerError);
                 }
                 `
                 : ""
@@ -248,10 +443,15 @@ export function WeatherMapIframe({
               }
             }, 500);
             
-            console.log('Map initialization completed');
+            // Add zoom control to bottom right
+            L.control.zoom({
+              position: 'bottomleft'
+            }).addTo(map);
+            
+            console.log('Weather map initialization completed');
             
           } catch(error) {
-            console.error('Map initialization error:', error);
+            console.error('Weather map initialization error:', error);
             document.getElementById('loading').innerHTML = 'Error memuat peta: ' + error.message;
           }
         </script>
@@ -266,17 +466,17 @@ export function WeatherMapIframe({
 
   return (
     <div
-      className="w-full h-full min-h-[400px] rounded-lg border border-gray-700/30 relative overflow-hidden"
+      className="w-full h-full min-h-[400px] rounded-lg border border-gray-700/30 relative overflow-hidden shadow-2xl"
       style={{ height: height }}
     >
       <iframe
         src={dataUrl}
         className="w-full h-full border-0 rounded-lg"
-        title="Peta Cuaca Wilayah"
+        title="Peta Cuaca dengan Overlay Awan dan Hujan"
         loading="lazy"
         sandbox="allow-scripts allow-same-origin"
-        onLoad={() => console.log('Iframe loaded successfully')}
-        onError={(e) => console.error('Iframe loading error:', e)}
+        onLoad={() => console.log('Weather iframe loaded successfully')}
+        onError={(e) => console.error('Weather iframe loading error:', e)}
       />
     </div>
   );
