@@ -2,7 +2,14 @@
 "use client";
 
 // Impor React-Leaflet
-import { MapContainer, TileLayer, Marker, Popup, Polygon, useMap } from "react-leaflet";
+import {
+  MapContainer,
+  TileLayer,
+  Marker,
+  Popup,
+  Polygon,
+  useMap,
+} from "react-leaflet";
 import { Icon, LatLngExpression } from "leaflet";
 
 // Impor dari file proyek Anda
@@ -19,7 +26,7 @@ import {
   Navigation,
   Mountain, // ICON untuk longsor
   Waves as WavesIcon, // Rename Waves untuk menghindari konflik dengan komponen Waves
-  CircleDot // Icon untuk risiko umum/rendah
+  CircleDot, // Icon untuk risiko umum/rendah
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -35,9 +42,8 @@ import {
 } from "@/lib/constants";
 import { FloodZone, WeatherData } from "@/types";
 import { cn } from "@/lib/utils";
-import { OverpassElement } from '@/lib/api';
-import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
-
+import { OverpassElement } from "@/lib/api";
+import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 
 // Custom marker icons
 const createCustomIcon = (color: string, icon: string) => {
@@ -61,7 +67,6 @@ const createCustomIcon = (color: string, icon: string) => {
 const floodIcon = createCustomIcon(FLOOD_RISK_COLORS.high, "🌊");
 const weatherIcon = createCustomIcon("#3B82F6", "☀️");
 
-
 // Komponen Helper untuk mengupdate view peta
 interface MapUpdaterProps {
   center: LatLngExpression;
@@ -74,7 +79,8 @@ function MapUpdater({ center, zoom }: MapUpdaterProps) {
     const currentCenter = map.getCenter();
     const currentZoom = map.getZoom();
 
-    const isCenterChanged = currentCenter.lat !== center[0] || currentCenter.lng !== center[1];
+    const isCenterChanged =
+      currentCenter.lat !== center[0] || currentCenter.lng !== center[1];
     const isZoomChanged = currentZoom !== zoom;
 
     if (isCenterChanged || isZoomChanged) {
@@ -161,48 +167,83 @@ export function FloodMap({
     let cardTitle;
     let cardTitleColor;
     let riskLabel = "Tidak Dikategorikan"; // Label risiko di Legenda
-    const detailText = element.tags.name || element.tags.description || element.tags.note || `ID: ${element.id}`;
+    const detailText =
+      element.tags.name ||
+      element.tags.description ||
+      element.tags.note ||
+      `ID: ${element.id}`;
 
     // === LOGIKA PEMETAAN RISIKO DARI TAGS OVERPASS (PRIORITAS TINGGI KE RENDAH) ===
 
-    // Prioritas 1: Risiko Kritis (Tetap paling menonjol)
-    if (element.tags.flood_prone === 'critical' || element.tags.hazard === 'critical_flood' || element.tags.disaster_type === 'extreme_flood') {
-        iconToUse = createCustomIcon(FLOOD_RISK_COLORS.critical, "💀"); // Cokelat gelap
-        color = FLOOD_RISK_COLORS.critical; // Cokelat gelap
-        cardTitle = "Risiko Kritis (Bencana Ekstrim)";
-        cardTitleColor = "text-red-800";
-        riskLabel = "Risiko Kritis";
+    // Prioritas 1: Risiko Kritis
+    if (
+      element.tags.flood_prone === "critical" ||
+      element.tags.hazard === "critical_flood" ||
+      element.tags.disaster_type === "extreme_flood"
+    ) {
+      iconToUse = createCustomIcon(FLOOD_RISK_COLORS.critical, "💀"); // Cokelat gelap (sesuai constants.ts)
+      color = FLOOD_RISK_COLORS.critical; // Cokelat gelap (sesuai constants.ts)
+      cardTitle = "Risiko Kritis (Bencana Ekstrim)";
+      cardTitleColor = "text-red-800";
+      riskLabel = "Risiko Kritis";
     }
     // Prioritas 2: Risiko Tinggi (Banjir Konkret) - MERAH
-    else if (element.tags.hazard === 'flood' || element.tags.flood_prone === 'yes' || element.tags.waterway === 'river' && element.tags.seasonal === 'yes') { // Contoh tambahan tag sungai musiman
-        iconToUse = createCustomIcon(FLOOD_RISK_COLORS.high, "🚨"); // Merah
-        color = FLOOD_RISK_COLORS.high; // Merah
-        cardTitle = "Risiko Tinggi Banjir";
-        cardTitleColor = "text-red-500";
-        riskLabel = "Risiko Tinggi";
+    else if (
+      element.tags.hazard === "flood" ||
+      element.tags.flood_prone === "yes" ||
+      (element.tags.waterway === "river" &&
+        element.tags.seasonal === "yes" &&
+        element.tags.flood_risk === "high")
+    ) {
+      // Tambahan tag river, seasonal, flood_risk
+      iconToUse = createCustomIcon(FLOOD_RISK_COLORS.high, "🚨"); // Merah (sesuai constants.ts)
+      color = FLOOD_RISK_COLORS.high; // Merah (sesuai constants.ts)
+      cardTitle = "Risiko Tinggi Banjir";
+      cardTitleColor = "text-red-500";
+      riskLabel = "Risiko Tinggi";
     }
     // Prioritas 3: Risiko Sedang (Longsor atau Area Rawan Lain) - KUNING
-    else if (element.tags.natural === 'landslide' || element.tags.hazard === 'landslide' || element.tags.natural === 'mudflow') { // Tambahan mudflow
-        iconToUse = createCustomIcon("#FFFF00", "⛰️"); // KUNING
-        color = "#FFFF00"; // KUNING
-        cardTitle = "Risiko Sedang Longsor";
-        cardTitleColor = "text-yellow-500";
-        riskLabel = "Risiko Sedang";
+    else if (
+      element.tags.natural === "landslide" ||
+      element.tags.hazard === "landslide" ||
+      element.tags.natural === "mudflow" ||
+      element.tags.landuse === "landslide_prone"
+    ) {
+      // Tambahan mudflow, landslide_prone
+      iconToUse = createCustomIcon("#FFFF00", "⛰️"); // KUNING (explicit hex code)
+      color = "#FFFF00"; // KUNING (explicit hex code)
+      cardTitle = "Risiko Sedang Longsor";
+      cardTitleColor = "text-yellow-500";
+      riskLabel = "Risiko Sedang";
     }
     // Prioritas 4: Risiko Rendah (Fitur Air Umum yang Berpotensi) - HIJAU
-    else if (element.tags.waterway || element.tags.natural === 'water' || element.tags.man_made === 'dyke' || element.tags.landuse === 'basin' || element.tags.natural === 'wetland') {
-        iconToUse = createCustomIcon(FLOOD_RISK_COLORS.low, "💧"); // HIJAU
-        color = FLOOD_RISK_COLORS.low; // HIJAU
-        cardTitle = "Risiko Rendah (Fitur Air)";
-        cardTitleColor = "text-green-500";
-        riskLabel = "Risiko Rendah";
+    // Hanya dirender jika tidak ada tag risiko yang lebih tinggi, dan tetap dengan warna hijau
+    else if (
+      element.tags.waterway ||
+      element.tags.natural === "water" ||
+      element.tags.man_made === "dyke" ||
+      element.tags.landuse === "basin" ||
+      element.tags.natural === "wetland"
+    ) {
+      iconToUse = createCustomIcon(FLOOD_RISK_COLORS.low, "💧"); // HIJAU (sesuai constants.ts)
+      color = FLOOD_RISK_COLORS.low; // HIJAU (sesuai constants.ts)
+      cardTitle = "Risiko Rendah (Fitur Air)";
+      cardTitleColor = "text-green-500";
+      riskLabel = "Risiko Rendah";
     }
-    // Jika tidak ada tag bencana spesifik yang terdeteksi
+    // Jika tidak ada tag bencana spesifik yang terdeteksi di atas, fungsi akan mengembalikan null
     else {
-        return null; // Mengembalikan null agar elemen ini tidak dirender
+      return null; // Mengembalikan null agar elemen ini tidak dirender
     }
 
-    return { iconToUse, color, cardTitle, cardTitleColor, detailText, riskLabel };
+    return {
+      iconToUse,
+      color,
+      cardTitle,
+      cardTitleColor,
+      detailText,
+      riskLabel,
+    };
   };
 
   return (
@@ -234,14 +275,15 @@ export function FloodMap({
         <MapReset center={DEFAULT_MAP_CENTER} zoom={DEFAULT_MAP_ZOOM} />
 
         {/* Marker di lokasi yang dipilih (dari RegionDropdown via page.tsx) */}
-        {center[0] !== DEFAULT_MAP_CENTER[0] || center[1] !== DEFAULT_MAP_CENTER[1] ? (
+        {center[0] !== DEFAULT_MAP_CENTER[0] ||
+        center[1] !== DEFAULT_MAP_CENTER[1] ? (
           <Marker position={center} icon={floodIcon}>
             <Popup>
-              Lokasi Terpilih: <br /> Lat: {center[0].toFixed(6)}, Lng: {center[1].toFixed(6)}
+              Lokasi Terpilih: <br /> Lat: {center[0].toFixed(6)}, Lng:{" "}
+              {center[1].toFixed(6)}
             </Popup>
           </Marker>
         ) : null}
-
 
         {/* Flood Zones (menggunakan mock data yang sudah ada) */}
         {/* Ini tetap ada sebagai layer terpisah, bisa di toggle jika perlu */}
@@ -293,8 +335,12 @@ export function FloodMap({
                       {zone.description}
                     </p>
                     <div className="flex space-x-2">
-                      <Button size="sm" variant="outline">Detail</Button>
-                      <Button size="sm" variant="secondary">Rute Evakuasi</Button>
+                      <Button size="sm" variant="outline">
+                        Detail
+                      </Button>
+                      <Button size="sm" variant="secondary">
+                        Rute Evakuasi
+                      </Button>
                     </div>
                   </div>
                 </Card>
@@ -323,7 +369,9 @@ export function FloodMap({
                     </div>
                     <div className="space-y-1">
                       <p className="text-muted-foreground">Angin</p>
-                      <p className="font-medium">{weatherData.windSpeed} km/h</p>
+                      <p className="font-medium">
+                        {weatherData.windSpeed} km/h
+                      </p>
                     </div>
                     <div className="space-y-1">
                       <p className="text-muted-foreground">Tekanan</p>
@@ -352,87 +400,111 @@ export function FloodMap({
             Error memuat data bencana: {floodDataError}
           </div>
         )}
-        {
-          !loadingFloodData && !floodDataError && floodProneData.length > 0 && showFloodZones && (
-            floodProneData.map(element => {
-              const disasterInfo = getDisasterInfo(element); // Panggil fungsi
+        {!loadingFloodData &&
+          !floodDataError &&
+          floodProneData.length > 0 &&
+          showFloodZones &&
+          floodProneData.map((element) => {
+            const disasterInfo = getDisasterInfo(element); // Panggil fungsi
 
-              // HANYA RENDER JIKA FUNGSI MENGEMBALIKAN OBJEK (bukan null)
-              if (!disasterInfo) {
-                return null; // Tidak merender jika kategori tidak spesifik
-              }
+            // HANYA RENDER JIKA FUNGSI MENGEMBALIKAN OBJEK (bukan null)
+            if (!disasterInfo) {
+              return null; // Tidak merender jika kategori tidak spesifik
+            }
 
-              const { iconToUse, color, cardTitle, cardTitleColor, detailText } = disasterInfo;
+            const { iconToUse, color, cardTitle, cardTitleColor, detailText } =
+              disasterInfo;
 
-              // RENDEr POLYGON UNTUK ELEMENT DENGAN GEOMETRI (WAY/RELATION)
-              if (element.geometry && element.geometry.length > 0) {
-                const positions = element.geometry.map(coord => [coord.lat, coord.lon] as LatLngExpression);
-                
-                return (
-                  <Polygon
-                    key={`overpass-poly-${element.id}`}
-                    positions={positions}
-                    pathOptions={{
-                      color: color,
-                      fillColor: color,
-                      fillOpacity: 0.3, // Lebih transparan untuk area
-                      weight: 2,
-                    }}
-                  >
-                    <Popup>
-                      <Card className="min-w-[200px] p-3">
-                        <h4 className={`font-semibold ${cardTitleColor}`}>{cardTitle}</h4>
-                        <p className="text-sm text-muted-foreground">ID OSM: {element.id}</p>
-                        <p className="text-xs text-muted-foreground">Tipe OSM: {element.type}</p>
-                        <p className="text-sm text-muted-foreground">Detail: {detailText}</p>
-                        {Object.keys(element.tags).length > 0 && (
-                            <div className="mt-2 text-xs text-gray-400">
-                                <strong>Tags:</strong>
-                                <ul className="list-disc list-inside">
-                                    {Object.entries(element.tags).map(([key, value]) => (
-                                        <li key={key}>{key}: {value}</li>
-                                    ))}
-                                </ul>
-                            </div>
-                        )}
-                      </Card>
-                    </Popup>
-                  </Polygon>
-                );
-              }
-              // RENDER MARKER UNTUK NODE
-              else if (element.type === "node" && element.lat && element.lon) {
-                return (
-                  <Marker
-                    key={`overpass-node-${element.id}`}
-                    position={[element.lat, element.lon]}
-                    icon={iconToUse}
-                  >
-                    <Popup>
-                      <Card className="min-w-[180px] p-3">
-                        <h4 className={`font-semibold ${cardTitleColor}`}>{cardTitle}</h4>
-                        <p className="text-sm text-muted-foreground">Detail: {detailText}</p>
-                        <p className="text-xs text-muted-foreground">Tipe OSM: {element.type}</p>
-                        {Object.keys(element.tags).length > 0 && (
-                            <div className="mt-2 text-xs text-gray-400">
-                                <strong>Tags:</strong>
-                                <ul className="list-disc list-inside">
-                                    {Object.entries(element.tags).map(([key, value]) => (
-                                        <li key={key}>{key}: {value}</li>
-                                    ))}
-                                </ul>
-                            </div>
-                        )}
-                      </Card>
-                    </Popup>
-                  </Marker>
-                );
-              }
-              return null;
-            })
-          )
-        }
+            // RENDEr POLYGON UNTUK ELEMENT DENGAN GEOMETRI (WAY/RELATION)
+            if (element.geometry && element.geometry.length > 0) {
+              const positions = element.geometry.map(
+                (coord) => [coord.lat, coord.lon] as LatLngExpression
+              );
 
+              return (
+                <Polygon
+                  key={`overpass-poly-${element.id}`}
+                  positions={positions}
+                  pathOptions={{
+                    color: color,
+                    fillColor: color,
+                    fillOpacity: 0.3, // Lebih transparan untuk area
+                    weight: 2,
+                  }}
+                >
+                  <Popup>
+                    <Card className="min-w-[200px] p-3">
+                      <h4 className={`font-semibold ${cardTitleColor}`}>
+                        {cardTitle}
+                      </h4>
+                      <p className="text-sm text-muted-foreground">
+                        ID OSM: {element.id}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        Tipe OSM: {element.type}
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        Detail: {detailText}
+                      </p>
+                      {Object.keys(element.tags).length > 0 && (
+                        <div className="mt-2 text-xs text-gray-400">
+                          <strong>Tags:</strong>
+                          <ul className="list-disc list-inside">
+                            {Object.entries(element.tags).map(
+                              ([key, value]) => (
+                                <li key={key}>
+                                  {key}: {value}
+                                </li>
+                              )
+                            )}
+                          </ul>
+                        </div>
+                      )}
+                    </Card>
+                  </Popup>
+                </Polygon>
+              );
+            }
+            // RENDER MARKER UNTUK NODE
+            else if (element.type === "node" && element.lat && element.lon) {
+              return (
+                <Marker
+                  key={`overpass-node-${element.id}`}
+                  position={[element.lat, element.lon]}
+                  icon={iconToUse}
+                >
+                  <Popup>
+                    <Card className="min-w-[180px] p-3">
+                      <h4 className={`font-semibold ${cardTitleColor}`}>
+                        {cardTitle}
+                      </h4>
+                      <p className="text-sm text-muted-foreground">
+                        Detail: {detailText}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        Tipe OSM: {element.type}
+                      </p>
+                      {Object.keys(element.tags).length > 0 && (
+                        <div className="mt-2 text-xs text-gray-400">
+                          <strong>Tags:</strong>
+                          <ul className="list-disc list-inside">
+                            {Object.entries(element.tags).map(
+                              ([key, value]) => (
+                                <li key={key}>
+                                  {key}: {value}
+                                </li>
+                              )
+                            )}
+                          </ul>
+                        </div>
+                      )}
+                    </Card>
+                  </Popup>
+                </Marker>
+              );
+            }
+            return null;
+          })}
       </MapContainer>
 
       {/* Map Controls */}

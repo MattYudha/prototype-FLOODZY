@@ -33,12 +33,12 @@ export async function fetchRegions(
 export interface OverpassElement {
   type: "node" | "way" | "relation";
   id: number;
-  lat?: number; // Hanya ada di type: "node"
-  lon?: number; // Hanya ada di type: "node"
+  lat?: number;
+  lon?: number;
   tags: { [key: string]: string };
-  nodes?: number[]; // Hanya ada di type: "way"
-  members?: Array<{ type: string; ref: number; role: string }>; // Hanya ada di type: "relation"
-  geometry?: Array<{ lat: number; lon: number }>; // Untuk ways dan relations dengan out geom;
+  nodes?: number[];
+  members?: Array<{ type: string; ref: number; role: string }>;
+  geometry?: Array<{ lat: number; lon: number }>;
 }
 
 export interface OverpassResponse {
@@ -76,23 +76,20 @@ export async function fetchDisasterProneData(
     way["hazard"="landslide"](${south},${west},${north},${east});
     relation["hazard"="landslide"](${south},${west},${north},${east});
 
-    // === PENAMBAHAN TAGS UNTUK DETAIL LEBIH LENGKAP (Fokus pada Air & Drainase) ===
-    // Saluran air besar, sungai kecil, dan selokan yang relevan dengan banjir
+    // === PERBAIKAN DAN PENAMBAHAN TAGS UNTUK DETAIL LEBIH LENGKAP (Fokus pada Air & Drainase) ===
+    // Setiap kueri dalam blok ini diakhiri dengan semicolon (;) untuk kejelasan sintaks Overpass QL
     node["waterway"~"^(river|stream|canal|drain|ditch)$"](${south},${west},${north},${east});
     way["waterway"~"^(river|stream|canal|drain|ditch)$"](${south},${west},${north},${east});
     relation["waterway"~"^(river|stream|canal|drain|ditch)$"](${south},${west},${north},${east});
 
-    // Area air seperti danau, kolam, reservoir (berpotensi meluap)
     node["natural"="water"](${south},${west},${north},${east});
     way["natural"="water"](${south},${west},${north},${east});
     relation["natural"="water"](${south},${west},${north},${east});
     
-    // Tanggul atau dinding yang menahan air
     node["man_made"="dyke"](${south},${west},${north},${east});
     way["man_made"="dyke"](${south},${west},${north},${east});
     relation["man_made"="dyke"](${south},${west},${north},${east});
 
-    // Area penahan air buatan
     node["landuse"="basin"](${south},${west},${north},${east});
     way["landuse"="basin"](${south},${west},${north},${east});
     relation["landuse"="basin"](${south},${west},${north},${east});
@@ -100,29 +97,27 @@ export async function fetchDisasterProneData(
     node["natural"="wetland"](${south},${west},${north},${east});
     way["natural"="wetland"](${south},${west},${north},${east});
     relation["natural"="wetland"](${south},${west},${north},${east});
-
-
   );
   out body geom;
   `;
 
-
-  const response = await fetch('https://overpass-api.de/api/interpreter', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: `data=${encodeURIComponent(query)}`
+  const response = await fetch("https://overpass-api.de/api/interpreter", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: `data=${encodeURIComponent(query)}`,
   });
 
   if (!response.ok) {
     const errorText = await response.text();
-    throw new Error(`Failed to fetch disaster prone data from Overpass API: ${response.status} ${response.statusText} - ${errorText}`);
+    throw new Error(
+      `Failed to fetch disaster prone data from Overpass API: ${response.status} ${response.statusText} - ${errorText}`
+    );
   }
 
   return response.json();
 }
 
 // === FUNGSI OPENWEATHERMAP API (TETAP SAMA) ===
-
 export interface WeatherData {
   temperature: number;
   feelsLike: number;
@@ -145,7 +140,10 @@ export async function fetchWeatherData(
   const response = await fetch(url);
   if (!response.ok) {
     const errorData = await response.json();
-    throw new Error(errorData.message || `Failed to fetch weather data: ${response.status} ${response.statusText}`);
+    throw new Error(
+      errorData.message ||
+        `Failed to fetch weather data: ${response.status} ${response.statusText}`
+    );
   }
 
   const data = await response.json();
@@ -158,8 +156,75 @@ export async function fetchWeatherData(
     windSpeed: data.wind.speed * 3.6,
     description: data.weather[0].description,
     icon: data.weather[0].icon,
-    rain1h: data.rain?.['1h'] || 0,
+    rain1h: data.rain?.["1h"] || 0,
   };
 
   return weather;
+}
+
+// === FUNGSI PUPR SIHKA/GEO API (TINGGI MUKA AIR) ===
+
+// Interface untuk data Pos Duga Air dari PUPR
+export interface WaterLevelPost {
+  id: string; // ID pos
+  name: string; // Nama pos
+  lat: number; // Latitude
+  lon: number; // Longitude
+  water_level?: number; // Tinggi muka air (contoh: dalam meter)
+  unit?: string; // Satuan (misalnya "m")
+  timestamp?: string; // Waktu pengukuran terakhir (ISO 8601 string)
+  status?: string; // Status pos (misalnya 'Normal', 'Siaga', 'Awas')
+}
+
+export async function fetchWaterLevelData(): Promise<WaterLevelPost[]> {
+  const apiUrl = `/api/water-level-proxy`; // Panggil API Route proxy lokal Anda
+
+  const response = await fetch(apiUrl);
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(
+      errorData.error ||
+        `Failed to fetch water level data from local proxy: ${response.status} ${response.statusText}`
+    );
+  }
+
+  let data: WaterLevelPost[] = await response.json();
+
+  return data;
+}
+
+// === FUNGSI BARU UNTUK DATA STATUS POMPA BANJIR ===
+
+// Interface untuk data Pompa Banjir dari Supabase
+export interface PumpData {
+  id: string; // ID pompa
+  nama_infrastruktur: string; // Nama pompa
+  latitude: number;
+  longitude: number;
+  kondisi_bangunan: string; // Misal: "Beroperasi", "Tidak Beroperasi", "Rusak"
+  tipe_hidrologi: string; // Misal: "Manual", "Otomatik", "Telemetri"
+  provinsi?: string;
+  kota_kabupaten?: string;
+  kecamatan?: string;
+  kelurahan?: string;
+  updated_at?: number; // Unix timestamp dari CSV
+}
+
+export async function fetchPumpStatusData(): Promise<PumpData[]> {
+  const apiUrl = `/api/pump-status-proxy`; // Panggil API Route proxy lokal Anda untuk pompa
+
+  const response = await fetch(apiUrl);
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(
+      errorData.error ||
+        `Failed to fetch pump status data from local proxy: ${response.status} ${response.statusText}`
+    );
+  }
+
+  const data: PumpData[] = await response.json();
+
+  return data;
 }

@@ -1,9 +1,7 @@
 // src/components/region-selector/RegionDropdown.tsx
-// Komponen lengkap dengan Region Selector dan Map dalam satu file
-
 "use client";
 
-import { useState, useEffect } from "react"; // useEffect tidak digunakan di sini, bisa dihapus. Saya biarkan saja untuk berjaga-jaga.
+import { useState } from "react";
 import { useRegionData } from "@/hooks/useRegionData";
 import {
   Select,
@@ -18,12 +16,20 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
   Frown,
   MapPin,
-  ChevronDown, // Ini tidak digunakan, bisa dihapus jika tidak diperlukan
   Building2,
   Globe,
-  Map, // Ini tidak digunakan karena peta ada di page.tsx, bisa dihapus jika tidak diperlukan
+  Map, // Map icon for the map card title
+  Sun,
+  Cloud,
+  CloudRain,
+  Zap,
+  Thermometer,
+  Loader2, // Icons for weather display
 } from "lucide-react";
+import { WeatherData } from "@/lib/api"; // Import WeatherData interface
+import { DEFAULT_MAP_CENTER, DEFAULT_MAP_ZOOM } from "@/lib/constants"; // Import default map constants
 
+// Props baru untuk menerima data cuaca dan lokasi terpilih
 interface RegionDropdownProps {
   onSelectDistrict?: (
     districtCode: string,
@@ -34,14 +40,20 @@ interface RegionDropdownProps {
     longitude?: number,
     geometry?: string
   ) => void;
+  // === PROPS BARU INI ===
+  selectedLocationCoords?: { lat: number; lng: number; name: string } | null;
+  currentWeatherData?: WeatherData | null;
+  loadingWeather?: boolean;
+  weatherError?: string | null;
 }
 
-// === PERHATIAN: Hapus interface SelectedLocation dan fungsi getMapUrl dari file ini.
-// Karena sudah dipindahkan ke page.tsx. Jika Anda tetap menyimpannya di sini,
-// itu duplikasi dan bisa menyebabkan kebingungan atau masalah di masa depan.
-// Saya akan HAPUS di kode di bawah ini.
-
-export function RegionDropdown({ onSelectDistrict }: RegionDropdownProps) {
+export function RegionDropdown({
+  onSelectDistrict,
+  selectedLocationCoords,
+  currentWeatherData,
+  loadingWeather,
+  weatherError,
+}: RegionDropdownProps) {
   const [selectedProvinceCode, setSelectedProvinceCode] = useState<
     string | null
   >(null);
@@ -51,14 +63,16 @@ export function RegionDropdown({ onSelectDistrict }: RegionDropdownProps) {
   const [selectedDistrictCode, setSelectedDistrictCode] = useState<
     string | null
   >(null);
-  // Hapus selectedLocation state dari sini, ini state milik page.tsx
-  // const [selectedLocation, setSelectedLocation] = useState<SelectedLocation | null>(null);
 
-  // === PENAMBAHAN STATE UNTUK NAMA YANG AKAN DITAMPILKAN PADA SELECTVALUE ===
-  const [displayProvinceName, setDisplayProvinceName] = useState<string | null>(null);
-  const [displayRegencyName, setDisplayRegencyName] = useState<string | null>(null);
-  const [displayDistrictName, setDisplayDistrictName] = useState<string | null>(null);
-
+  const [displayProvinceName, setDisplayProvinceName] = useState<string | null>(
+    null
+  );
+  const [displayRegencyName, setDisplayRegencyName] = useState<string | null>(
+    null
+  );
+  const [displayDistrictName, setDisplayDistrictName] = useState<string | null>(
+    null
+  );
 
   const {
     data: provinces,
@@ -88,38 +102,38 @@ export function RegionDropdown({ onSelectDistrict }: RegionDropdownProps) {
 
   const handleProvinceChange = (value: string) => {
     setSelectedProvinceCode(value);
-    // Set nama yang akan ditampilkan
-    const selectedProv = provinces.find(p => String(p.province_code) === value);
-    setDisplayProvinceName(selectedProv?.province_name || null);
+    const name =
+      provinces.find((p) => String(p.province_code) === value)?.province_name ||
+      null;
+    setDisplayProvinceName(name);
 
     setSelectedRegencyCode(null);
-    setDisplayRegencyName(null); // Reset nama kabupaten/kota
+    setDisplayRegencyName(null);
     setSelectedDistrictCode(null);
-    setDisplayDistrictName(null); // Reset nama kecamatan
-    // setSelectedLocation(null); // Ini milik page.tsx
-    onSelectDistrict?.("", "", "", ""); // Reset selection di parent
+    setDisplayDistrictName(null);
+
+    onSelectDistrict?.("", "", "", "");
   };
 
   const handleRegencyChange = (value: string) => {
     setSelectedRegencyCode(value);
-    // Set nama yang akan ditampilkan
-    const selectedReg = regencies.find(r => String(r.city_code) === value);
-    setDisplayRegencyName(selectedReg?.city_name || null);
+    const name =
+      regencies.find((r) => String(r.city_code) === value)?.city_name || null;
+    setDisplayRegencyName(name);
 
     setSelectedDistrictCode(null);
-    setDisplayDistrictName(null); // Reset nama kecamatan
-    // setSelectedLocation(null); // Ini milik page.tsx
-    onSelectDistrict?.("", "", "", ""); // Reset selection di parent
+    setDisplayDistrictName(null);
+
+    onSelectDistrict?.("", "", "", "");
   };
 
   const handleDistrictChange = (value: string) => {
     setSelectedDistrictCode(value);
 
-    // Pastikan selectedProvinceCode dan selectedRegencyCode tidak null
     if (!selectedProvinceCode || !selectedRegencyCode) {
-        setDisplayDistrictName(null); // Reset nama kecamatan
-        onSelectDistrict?.("", "", "", "");
-        return;
+      setDisplayDistrictName(null);
+      onSelectDistrict?.("", "", "", "");
+      return;
     }
 
     const selectedDistrict = districts.find(
@@ -127,8 +141,8 @@ export function RegionDropdown({ onSelectDistrict }: RegionDropdownProps) {
     );
 
     if (selectedDistrict) {
-      // Set nama yang akan ditampilkan
-      setDisplayDistrictName(selectedDistrict.sub_district_name || null);
+      const name = selectedDistrict.sub_district_name || null;
+      setDisplayDistrictName(name);
 
       const locationData = {
         districtCode: String(selectedDistrict.sub_district_code),
@@ -139,19 +153,7 @@ export function RegionDropdown({ onSelectDistrict }: RegionDropdownProps) {
         longitude: selectedDistrict.sub_district_longitude,
         geometry: selectedDistrict.sub_district_geometry,
       };
-      
-      // setSelectedLocation(locationData); // Ini milik page.tsx
 
-      // DEBUGGING: Cek data koordinat di konsol
-      console.log("RegionDropdown DEBUG: Selected District Data before callback:", locationData);
-      console.log(
-        "RegionDropdown DEBUG: Latitude:",
-        locationData.latitude,
-        "Longitude:",
-        locationData.longitude
-      );
-
-      // Panggil callback onSelectDistrict dengan semua data yang relevan
       onSelectDistrict(
         locationData.districtCode,
         locationData.districtName,
@@ -162,7 +164,6 @@ export function RegionDropdown({ onSelectDistrict }: RegionDropdownProps) {
         locationData.geometry
       );
     } else {
-      // Jika distrik tidak ditemukan, reset display name dan selection di parent
       setDisplayDistrictName(null);
       onSelectDistrict?.("", "", "", "");
     }
@@ -179,9 +180,8 @@ export function RegionDropdown({ onSelectDistrict }: RegionDropdownProps) {
     </Alert>
   );
 
-  // === Fungsi renderSelectField disesuaikan untuk menampilkan displayedName ===
   const renderSelectField = (
-    value: string | null, // Kode yang dipilih
+    selectedValue: string | null,
     onValueChange: (value: string) => void,
     placeholder: string,
     loading: boolean,
@@ -190,21 +190,24 @@ export function RegionDropdown({ onSelectDistrict }: RegionDropdownProps) {
     icon: React.ReactNode,
     valueKey: string,
     nameKey: string,
-    currentDisplayName: string | null // Nama yang akan ditampilkan di SelectValue
+    currentDisplayName: string | null
   ) => (
     <div className="space-y-1.5">
       <div className="flex items-center gap-1.5 text-xs font-medium text-gray-300">
         {icon}
         <span>{placeholder}</span>
       </div>
-      <Select value={value || ""} onValueChange={onValueChange} disabled={disabled}>
+      <Select
+        value={selectedValue || ""}
+        onValueChange={onValueChange}
+        disabled={disabled}
+      >
         <SelectTrigger
           className="w-full h-10 bg-gray-800/50 border-gray-700/50 text-white rounded-lg
                              hover:bg-gray-800/70 hover:border-gray-600/50 transition-all duration-200
                              focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50
                              data-[placeholder]:text-gray-400"
         >
-          {/* === Perbaikan Utama: Meneruskan currentDisplayName sebagai children ke SelectValue === */}
           <SelectValue
             placeholder={
               loading ? (
@@ -217,7 +220,6 @@ export function RegionDropdown({ onSelectDistrict }: RegionDropdownProps) {
               )
             }
           >
-            {/* Hanya tampilkan nama jika sudah ada yang dipilih, jika tidak, placeholder akan aktif */}
             {currentDisplayName}
           </SelectValue>
         </SelectTrigger>
@@ -241,8 +243,121 @@ export function RegionDropdown({ onSelectDistrict }: RegionDropdownProps) {
     </div>
   );
 
+  // === FUNGSI HELPER BARU: untuk menghasilkan string HTML iframe cuaca ===
+  const generateWeatherMapIframeSrc = () => {
+    const lat = selectedLocationCoords?.lat || DEFAULT_MAP_CENTER[0];
+    const lng = selectedLocationCoords?.lng || DEFAULT_MAP_CENTER[1];
+    const zoom = selectedLocationCoords ? 10 : 5; // Zoom in if location selected
+
+    let weatherIconSvg = ``;
+    let weatherDescription = ``;
+    let temperature = ``;
+
+    if (loadingWeather) {
+      weatherIconSvg = `<div style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); color:#fff; font-size:14px;">Memuat cuaca...</div>`;
+    } else if (weatherError) {
+      weatherIconSvg = `<div style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); color:#ef4444; font-size:14px;">Error: ${weatherError}</div>`;
+    } else if (currentWeatherData) {
+      const iconCode = currentWeatherData.icon;
+      let iconChar = "☁️"; // Default cloud
+      if (iconCode.startsWith("01")) iconChar = "☀️"; // Clear sky
+      else if (iconCode.startsWith("02")) iconChar = "🌤️"; // Few clouds
+      else if (iconCode.startsWith("03") || iconCode.startsWith("04"))
+        iconChar = "☁️"; // Scattered/broken clouds
+      else if (iconCode.startsWith("09") || iconCode.startsWith("10"))
+        iconChar = "🌧️"; // Rain/shower rain
+      else if (iconCode.startsWith("11")) iconChar = "🌩️"; // Thunderstorm
+      else if (iconCode.startsWith("13")) iconChar = "🌨️"; // Snow
+      else if (iconCode.startsWith("50")) iconChar = "🌫️"; // Mist/fog
+
+      weatherIconSvg = `<div style="font-size: 50px; text-align: center;">${iconChar}</div>`;
+      weatherDescription = currentWeatherData.description;
+      temperature = `${Math.round(currentWeatherData.temperature)}°C`;
+    } else {
+      weatherIconSvg = `<div style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); color:#fff; font-size:14px;">Pilih lokasi</div>`;
+    }
+
+    return `data:text/html;charset=utf-8,
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Peta Cuaca</title>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+        <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+        <style>
+          body { margin: 0; padding: 0; font-family: Arial, sans-serif; background: #1a202c; overflow: hidden; }
+          #map { height: 100% !important; width: 100% !important; background: #2d3748; }
+          .leaflet-container { background: #2d3748; }
+          .weather-overlay {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.6);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            z-index: 1000;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(5px);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+          }
+          .weather-overlay .main-info {
+              display: flex;
+              align-items: center;
+              gap: 10px;
+          }
+          .weather-overlay .temp {
+              font-size: 24px;
+              font-weight: bold;
+              color: #63b3ed; /* Light blue */
+          }
+          .weather-overlay .desc {
+              font-size: 12px;
+              color: #cbd5e0; /* Grayish white */
+              text-transform: capitalize;
+          }
+        </style>
+      </head>
+      <body>
+        <div id="map"></div>
+        <div class="weather-overlay">
+          <div class="main-info">
+            <div style="font-size: 30px;">${weatherIconSvg}</div>
+            <div>
+              <div class="temp">${temperature}</div>
+              <div class="desc">${weatherDescription}</div>
+            </div>
+          </div>
+          <div style="text-align: right;">
+            <div style="font-weight: bold; color: #63b3ed;">${
+              selectedLocationCoords?.name || "Indonesia"
+            }</div>
+            <div style="font-size: 11px; color: #cbd5e0;">
+              Lat: ${lat.toFixed(4)}<br>Lng: ${lng.toFixed(4)}
+            </div>
+          </div>
+        </div>
+        <script>
+          var map = L.map('map', {zoomControl: false}).setView([${lat}, ${lng}], ${zoom});
+          L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+          }).addTo(map);
+          // Invalidate size to ensure map renders correctly
+          setTimeout(() => { map.invalidateSize(); }, 100);
+        </script>
+      </body>
+      </html>
+    `;
+  };
+
   return (
-    <div className="w-full h-full"> {/* Pastikan container utama memiliki tinggi */}
+    <div className="w-full h-full">
       {/* Header */}
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-white flex items-center gap-3">
@@ -255,7 +370,6 @@ export function RegionDropdown({ onSelectDistrict }: RegionDropdownProps) {
       </div>
 
       {/* Main Content Layout */}
-      {/* Menggunakan h-full agar Card dapat mengambil tinggi yang cukup */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-full">
         {/* Left Side - Region Selector */}
         <div className="space-y-4">
@@ -293,7 +407,7 @@ export function RegionDropdown({ onSelectDistrict }: RegionDropdownProps) {
                 <Globe className="h-4 w-4 text-cyan-400" />,
                 "province_code",
                 "province_name",
-                displayProvinceName // === KIRIM NAMA INI KE renderSelectField ===
+                displayProvinceName
               )}
 
               {/* Regency Selection */}
@@ -307,7 +421,7 @@ export function RegionDropdown({ onSelectDistrict }: RegionDropdownProps) {
                 <Building2 className="h-4 w-4 text-cyan-400" />,
                 "city_code",
                 "city_name",
-                displayRegencyName // === KIRIM NAMA INI KE renderSelectField ===
+                displayRegencyName
               )}
 
               {/* District Selection */}
@@ -321,11 +435,11 @@ export function RegionDropdown({ onSelectDistrict }: RegionDropdownProps) {
                 <MapPin className="h-4 w-4 text-cyan-400" />,
                 "sub_district_code",
                 "sub_district_name",
-                displayDistrictName // === KIRIM NAMA INI KE renderSelectField ===
+                displayDistrictName
               )}
 
               {/* Selection Summary */}
-              {selectedDistrictCode && ( // Tampilkan jika ada lokasi terpilih (berdasarkan kode distrik)
+              {selectedDistrictCode && (
                 <div className="mt-4 p-3 bg-gray-800/30 rounded-lg border border-gray-700/30">
                   <h4 className="text-xs font-medium text-gray-300 mb-2 flex items-center gap-1.5">
                     <MapPin className="h-3 w-3 text-cyan-400" />
@@ -357,8 +471,7 @@ export function RegionDropdown({ onSelectDistrict }: RegionDropdownProps) {
           </Card>
         </div>
 
-        {/* Right Side - Map Container (PETA SUDAH DIPINDAH KE page.tsx) */}
-        {/* Hapus div ini jika Anda tidak lagi memerlukan peta di sini */}
+        {/* Right Side - Map Container */}
         <div className="space-y-4">
           <Card className="bg-gray-900/60 border-gray-800/50 backdrop-blur-lg rounded-xl shadow-xl overflow-hidden h-full">
             <CardHeader className="bg-gradient-to-r from-blue-600/10 to-indigo-600/10 border-b border-gray-800/50 pb-4">
@@ -368,21 +481,23 @@ export function RegionDropdown({ onSelectDistrict }: RegionDropdownProps) {
                 </div>
                 <div>
                   <CardTitle className="text-lg font-semibold text-white">
-                    Peta Wilayah
+                    Peta Cuaca Wilayah
                   </CardTitle>
                   <p className="text-gray-400 text-xs mt-0.5">
-                    Visualisasi lokasi yang dipilih
+                    Visualisasi cuaca lokasi yang dipilih
                   </p>
                 </div>
               </div>
             </CardHeader>
 
-            <CardContent className="p-4 h-full flex flex-col items-center justify-center text-center">
-              {/* Teks placeholder atau spinner jika diperlukan */}
-              <div className="text-muted-foreground">
-                <MapPin className="h-12 w-12 mx-auto mb-4" />
-                <p>Peta akan muncul di Dashboard Utama</p>
-                <p className="text-xs">Silakan pilih wilayah terlebih dahulu.</p>
+            <CardContent className="p-4 h-full">
+              <div className="w-full h-full min-h-[400px] rounded-lg border border-gray-700/30 relative overflow-hidden">
+                <iframe
+                  src={generateWeatherMapIframeSrc()}
+                  className="w-full h-full border-0 rounded-lg"
+                  title="Peta Cuaca Wilayah"
+                  loading="lazy"
+                />
               </div>
             </CardContent>
           </Card>

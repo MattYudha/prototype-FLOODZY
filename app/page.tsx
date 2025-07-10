@@ -1,21 +1,20 @@
 // src/app/page.tsx
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { useState, useEffect } from "react";
+import { motion } from "framer-motion";
 // Perlu mengimport CSS Leaflet secara global di client-side
 // Ini PENTING untuk react-leaflet agar styling peta muncul
-import 'leaflet/dist/leaflet.css';
+import "leaflet/dist/leaflet.css";
 
-
-import { Header } from '@/components/layout/Header';
-import { Sidebar } from '@/components/layout/Sidebar';
-import { WeatherDisplay } from '@/components/weather/WeatherDisplay';
-import { FloodAlertList } from '@/components/flood/FloodAlert';
-import { DashboardStats } from '@/components/dashboard/DashboardStats';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
-import { Button } from '@/components/ui/Button';
-import { Badge } from '@/components/ui/Badge';
+import { Header } from "@/components/layout/Header";
+import { Sidebar } from "@/components/layout/Sidebar";
+import { WeatherDisplay } from "@/components/weather/WeatherDisplay";
+import { FloodAlertList } from "@/components/flood/FloodAlert";
+import { DashboardStats } from "@/components/dashboard/DashboardStats";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
+import { Button } from "@/components/ui/Button";
+import { Badge } from "@/components/ui/Badge";
 import {
   MapPin,
   Bell,
@@ -27,23 +26,32 @@ import {
   CloudRain,
   Waves,
   Globe,
-} from 'lucide-react';
-import { useMediaQuery } from '@/hooks/useMediaQuery';
+} from "lucide-react";
+import { useMediaQuery } from "@/hooks/useMediaQuery";
 import {
   FLOOD_MOCK_ALERTS,
   DASHBOARD_STATS_MOCK,
   DEFAULT_MAP_CENTER,
-  DEFAULT_MAP_ZOOM
-} from '@/lib/constants';
-import { cn, formatNumber } from '@/lib/utils';
-import { RegionDropdown } from '@/components/region-selector/RegionDropdown';
-import { FloodMap } from '@/components/map/FloodMap';
+  DEFAULT_MAP_ZOOM,
+} from "@/lib/constants";
+import { cn, formatNumber } from "@/lib/utils";
+import { RegionDropdown } from "@/components/region-selector/RegionDropdown";
+import { FloodMap } from "@/components/map/FloodMap";
 
-// Import untuk memanggil Overpass API dan OpenWeatherMap API
-import { fetchDisasterProneData, OverpassElement, fetchWeatherData, WeatherData } from '@/lib/api';
+// Import untuk memanggil API
+import {
+  fetchDisasterProneData,
+  OverpassElement,
+  fetchWeatherData,
+  WeatherData,
+  fetchWaterLevelData,
+  WaterLevelPost,
+  fetchPumpStatusData, // === IMPORT BARU: untuk data pompa banjir ===
+  PumpData, // === IMPORT BARU: untuk interface data pompa ===
+} from "@/lib/api";
 
 // API Key OpenWeatherMap Anda
-const OPEN_WEATHER_API_KEY = 'b48e2782f52bd9c6783ef14a35856abc';
+const OPEN_WEATHER_API_KEY = "b48e2782f52bd9c6783ef14a35856abc";
 
 // Definisikan tipe untuk lokasi yang dipilih, kini sampai tingkat kecamatan dengan koordinat
 interface SelectedLocationDetails {
@@ -58,23 +66,85 @@ interface SelectedLocationDetails {
 
 export default function Home() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [selectedLocation, setSelectedLocation] = useState<SelectedLocationDetails | null>(null);
-  const isMobile = useMediaQuery('(max-width: 768px)');
+  const [selectedLocation, setSelectedLocation] =
+    useState<SelectedLocationDetails | null>(null);
+  const isMobile = useMediaQuery("(max-width: 768px)");
 
   // State untuk data bencana dari Overpass API
-  const [disasterProneAreas, setDisasterProneAreas] = useState<OverpassElement[]>([]);
+  const [disasterProneAreas, setDisasterProneAreas] = useState<
+    OverpassElement[]
+  >([]);
   const [loadingDisasterData, setLoadingDisasterData] = useState(false);
-  const [disasterDataError, setDisasterDataError] = useState<string | null>(null);
+  const [disasterDataError, setDisasterDataError] = useState<string | null>(
+    null
+  );
 
   // State untuk data cuaca dari OpenWeatherMap API
-  const [currentWeatherData, setCurrentWeatherData] = useState<WeatherData | null>(null);
+  const [currentWeatherData, setCurrentWeatherData] =
+    useState<WeatherData | null>(null);
   const [loadingWeather, setLoadingWeather] = useState(false);
   const [weatherError, setWeatherError] = useState<string | null>(null);
 
+  // State untuk data Tinggi Muka Air dari PUPR API
+  const [waterLevelPosts, setWaterLevelPosts] = useState<WaterLevelPost[]>([]);
+  const [loadingWaterLevel, setLoadingWaterLevel] = useState(false);
+  const [waterLevelError, setWaterLevelError] = useState<string | null>(null);
+
+  // === STATE BARU: Untuk data status pompa banjir ===
+  const [pumpStatusData, setPumpStatusData] = useState<PumpData[]>([]);
+  const [loadingPumpStatus, setLoadingPumpStatus] = useState(false);
+  const [pumpStatusError, setPumpStatusError] = useState<string | null>(null);
+
+  // === STATE BARU: Untuk bounding box peta saat ini (untuk memicu fetch bencana) ===
+  const [currentMapBounds, setCurrentMapBounds] = useState<{
+    south: number;
+    west: number;
+    north: number;
+    east: number;
+  } | null>(null);
 
   useEffect(() => {
     setIsSidebarOpen(!isMobile);
   }, [isMobile]);
+
+  // === CALLBACK BARU: Menerima batas peta dari FloodMap (untuk memicu fetch bencana) ===
+  const handleMapBoundsChange = (
+    south: number,
+    west: number,
+    north: number,
+    east: number
+  ) => {
+    setCurrentMapBounds({ south, west, north, east });
+  };
+
+  // === useEffect BARU: Memanggil fetchDisasterProneData saat currentMapBounds berubah ===
+  useEffect(() => {
+    if (currentMapBounds) {
+      const { south, west, north, east } = currentMapBounds;
+
+      setLoadingDisasterData(true);
+      setDisasterDataError(null);
+      fetchDisasterProneData(south, west, north, east)
+        .then((data) => {
+          setDisasterProneAreas(data.elements);
+          console.log(
+            "Disaster Prone Data (from map move) from Overpass:",
+            data.elements
+          );
+        })
+        .catch((err) => {
+          console.error(
+            "Error fetching disaster prone data (from map move):",
+            err
+          );
+          setDisasterDataError(err.message);
+          setDisasterProneAreas([]);
+        })
+        .finally(() => {
+          setLoadingDisasterData(false);
+        });
+    }
+  }, [currentMapBounds]); // Terpicu saat currentMapBounds berubah (dari geseran peta)
 
   // Handler saat RegionDropdown memilih kecamatan
   const handleRegionSelect = (
@@ -93,44 +163,24 @@ export default function Home() {
       provinceCode,
       latitude,
       longitude,
-      geometry
+      geometry,
     };
     setSelectedLocation(newLocation);
-    console.log('DEBUG page.tsx: Lokasi Terpilih (newLocation dari dropdown):', newLocation);
+    console.log(
+      "DEBUG page.tsx: Lokasi Terpilih (newLocation dari dropdown):",
+      newLocation
+    );
 
     if (latitude != null && longitude != null) {
-      // Panggil Overpass API untuk data bencana
-      const buffer = 0.05; // sekitar 5.5 km, sesuaikan jika perlu
-      const south = latitude - buffer;
-      const west = longitude - buffer;
-      const north = latitude + buffer;
-      const east = longitude + buffer;
-
-      setLoadingDisasterData(true);
-      setDisasterDataError(null);
-      fetchDisasterProneData(south, west, north, east)
-        .then(data => {
-          setDisasterProneAreas(data.elements);
-          console.log("Disaster Prone Data from Overpass:", data.elements);
-        })
-        .catch(err => {
-          console.error("Error fetching disaster prone data:", err);
-          setDisasterDataError(err.message);
-          setDisasterProneAreas([]);
-        })
-        .finally(() => {
-          setLoadingDisasterData(false);
-        });
-
       // Panggil OpenWeatherMap API untuk data cuaca
       setLoadingWeather(true);
       setWeatherError(null);
       fetchWeatherData(latitude, longitude, OPEN_WEATHER_API_KEY)
-        .then(data => {
+        .then((data) => {
           setCurrentWeatherData(data);
           console.log("Weather Data from OpenWeatherMap:", data);
         })
-        .catch(err => {
+        .catch((err) => {
           console.error("Error fetching weather data:", err);
           setWeatherError(err.message);
           setCurrentWeatherData(null);
@@ -139,48 +189,110 @@ export default function Home() {
           setLoadingWeather(false);
         });
 
+      // PANGGIL PUPR API UNTUK TINGGI MUKA AIR
+      setLoadingWaterLevel(true);
+      setWaterLevelError(null);
+      fetchWaterLevelData()
+        .then((data) => {
+          const nearbyPosts = data.filter(
+            (post) =>
+              post.lat &&
+              post.lon &&
+              Math.abs(post.lat - latitude) < 0.1 &&
+              Math.abs(post.lon - longitude) < 0.1
+          );
+          setWaterLevelPosts(nearbyPosts);
+          console.log("Water Level Posts from PUPR API:", nearbyPosts);
+        })
+        .catch((err) => {
+          console.error("Error fetching water level data:", err);
+          setWaterLevelError(err.message);
+          setWaterLevelPosts([]);
+        })
+        .finally(() => {
+          setLoadingWaterLevel(false);
+        });
+
+      // === PANGGIL API UNTUK STATUS POMPA BANJIR ===
+      setLoadingPumpStatus(true);
+      setPumpStatusError(null);
+      fetchPumpStatusData()
+        .then((data) => {
+          // Filter pompa yang dekat dengan lokasi yang dipilih (opsional, jika data pompa sangat banyak)
+          const nearbyPumps = data.filter(
+            (pump) =>
+              pump.latitude != null &&
+              pump.longitude != null &&
+              Math.abs(pump.latitude - latitude) < 0.5 && // Buffer lebih besar untuk pompa
+              Math.abs(pump.longitude - longitude) < 0.5
+          );
+          setPumpStatusData(nearbyPumps);
+          console.log("Pump Status Data:", nearbyPumps);
+        })
+        .catch((err) => {
+          console.error("Error fetching pump status data:", err);
+          setPumpStatusError(err.message);
+          setPumpStatusData([]);
+        })
+        .finally(() => {
+          setLoadingPumpStatus(false);
+        });
+
+      // === SAAT LOKASI DIPILIH: Inisialisasi peta dengan bounding box dari lokasi pilihan ===
+      // Ini akan memicu useEffect di atas (currentMapBounds)
+      const buffer = 0.05;
+      const south = latitude - buffer;
+      const west = longitude - buffer;
+      const north = latitude + buffer;
+      const east = longitude + buffer;
+      setCurrentMapBounds({ south, west, north, east }); // Ini akan memicu fetchDisasterProneData
     } else {
-      // Reset data bencana dan cuaca jika tidak ada koordinat
+      // Reset semua data jika tidak ada koordinat
       setDisasterProneAreas([]);
       setLoadingDisasterData(false);
       setCurrentWeatherData(null);
       setLoadingWeather(false);
+      setWaterLevelPosts([]);
+      setLoadingWaterLevel(false);
+      setPumpStatusData([]); // Reset data pompa
+      setLoadingPumpStatus(false); // Reset loading pompa
+      setCurrentMapBounds(null);
     }
   };
 
   const heroCards = [
     {
-      title: 'Total Wilayah',
-      description: 'Wilayah yang dipantau',
+      title: "Total Wilayah",
+      description: "Wilayah yang dipantau",
       count: DASHBOARD_STATS_MOCK.totalRegions,
       icon: MapPin,
-      color: 'text-primary',
-      bgColor: 'bg-primary/20'
+      color: "text-primary",
+      bgColor: "bg-primary/20",
     },
     {
-      title: 'Peringatan Aktif',
-      description: 'Peringatan banjir saat ini',
+      title: "Peringatan Aktif",
+      description: "Peringatan banjir saat ini",
       count: DASHBOARD_STATS_MOCK.activeAlerts,
       icon: Bell,
-      color: 'text-warning',
-      bgColor: 'bg-warning/20'
+      color: "text-warning",
+      bgColor: "bg-warning/20",
     },
     {
-      title: 'Zona Banjir',
-      description: 'Area yang rawan banjir',
+      title: "Zona Banjir",
+      description: "Area yang rawan banjir",
       count: DASHBOARD_STATS_MOCK.floodZones,
       icon: Shield,
-      color: 'text-danger',
-      bgColor: 'bg-danger/20'
+      color: "text-danger",
+      bgColor: "bg-danger/20",
     },
     {
-      title: 'Orang Berisiko',
-      description: 'Estimasi populasi berisiko',
+      title: "Orang Berisiko",
+      description: "Estimasi populasi berisiko",
       count: formatNumber(DASHBOARD_STATS_MOCK.peopleAtRisk),
       icon: Users,
-      color: 'text-secondary',
-      bgColor: 'bg-secondary/20'
-    }
+      color: "text-secondary",
+      bgColor: "bg-secondary/20",
+    },
   ];
 
   return (
@@ -189,15 +301,14 @@ export default function Home() {
         onMenuToggle={() => setIsSidebarOpen(!isSidebarOpen)}
         isMenuOpen={isSidebarOpen}
       />
-      <Sidebar
-        isOpen={isSidebarOpen}
-        onClose={() => setIsSidebarOpen(false)}
-      />
+      <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
 
-      <main className={cn(
-        'transition-all duration-300 ease-in-out',
-        isSidebarOpen && !isMobile ? 'ml-64' : 'ml-0'
-      )}>
+      <main
+        className={cn(
+          "transition-all duration-300 ease-in-out",
+          isSidebarOpen && !isMobile ? "ml-64" : "ml-0"
+        )}
+      >
         {/* Hero Section */}
         <section className="relative overflow-hidden bg-gradient-to-br from-primary via-primary-800 to-secondary text-white">
           <div className="absolute inset-0 bg-black/20" />
@@ -216,7 +327,8 @@ export default function Home() {
               </div>
 
               <p className="text-xl md:text-2xl text-white/90 max-w-3xl mx-auto">
-                Sistem Deteksi Banjir & Monitoring Cuaca Real-time untuk Indonesia
+                Sistem Deteksi Banjir & Monitoring Cuaca Real-time untuk
+                Indonesia
               </p>
 
               <div className="flex flex-wrap justify-center gap-4 mt-8">
@@ -224,7 +336,11 @@ export default function Home() {
                   <MapPin className="mr-2 h-5 w-5" />
                   Lihat Peta Banjir
                 </Button>
-                <Button size="lg" variant="outline" className="text-white border-white hover:bg-white/10">
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="text-white border-white hover:bg-white/10"
+                >
                   <Bell className="mr-2 h-5 w-5" />
                   Peringatan Terkini
                 </Button>
@@ -243,15 +359,19 @@ export default function Home() {
                   <Card className="glass text-white border-white/20 hover:bg-white/10 transition-colors">
                     <CardContent className="p-6">
                       <div className="flex items-center justify-between mb-4">
-                        <div className={cn('p-2 rounded-lg', card.bgColor)}>
-                          <card.icon className={cn('h-6 w-6', card.color)} />
+                        <div className={cn("p-2 rounded-lg", card.bgColor)}>
+                          <card.icon className={cn("h-6 w-6", card.color)} />
                         </div>
                         <Badge variant="glass" className="text-white">
                           {card.count}
                         </Badge>
                       </div>
-                      <h3 className="text-lg font-semibold mb-2">{card.title}</h3>
-                      <p className="text-sm text-white/80">{card.description}</p>
+                      <h3 className="text-lg font-semibold mb-2">
+                        {card.title}
+                      </h3>
+                      <p className="text-sm text-white/80">
+                        {card.description}
+                      </p>
                     </CardContent>
                   </Card>
                 </motion.div>
@@ -269,15 +389,25 @@ export default function Home() {
             <motion.div
               className="absolute bottom-20 right-10 w-16 h-16 bg-secondary/20 rounded-full"
               animate={{ y: [0, -15, 0] }}
-              transition={{ duration: 3, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+              transition={{
+                duration: 3,
+                repeat: Infinity,
+                ease: "easeInOut",
+                delay: 1,
+              }}
             />
             <motion.div
               className="absolute top-1/2 left-1/2 w-12 h-12 bg-white/10 rounded-full"
               animate={{
                 y: [0, -10, 0],
-                x: [0, 10, 0]
+                x: [0, 10, 0],
               }}
-              transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 2 }}
+              transition={{
+                duration: 5,
+                repeat: Infinity,
+                ease: "easeInOut",
+                delay: 2,
+              }}
             />
           </div>
         </section>
@@ -297,7 +427,6 @@ export default function Home() {
           </Card>
         </section>
 
-
         {/* Main Dashboard */}
         <section className="container mx-auto px-4 py-8 space-y-8">
           {/* Dashboard Stats */}
@@ -306,7 +435,16 @@ export default function Home() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.2 }}
           >
-            <DashboardStats stats={DASHBOARD_STATS_MOCK} />
+            <DashboardStats
+              stats={DASHBOARD_STATS_MOCK}
+              waterLevelPosts={waterLevelPosts}
+              loadingWaterLevel={loadingWaterLevel}
+              waterLevelError={waterLevelError}
+              // === TERUSKAN DATA POMPA BANJIR KE DASHBOARDSTATS ===
+              pumpStatusData={pumpStatusData}
+              loadingPumpStatus={loadingPumpStatus}
+              pumpStatusError={pumpStatusError}
+            />
           </motion.div>
 
           {/* Main Content Grid */}
@@ -322,27 +460,36 @@ export default function Home() {
                 <CardHeader>
                   <CardTitle className="flex items-center space-x-2">
                     <MapPin className="h-5 w-5 text-primary" />
-                    <span>Peta Banjir - {selectedLocation?.districtName || 'Indonesia'}</span>
-                    <Badge variant="success" className="ml-auto">Live</Badge>
+                    <span>
+                      Peta Banjir -{" "}
+                      {selectedLocation?.districtName || "Indonesia"}
+                    </span>
+                    <Badge variant="success" className="ml-auto">
+                      Live
+                    </Badge>
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div
-                    style={{ height: '600px', width: '100%' }}
+                    style={{ height: "600px", width: "100%" }}
                     className="w-full rounded-lg border border-gray-700/30 relative overflow-hidden"
                   >
                     <FloodMap
                       center={
-                        selectedLocation?.latitude != null && selectedLocation?.longitude != null
-                          ? [selectedLocation.latitude, selectedLocation.longitude]
+                        selectedLocation?.latitude != null &&
+                        selectedLocation?.longitude != null
+                          ? [
+                              selectedLocation.latitude,
+                              selectedLocation.longitude,
+                            ]
                           : DEFAULT_MAP_CENTER
                       }
                       zoom={selectedLocation ? 12 : DEFAULT_MAP_ZOOM}
                       className="h-full w-full"
-                      // === TERUSKAN DATA BANJIR/BENCANA DARI OVERPASS KE FLOODMAP ===
                       floodProneData={disasterProneAreas}
                       loadingFloodData={loadingDisasterData}
                       floodDataError={disasterDataError}
+                      onMapBoundsChange={handleMapBoundsChange}
                     />
                     {selectedLocation && (
                       <div className="absolute bottom-4 left-4 right-4 bg-gray-800/90 backdrop-blur-sm rounded-lg p-3 border border-gray-700/50">
@@ -377,7 +524,6 @@ export default function Home() {
             >
               {/* Weather Display */}
               <WeatherDisplay
-                // === TERUSKAN DATA CUACA NYATA KE WEATHERDISPLAY ===
                 data={currentWeatherData}
                 loading={loadingWeather}
                 error={weatherError}
@@ -393,19 +539,31 @@ export default function Home() {
                 </CardHeader>
                 <CardContent>
                   <div className="grid grid-cols-2 gap-4">
-                    <Button variant="outline" className="h-12 flex-col space-y-1">
+                    <Button
+                      variant="outline"
+                      className="h-12 flex-col space-y-1"
+                    >
                       <AlertTriangle className="h-4 w-4" />
                       <span className="text-xs">Lapor Banjir</span>
                     </Button>
-                    <Button variant="outline" className="h-12 flex-col space-y-1">
+                    <Button
+                      variant="outline"
+                      className="h-12 flex-col space-y-1"
+                    >
                       <Users className="h-4 w-4" />
                       <span className="text-xs">Evakuasi</span>
                     </Button>
-                    <Button variant="outline" className="h-12 flex-col space-y-1">
+                    <Button
+                      variant="outline"
+                      className="h-12 flex-col space-y-1"
+                    >
                       <CloudRain className="h-4 w-4" />
                       <span className="text-xs">Cuaca</span>
                     </Button>
-                    <Button variant="outline" className="h-12 flex-col space-y-1">
+                    <Button
+                      variant="outline"
+                      className="h-12 flex-col space-y-1"
+                    >
                       <Waves className="h-4 w-4" />
                       <span className="text-xs">Sensor</span>
                     </Button>
