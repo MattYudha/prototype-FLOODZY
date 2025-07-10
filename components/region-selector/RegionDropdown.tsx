@@ -1,6 +1,6 @@
 // src/components/region-selector/RegionDropdown.tsx
 "use client";
-
+// src/components/region-selector/RegionDropdown.tsx
 import { useState } from "react";
 import { useRegionData } from "@/hooks/useRegionData";
 import {
@@ -19,15 +19,12 @@ import {
   Building2,
   Globe,
   Map, // Map icon for the map card title
-  Sun,
-  Cloud,
-  CloudRain,
-  Zap,
-  Thermometer,
-  Loader2, // Icons for weather display
-} from "lucide-react";
-import { WeatherData } from "@/lib/api"; // Import WeatherData interface
-import { DEFAULT_MAP_CENTER, DEFAULT_MAP_ZOOM } from "@/lib/constants"; // Import default map constants
+} from "lucide-react"; // Hapus import ikon cuaca yang tidak lagi dipakai di sini
+import { WeatherData } from "@/lib/api";
+import { DEFAULT_MAP_CENTER, DEFAULT_MAP_ZOOM } from "@/lib/constants";
+
+// Import komponen baru
+import { WeatherMapIframe } from "@/components/weather/WeatherMapIframe"; // <--- IMPORT BARU
 
 // Props baru untuk menerima data cuaca dan lokasi terpilih
 interface RegionDropdownProps {
@@ -40,7 +37,6 @@ interface RegionDropdownProps {
     longitude?: number,
     geometry?: string
   ) => void;
-  // === PROPS BARU INI ===
   selectedLocationCoords?: { lat: number; lng: number; name: string } | null;
   currentWeatherData?: WeatherData | null;
   loadingWeather?: boolean;
@@ -112,7 +108,7 @@ export function RegionDropdown({
     setSelectedDistrictCode(null);
     setDisplayDistrictName(null);
 
-    onSelectDistrict?.("", "", "", "");
+    onSelectDistrict?.("", "", "", "", undefined, undefined, undefined);
   };
 
   const handleRegencyChange = (value: string) => {
@@ -124,7 +120,7 @@ export function RegionDropdown({
     setSelectedDistrictCode(null);
     setDisplayDistrictName(null);
 
-    onSelectDistrict?.("", "", "", "");
+    onSelectDistrict?.("", "", "", "", undefined, undefined, undefined);
   };
 
   const handleDistrictChange = (value: string) => {
@@ -132,7 +128,7 @@ export function RegionDropdown({
 
     if (!selectedProvinceCode || !selectedRegencyCode) {
       setDisplayDistrictName(null);
-      onSelectDistrict?.("", "", "", "");
+      onSelectDistrict?.("", "", "", "", undefined, undefined, undefined);
       return;
     }
 
@@ -165,7 +161,7 @@ export function RegionDropdown({
       );
     } else {
       setDisplayDistrictName(null);
-      onSelectDistrict?.("", "", "", "");
+      onSelectDistrict?.("", "", "", "", undefined, undefined, undefined);
     }
   };
 
@@ -243,118 +239,7 @@ export function RegionDropdown({
     </div>
   );
 
-  // === FUNGSI HELPER BARU: untuk menghasilkan string HTML iframe cuaca ===
-  const generateWeatherMapIframeSrc = () => {
-    const lat = selectedLocationCoords?.lat || DEFAULT_MAP_CENTER[0];
-    const lng = selectedLocationCoords?.lng || DEFAULT_MAP_CENTER[1];
-    const zoom = selectedLocationCoords ? 10 : 5; // Zoom in if location selected
-
-    let weatherIconSvg = ``;
-    let weatherDescription = ``;
-    let temperature = ``;
-
-    if (loadingWeather) {
-      weatherIconSvg = `<div style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); color:#fff; font-size:14px;">Memuat cuaca...</div>`;
-    } else if (weatherError) {
-      weatherIconSvg = `<div style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); color:#ef4444; font-size:14px;">Error: ${weatherError}</div>`;
-    } else if (currentWeatherData) {
-      const iconCode = currentWeatherData.icon;
-      let iconChar = "☁️"; // Default cloud
-      if (iconCode.startsWith("01")) iconChar = "☀️"; // Clear sky
-      else if (iconCode.startsWith("02")) iconChar = "🌤️"; // Few clouds
-      else if (iconCode.startsWith("03") || iconCode.startsWith("04"))
-        iconChar = "☁️"; // Scattered/broken clouds
-      else if (iconCode.startsWith("09") || iconCode.startsWith("10"))
-        iconChar = "🌧️"; // Rain/shower rain
-      else if (iconCode.startsWith("11")) iconChar = "🌩️"; // Thunderstorm
-      else if (iconCode.startsWith("13")) iconChar = "🌨️"; // Snow
-      else if (iconCode.startsWith("50")) iconChar = "🌫️"; // Mist/fog
-
-      weatherIconSvg = `<div style="font-size: 50px; text-align: center;">${iconChar}</div>`;
-      weatherDescription = currentWeatherData.description;
-      temperature = `${Math.round(currentWeatherData.temperature)}°C`;
-    } else {
-      weatherIconSvg = `<div style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); color:#fff; font-size:14px;">Pilih lokasi</div>`;
-    }
-
-    return `data:text/html;charset=utf-8,
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <title>Peta Cuaca</title>
-        <meta charset="utf-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-        <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-        <style>
-          body { margin: 0; padding: 0; font-family: Arial, sans-serif; background: #1a202c; overflow: hidden; }
-          #map { height: 100% !important; width: 100% !important; background: #2d3748; }
-          .leaflet-container { background: #2d3748; }
-          .weather-overlay {
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            right: 10px;
-            background: rgba(0, 0, 0, 0.6);
-            color: white;
-            padding: 8px 12px;
-            border-radius: 8px;
-            font-size: 12px;
-            z-index: 1000;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(5px);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-          }
-          .weather-overlay .main-info {
-              display: flex;
-              align-items: center;
-              gap: 10px;
-          }
-          .weather-overlay .temp {
-              font-size: 24px;
-              font-weight: bold;
-              color: #63b3ed; /* Light blue */
-          }
-          .weather-overlay .desc {
-              font-size: 12px;
-              color: #cbd5e0; /* Grayish white */
-              text-transform: capitalize;
-          }
-        </style>
-      </head>
-      <body>
-        <div id="map"></div>
-        <div class="weather-overlay">
-          <div class="main-info">
-            <div style="font-size: 30px;">${weatherIconSvg}</div>
-            <div>
-              <div class="temp">${temperature}</div>
-              <div class="desc">${weatherDescription}</div>
-            </div>
-          </div>
-          <div style="text-align: right;">
-            <div style="font-weight: bold; color: #63b3ed;">${
-              selectedLocationCoords?.name || "Indonesia"
-            }</div>
-            <div style="font-size: 11px; color: #cbd5e0;">
-              Lat: ${lat.toFixed(4)}<br>Lng: ${lng.toFixed(4)}
-            </div>
-          </div>
-        </div>
-        <script>
-          var map = L.map('map', {zoomControl: false}).setView([${lat}, ${lng}], ${zoom});
-          L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '© OpenStreetMap contributors'
-          }).addTo(map);
-          // Invalidate size to ensure map renders correctly
-          setTimeout(() => { map.invalidateSize(); }, 100);
-        </script>
-      </body>
-      </html>
-    `;
-  };
+  // === FUNGSI generateWeatherMapIframeSrc SUDAH DIPINDAHKAN KE WeatherMapIframe.tsx ===
 
   return (
     <div className="w-full h-full">
@@ -491,14 +376,14 @@ export function RegionDropdown({
             </CardHeader>
 
             <CardContent className="p-4 h-full">
-              <div className="w-full h-full min-h-[400px] rounded-lg border border-gray-700/30 relative overflow-hidden">
-                <iframe
-                  src={generateWeatherMapIframeSrc()}
-                  className="w-full h-full border-0 rounded-lg"
-                  title="Peta Cuaca Wilayah"
-                  loading="lazy"
-                />
-              </div>
+              {/* === GUNAKAN KOMPONEN BARU DI SINI === */}
+              <WeatherMapIframe
+                selectedLocationCoords={selectedLocationCoords}
+                currentWeatherData={currentWeatherData}
+                loadingWeather={loadingWeather}
+                weatherError={weatherError}
+                height="100%" // Pastikan height agar memenuhi container CardContent
+              />
             </CardContent>
           </Card>
         </div>

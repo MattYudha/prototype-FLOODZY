@@ -290,7 +290,7 @@ export default function Home() {
       description: "Estimasi populasi berisiko",
       count: formatNumber(DASHBOARD_STATS_MOCK.peopleAtRisk),
       icon: Users,
-      color: "text-secondary",
+      color: "text-purple-500",
       bgColor: "bg-secondary/20",
     },
   ];
@@ -422,7 +422,22 @@ export default function Home() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <RegionDropdown onSelectDistrict={handleRegionSelect} />
+              <RegionDropdown
+                onSelectDistrict={handleRegionSelect}
+                selectedLocationCoords={
+                  selectedLocation?.latitude != null &&
+                  selectedLocation?.longitude != null
+                    ? {
+                        lat: selectedLocation.latitude,
+                        lng: selectedLocation.longitude,
+                        name: selectedLocation.districtName,
+                      }
+                    : null
+                }
+                currentWeatherData={currentWeatherData}
+                loadingWeather={loadingWeather}
+                weatherError={weatherError}
+              />
             </CardContent>
           </Card>
         </section>
