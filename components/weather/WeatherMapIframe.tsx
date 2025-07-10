@@ -21,7 +21,7 @@ export function WeatherMapIframe({
   weatherError,
   height = "100%", // Default height
 }: WeatherMapIframeProps) {
-  const generateIframeHtmlSrc = () => {
+  const generateIframeHtml = () => {
     // Gunakan koordinat lokasi terpilih atau default jika belum ada
     const lat = selectedLocationCoords?.lat || DEFAULT_MAP_CENTER[0];
     const lng = selectedLocationCoords?.lng || DEFAULT_MAP_CENTER[1];
@@ -125,15 +125,13 @@ export function WeatherMapIframe({
       weatherContentHtml = `<div style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); color:#fff; font-size:14px;">Pilih lokasi untuk melihat cuaca.</div>`;
     }
 
-    return `data:text/html;charset=utf-8,
-      <!DOCTYPE html>
+    return `<!DOCTYPE html>
       <html>
       <head>
         <title>Peta Cuaca</title>
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-        <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
         <style>
           body { margin: 0; padding: 0; font-family: Arial, sans-serif; background: #1a202c; overflow: hidden; }
           #map { height: 100% !important; width: 100% !important; background: #2d3748; }
@@ -179,6 +177,15 @@ export function WeatherMapIframe({
             from { transform: rotate(0deg); }
             to { transform: rotate(360deg); }
           }
+          .loading-overlay {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-size: 14px;
+            z-index: 2000;
+          }
         </style>
       </head>
       <body>
@@ -186,26 +193,76 @@ export function WeatherMapIframe({
         <div class="weather-overlay">
             ${weatherContentHtml}
         </div>
+        <div id="loading" class="loading-overlay">Memuat peta...</div>
+        
+        <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
         <script>
-          var map = L.map('map', {zoomControl: false}).setView([${lat}, ${lng}], ${zoom});
-          L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '© OpenStreetMap contributors'
-          }).addTo(map);
-          // Tambahkan marker jika lokasi dipilih
-          ${
-            hasValidCoords
-              ? `L.marker([${lat}, ${lng}]).addTo(map)
-                .bindPopup('Lokasi Terpilih: ${locationName || "N/A"}')
-                .openPopup();`
-              : ""
+          try {
+            console.log('Initializing map...');
+            document.getElementById('loading').style.display = 'block';
+            
+            var map = L.map('map', {
+              zoomControl: false,
+              attributionControl: false
+            }).setView([${lat}, ${lng}], ${zoom});
+            
+            var tileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+              attribution: '© OpenStreetMap contributors',
+              maxZoom: 18
+            });
+            
+            tileLayer.on('load', function() {
+              console.log('Tiles loaded successfully');
+              document.getElementById('loading').style.display = 'none';
+            });
+            
+            tileLayer.on('tileerror', function(e) {
+              console.error('Tile loading error:', e);
+            });
+            
+            tileLayer.addTo(map);
+            
+            // Tambahkan marker jika lokasi dipilih
+            ${
+              hasValidCoords
+                ? `
+                try {
+                  var marker = L.marker([${lat}, ${lng}]).addTo(map);
+                  marker.bindPopup('Lokasi Terpilih: ${locationName || "N/A"}');
+                  console.log('Marker added successfully');
+                } catch(markerError) {
+                  console.error('Error adding marker:', markerError);
+                }
+                `
+                : ""
+            }
+            
+            // Invalidate size to ensure map renders correctly
+            setTimeout(() => { 
+              try {
+                map.invalidateSize(); 
+                console.log('Map size invalidated');
+                document.getElementById('loading').style.display = 'none';
+              } catch(sizeError) {
+                console.error('Error invalidating map size:', sizeError);
+              }
+            }, 500);
+            
+            console.log('Map initialization completed');
+            
+          } catch(error) {
+            console.error('Map initialization error:', error);
+            document.getElementById('loading').innerHTML = 'Error memuat peta: ' + error.message;
           }
-          // Invalidate size to ensure map renders correctly after content load
-          setTimeout(() => { map.invalidateSize(); }, 100);
         </script>
       </body>
       </html>
     `;
   };
+
+  // Convert HTML to data URL
+  const htmlContent = generateIframeHtml();
+  const dataUrl = `data:text/html;charset=utf-8,${encodeURIComponent(htmlContent)}`;
 
   return (
     <div
@@ -213,10 +270,13 @@ export function WeatherMapIframe({
       style={{ height: height }}
     >
       <iframe
-        src={generateIframeHtmlSrc()}
+        src={dataUrl}
         className="w-full h-full border-0 rounded-lg"
         title="Peta Cuaca Wilayah"
         loading="lazy"
+        sandbox="allow-scripts allow-same-origin"
+        onLoad={() => console.log('Iframe loaded successfully')}
+        onError={(e) => console.error('Iframe loading error:', e)}
       />
     </div>
   );

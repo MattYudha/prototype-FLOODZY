@@ -16,17 +16,36 @@ export async function fetchRegions(
   type: "provinces" | "regencies" | "districts" | "villages",
   parentCode?: number | string
 ): Promise<RegionData[]> {
+  console.log(`fetchRegions called with type: ${type}, parentCode: ${parentCode}`);
+  
   const params = new URLSearchParams({ type });
   if (parentCode) {
     params.append("parent_code", String(parentCode));
   }
 
-  const response = await fetch(`/api/regions?${params.toString()}`);
+  const url = `/api/regions?${params.toString()}`;
+  console.log(`Fetching from URL: ${url}`);
+  
+  const response = await fetch(url, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    cache: 'no-cache'
+  });
+  
+  console.log(`Response status: ${response.status}`);
+  
   if (!response.ok) {
+    const errorText = await response.text();
+    console.error(`API Error: ${response.status} - ${errorText}`);
     const errorData = await response.json();
     throw new Error(errorData.error || `Failed to fetch ${type}`);
   }
-  return response.json();
+  
+  const data = await response.json();
+  console.log(`Received data:`, data);
+  return data;
 }
 
 // --- INTERFACE UNTUK OVERPASS DAN FUNGSI FETCH-NYA ---

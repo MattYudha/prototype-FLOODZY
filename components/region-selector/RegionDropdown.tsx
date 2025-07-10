@@ -140,13 +140,23 @@ export function RegionDropdown({
       const name = selectedDistrict.sub_district_name || null;
       setDisplayDistrictName(name);
 
+      // Validate coordinates before proceeding
+      const lat = selectedDistrict.sub_district_latitude;
+      const lng = selectedDistrict.sub_district_longitude;
+      
+      console.log(`Selected district coordinates: lat=${lat}, lng=${lng}`);
+      
+      if (lat == null || lng == null || isNaN(lat) || isNaN(lng)) {
+        console.warn(`Invalid coordinates for district ${name}: lat=${lat}, lng=${lng}`);
+      }
+
       const locationData = {
         districtCode: String(selectedDistrict.sub_district_code),
         districtName: selectedDistrict.sub_district_name || "",
         regencyCode: selectedRegencyCode,
         provinceCode: selectedProvinceCode,
-        latitude: selectedDistrict.sub_district_latitude,
-        longitude: selectedDistrict.sub_district_longitude,
+        latitude: lat,
+        longitude: lng,
         geometry: selectedDistrict.sub_district_geometry,
       };
 
