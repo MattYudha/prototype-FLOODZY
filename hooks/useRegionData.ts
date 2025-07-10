@@ -1,6 +1,8 @@
 // src/hooks/useRegionData.ts
 import { useState, useEffect } from "react";
-import { fetchRegions, RegionData } from "@/lib/api"; // Pastikan path ini benar
+// === PERBAIKAN DI SINI: Ubah cara import fetchRegions ===
+import * as apiService from "@/lib/api"; // Import seluruh modul sebagai alias apiService
+import { RegionData } from "@/lib/api"; // RegionData tetap diimpor secara named
 
 interface UseRegionDataOptions {
   type: "provinces" | "regencies" | "districts" | "villages";
@@ -39,8 +41,8 @@ export function useRegionData({
       setLoading(true);
       setError(null);
       try {
-        const result = await fetchRegions(type, parentCode || undefined);
-        // INI ADALAH console.log YANG KRUSIAL
+        // === PERBAIKAN DI SINI: Panggil fetchRegions melalui alias apiService ===
+        const result = await apiService.fetchRegions(type, parentCode || undefined);
         console.log(`DEBUG useRegionData: Raw API response for type '${type}' and parent '${parentCode}':`, result);
         setData(result);
       } catch (err: any) {

@@ -3,7 +3,7 @@
 
 "use client";
 
-import { useState, useEffect } from "react"; // Tambahkan useEffect
+import { useState, useEffect } from "react"; // useEffect tidak digunakan di sini, bisa dihapus. Saya biarkan saja untuk berjaga-jaga.
 import { useRegionData } from "@/hooks/useRegionData";
 import {
   Select,
@@ -21,7 +21,7 @@ import {
   ChevronDown, // Ini tidak digunakan, bisa dihapus jika tidak diperlukan
   Building2,
   Globe,
-  Map,
+  Map, // Ini tidak digunakan karena peta ada di page.tsx, bisa dihapus jika tidak diperlukan
 } from "lucide-react";
 
 interface RegionDropdownProps {
@@ -36,15 +36,10 @@ interface RegionDropdownProps {
   ) => void;
 }
 
-interface SelectedLocation {
-  districtCode: string;
-  districtName: string;
-  regencyCode: string;
-  provinceCode: string;
-  latitude?: number;
-  longitude?: number;
-  geometry?: string;
-}
+// === PERHATIAN: Hapus interface SelectedLocation dan fungsi getMapUrl dari file ini.
+// Karena sudah dipindahkan ke page.tsx. Jika Anda tetap menyimpannya di sini,
+// itu duplikasi dan bisa menyebabkan kebingungan atau masalah di masa depan.
+// Saya akan HAPUS di kode di bawah ini.
 
 export function RegionDropdown({ onSelectDistrict }: RegionDropdownProps) {
   const [selectedProvinceCode, setSelectedProvinceCode] = useState<
@@ -56,8 +51,14 @@ export function RegionDropdown({ onSelectDistrict }: RegionDropdownProps) {
   const [selectedDistrictCode, setSelectedDistrictCode] = useState<
     string | null
   >(null);
-  const [selectedLocation, setSelectedLocation] =
-    useState<SelectedLocation | null>(null);
+  // Hapus selectedLocation state dari sini, ini state milik page.tsx
+  // const [selectedLocation, setSelectedLocation] = useState<SelectedLocation | null>(null);
+
+  // === PENAMBAHAN STATE UNTUK NAMA YANG AKAN DITAMPILKAN PADA SELECTVALUE ===
+  const [displayProvinceName, setDisplayProvinceName] = useState<string | null>(null);
+  const [displayRegencyName, setDisplayRegencyName] = useState<string | null>(null);
+  const [displayDistrictName, setDisplayDistrictName] = useState<string | null>(null);
+
 
   const {
     data: provinces,
@@ -87,186 +88,83 @@ export function RegionDropdown({ onSelectDistrict }: RegionDropdownProps) {
 
   const handleProvinceChange = (value: string) => {
     setSelectedProvinceCode(value);
+    // Set nama yang akan ditampilkan
+    const selectedProv = provinces.find(p => String(p.province_code) === value);
+    setDisplayProvinceName(selectedProv?.province_name || null);
+
     setSelectedRegencyCode(null);
+    setDisplayRegencyName(null); // Reset nama kabupaten/kota
     setSelectedDistrictCode(null);
-    setSelectedLocation(null);
-    onSelectDistrict?.("", "", "", ""); // Reset selection
+    setDisplayDistrictName(null); // Reset nama kecamatan
+    // setSelectedLocation(null); // Ini milik page.tsx
+    onSelectDistrict?.("", "", "", ""); // Reset selection di parent
   };
 
   const handleRegencyChange = (value: string) => {
     setSelectedRegencyCode(value);
+    // Set nama yang akan ditampilkan
+    const selectedReg = regencies.find(r => String(r.city_code) === value);
+    setDisplayRegencyName(selectedReg?.city_name || null);
+
     setSelectedDistrictCode(null);
-    setSelectedLocation(null);
-    onSelectDistrict?.("", "", "", ""); // Reset selection
+    setDisplayDistrictName(null); // Reset nama kecamatan
+    // setSelectedLocation(null); // Ini milik page.tsx
+    onSelectDistrict?.("", "", "", ""); // Reset selection di parent
   };
 
   const handleDistrictChange = (value: string) => {
     setSelectedDistrictCode(value);
 
-    if (onSelectDistrict && selectedProvinceCode && selectedRegencyCode) {
-      const selectedDistrict = districts.find(
-        (d) => d.sub_district_code === Number(value)
-      );
-      if (selectedDistrict) {
-        const locationData = {
-          districtCode: String(selectedDistrict.sub_district_code),
-          districtName: selectedDistrict.sub_district_name || "",
-          regencyCode: selectedRegencyCode,
-          provinceCode: selectedProvinceCode,
-          latitude: selectedDistrict.sub_district_latitude,
-          longitude: selectedDistrict.sub_district_longitude,
-          geometry: selectedDistrict.sub_district_geometry,
-        };
-
-        setSelectedLocation(locationData);
-
-        // DEBUGGING: Cek data koordinat di konsol
-        console.log("Selected Location Data:", locationData);
-        console.log(
-          "Latitude:",
-          locationData.latitude,
-          "Longitude:",
-          locationData.longitude
-        );
-
-        onSelectDistrict(
-          locationData.districtCode,
-          locationData.districtName,
-          locationData.regencyCode,
-          locationData.provinceCode,
-          locationData.latitude,
-          locationData.longitude,
-          locationData.geometry
-        );
-      } else {
-        // Jika distrik tidak ditemukan, reset lokasi terpilih
-        setSelectedLocation(null);
+    // Pastikan selectedProvinceCode dan selectedRegencyCode tidak null
+    if (!selectedProvinceCode || !selectedRegencyCode) {
+        setDisplayDistrictName(null); // Reset nama kecamatan
         onSelectDistrict?.("", "", "", "");
-      }
-    } else {
-      // Jika parent codes tidak lengkap, reset lokasi terpilih
-      setSelectedLocation(null);
-      onSelectDistrict?.("", "", "", "");
+        return;
     }
-  };
 
-  // Generate map URL berdasarkan koordinat yang dipilih
-  const getMapUrl = () => {
-    if (selectedLocation?.latitude != null && selectedLocation?.longitude != null) {
-      const lat = selectedLocation.latitude;
-      const lng = selectedLocation.longitude;
-      const zoom = 12;
+    const selectedDistrict = districts.find(
+      (d) => d.sub_district_code === Number(value)
+    );
 
-      // HTML untuk peta dengan lokasi spesifik
-      return `data:text/html;charset=utf-8,
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <title>Peta Wilayah Monitoring</title>
-          <meta charset="utf-8" />
-          <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-          <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-          <style>
-            body { margin: 0; padding: 0; font-family: Arial, sans-serif; background: #1f2937; }
-            #map { height: 100%; width: 100%; } /* Mengubah 100vh menjadi 100% */
-            .location-info {
-              position: absolute;
-              top: 10px;
-              left: 10px;
-              background: rgba(0, 0, 0, 0.8);
-              color: white;
-              padding: 12px;
-              border-radius: 8px;
-              font-size: 12px;
-              z-index: 1000;
-              border: 1px solid rgba(255, 255, 255, 0.1);
-            }
-          </style>
-        </head>
-        <body>
-          <div class="location-info">
-            <div style="font-weight: bold; color: #06b6d4; margin-bottom: 5px;">📍 ${selectedLocation.districtName}</div>
-            <div style="color: #9ca3af; font-size: 11px;">
-              Lat: ${lat.toFixed(6)}<br>
-              Lng: ${lng.toFixed(6)}
-            </div>
-          </div>
-          <div id="map"></div>
-          <script>
-            var map = L.map('map').setView([${lat}, ${lng}], ${zoom});
-            
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-              attribution: '© OpenStreetMap contributors'
-            }).addTo(map);
-            
-            var marker = L.marker([${lat}, ${lng}]).addTo(map);
-            marker.bindPopup('<div style="text-align: center;"><b>${selectedLocation.districtName}</b><br><small>Wilayah monitoring banjir</small></div>').openPopup();
-            
-            var circle = L.circle([${lat}, ${lng}], {
-              color: '#06b6d4',
-              fillColor: '#06b6d4',
-              fillOpacity: 0.2,
-              radius: 5000
-            }).addTo(map);
-            circle.bindPopup('<div style="text-align: center;"><b>Area Monitoring</b><br><small>Radius 5km</small></div>');
-            
-            // Invalidate size to ensure map tiles load correctly if container size changes after init
-            setTimeout(() => { map.invalidateSize(); }, 200); 
-          </script>
-        </body>
-        </html>
-      `;
+    if (selectedDistrict) {
+      // Set nama yang akan ditampilkan
+      setDisplayDistrictName(selectedDistrict.sub_district_name || null);
+
+      const locationData = {
+        districtCode: String(selectedDistrict.sub_district_code),
+        districtName: selectedDistrict.sub_district_name || "",
+        regencyCode: selectedRegencyCode,
+        provinceCode: selectedProvinceCode,
+        latitude: selectedDistrict.sub_district_latitude,
+        longitude: selectedDistrict.sub_district_longitude,
+        geometry: selectedDistrict.sub_district_geometry,
+      };
+      
+      // setSelectedLocation(locationData); // Ini milik page.tsx
+
+      // DEBUGGING: Cek data koordinat di konsol
+      console.log("RegionDropdown DEBUG: Selected District Data before callback:", locationData);
+      console.log(
+        "RegionDropdown DEBUG: Latitude:",
+        locationData.latitude,
+        "Longitude:",
+        locationData.longitude
+      );
+
+      // Panggil callback onSelectDistrict dengan semua data yang relevan
+      onSelectDistrict(
+        locationData.districtCode,
+        locationData.districtName,
+        locationData.regencyCode,
+        locationData.provinceCode,
+        locationData.latitude,
+        locationData.longitude,
+        locationData.geometry
+      );
     } else {
-      // HTML untuk peta default (tanpa lokasi spesifik)
-      return `data:text/html;charset=utf-8,
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <title>Peta Indonesia</title>
-          <meta charset="utf-8" />
-          <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-          <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-          <style>
-            body { margin: 0; padding: 0; font-family: Arial, sans-serif; background: #1f2937; }
-            #map { height: 100%; width: 100%; } /* Mengubah 100vh menjadi 100% */
-            .welcome-info {
-              position: absolute;
-              top: 50%;
-              left: 50%;
-              transform: translate(-50%, -50%);
-              background: rgba(0, 0, 0, 0.8);
-              color: white;
-              padding: 20px;
-              border-radius: 10px;
-              text-align: center;
-              z-index: 1000;
-              border: 1px solid rgba(255, 255, 255, 0.1);
-              backdrop-filter: blur(10px);
-            }
-            .welcome-info h3 { margin: 0 0 10px 0; color: #06b6d4; }
-            .welcome-info p { margin: 0; color: #9ca3af; font-size: 14px; }
-          </style>
-        </head>
-        <body>
-          <div id="map"></div>
-          <div class="welcome-info">
-            <h3>🗺️ Peta Indonesia</h3>
-            <p>Pilih wilayah di sebelah kiri untuk<br>menampilkan lokasi di peta</p>
-          </div>
-          <script>
-            var map = L.map('map').setView([-2.5, 118], 5); // Default view untuk seluruh Indonesia
-            
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-              attribution: '© OpenStreetMap contributors'
-            }).addTo(map);
-
-            setTimeout(() => { map.invalidateSize(); }, 200); 
-          </script>
-        </body>
-        </html>
-      `;
+      // Jika distrik tidak ditemukan, reset display name dan selection di parent
+      setDisplayDistrictName(null);
+      onSelectDistrict?.("", "", "", "");
     }
   };
 
@@ -281,8 +179,9 @@ export function RegionDropdown({ onSelectDistrict }: RegionDropdownProps) {
     </Alert>
   );
 
+  // === Fungsi renderSelectField disesuaikan untuk menampilkan displayedName ===
   const renderSelectField = (
-    value: string,
+    value: string | null, // Kode yang dipilih
     onValueChange: (value: string) => void,
     placeholder: string,
     loading: boolean,
@@ -290,20 +189,22 @@ export function RegionDropdown({ onSelectDistrict }: RegionDropdownProps) {
     data: any[],
     icon: React.ReactNode,
     valueKey: string,
-    nameKey: string
+    nameKey: string,
+    currentDisplayName: string | null // Nama yang akan ditampilkan di SelectValue
   ) => (
     <div className="space-y-1.5">
       <div className="flex items-center gap-1.5 text-xs font-medium text-gray-300">
         {icon}
         <span>{placeholder}</span>
       </div>
-      <Select value={value} onValueChange={onValueChange} disabled={disabled}>
+      <Select value={value || ""} onValueChange={onValueChange} disabled={disabled}>
         <SelectTrigger
-          className="w-full h-10 bg-gray-800/50 border-gray-700/50 text-white rounded-lg 
+          className="w-full h-10 bg-gray-800/50 border-gray-700/50 text-white rounded-lg
                              hover:bg-gray-800/70 hover:border-gray-600/50 transition-all duration-200
                              focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50
                              data-[placeholder]:text-gray-400"
         >
+          {/* === Perbaikan Utama: Meneruskan currentDisplayName sebagai children ke SelectValue === */}
           <SelectValue
             placeholder={
               loading ? (
@@ -315,7 +216,10 @@ export function RegionDropdown({ onSelectDistrict }: RegionDropdownProps) {
                 `Pilih ${placeholder}`
               )
             }
-          />
+          >
+            {/* Hanya tampilkan nama jika sudah ada yang dipilih, jika tidak, placeholder akan aktif */}
+            {currentDisplayName}
+          </SelectValue>
         </SelectTrigger>
         <SelectContent className="bg-gray-800 border-gray-700/50 text-white max-h-48 overflow-y-auto">
           {data.map((item, index) => (
@@ -351,8 +255,8 @@ export function RegionDropdown({ onSelectDistrict }: RegionDropdownProps) {
       </div>
 
       {/* Main Content Layout */}
-      {/* Pastikan div grid memiliki tinggi yang memadai */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-[calc(100vh-180px)]"> {/* Contoh tinggi relatif */}
+      {/* Menggunakan h-full agar Card dapat mengambil tinggi yang cukup */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-full">
         {/* Left Side - Region Selector */}
         <div className="space-y-4">
           <Card className="bg-gray-900/60 border-gray-800/50 backdrop-blur-lg rounded-xl shadow-xl overflow-hidden">
@@ -380,7 +284,7 @@ export function RegionDropdown({ onSelectDistrict }: RegionDropdownProps) {
 
               {/* Province Selection */}
               {renderSelectField(
-                selectedProvinceCode || "",
+                selectedProvinceCode,
                 handleProvinceChange,
                 "Provinsi",
                 loadingProvinces,
@@ -388,12 +292,13 @@ export function RegionDropdown({ onSelectDistrict }: RegionDropdownProps) {
                 provinces,
                 <Globe className="h-4 w-4 text-cyan-400" />,
                 "province_code",
-                "province_name"
+                "province_name",
+                displayProvinceName // === KIRIM NAMA INI KE renderSelectField ===
               )}
 
               {/* Regency Selection */}
               {renderSelectField(
-                selectedRegencyCode || "",
+                selectedRegencyCode,
                 handleRegencyChange,
                 "Kabupaten/Kota",
                 loadingRegencies,
@@ -401,12 +306,13 @@ export function RegionDropdown({ onSelectDistrict }: RegionDropdownProps) {
                 regencies,
                 <Building2 className="h-4 w-4 text-cyan-400" />,
                 "city_code",
-                "city_name"
+                "city_name",
+                displayRegencyName // === KIRIM NAMA INI KE renderSelectField ===
               )}
 
               {/* District Selection */}
               {renderSelectField(
-                selectedDistrictCode || "",
+                selectedDistrictCode,
                 handleDistrictChange,
                 "Kecamatan",
                 loadingDistricts,
@@ -414,11 +320,12 @@ export function RegionDropdown({ onSelectDistrict }: RegionDropdownProps) {
                 districts,
                 <MapPin className="h-4 w-4 text-cyan-400" />,
                 "sub_district_code",
-                "sub_district_name"
+                "sub_district_name",
+                displayDistrictName // === KIRIM NAMA INI KE renderSelectField ===
               )}
 
               {/* Selection Summary */}
-              {selectedLocation && ( // Tampilkan jika ada lokasi terpilih
+              {selectedDistrictCode && ( // Tampilkan jika ada lokasi terpilih (berdasarkan kode distrik)
                 <div className="mt-4 p-3 bg-gray-800/30 rounded-lg border border-gray-700/30">
                   <h4 className="text-xs font-medium text-gray-300 mb-2 flex items-center gap-1.5">
                     <MapPin className="h-3 w-3 text-cyan-400" />
@@ -428,23 +335,19 @@ export function RegionDropdown({ onSelectDistrict }: RegionDropdownProps) {
                     <div className="flex justify-between">
                       <span>Provinsi:</span>
                       <span className="text-white font-medium text-xs">
-                        {provinces.find(
-                          (p) => p.province_code === Number(selectedLocation.provinceCode)
-                        )?.province_name || "-"}
+                        {displayProvinceName || "-"}
                       </span>
                     </div>
                     <div className="flex justify-between">
                       <span>Kabupaten/Kota:</span>
                       <span className="text-white font-medium text-xs">
-                        {regencies.find(
-                          (r) => r.city_code === Number(selectedLocation.regencyCode)
-                        )?.city_name || "-"}
+                        {displayRegencyName || "-"}
                       </span>
                     </div>
                     <div className="flex justify-between">
                       <span>Kecamatan:</span>
                       <span className="text-white font-medium text-xs">
-                        {selectedLocation.districtName || "-"}
+                        {displayDistrictName || "-"}
                       </span>
                     </div>
                   </div>
@@ -454,9 +357,10 @@ export function RegionDropdown({ onSelectDistrict }: RegionDropdownProps) {
           </Card>
         </div>
 
-        {/* Right Side - Map Container */}
+        {/* Right Side - Map Container (PETA SUDAH DIPINDAH KE page.tsx) */}
+        {/* Hapus div ini jika Anda tidak lagi memerlukan peta di sini */}
         <div className="space-y-4">
-          <Card className="bg-gray-900/60 border-gray-800/50 backdrop-blur-lg rounded-xl shadow-xl overflow-hidden h-full"> {/* Card ini harus punya tinggi */}
+          <Card className="bg-gray-900/60 border-gray-800/50 backdrop-blur-lg rounded-xl shadow-xl overflow-hidden h-full">
             <CardHeader className="bg-gradient-to-r from-blue-600/10 to-indigo-600/10 border-b border-gray-800/50 pb-4">
               <div className="flex items-center gap-2">
                 <div className="p-1.5 bg-blue-500/20 rounded-lg">
@@ -473,34 +377,12 @@ export function RegionDropdown({ onSelectDistrict }: RegionDropdownProps) {
               </div>
             </CardHeader>
 
-            {/* Pastikan CardContent memiliki tinggi, dan div peta di dalamnya juga */}
-            <CardContent className="p-4 h-[calc(100%-80px)] flex flex-col"> {/* Tambahkan h-[calc(100%-80px)] dan flex flex-col */}
-              <div className="w-full h-full min-h-[500px] rounded-lg border border-gray-700/30 relative overflow-hidden">
-                <iframe
-                  src={getMapUrl()}
-                  className="w-full h-full border-0 rounded-lg" // h-full di sini akan bekerja jika parentnya punya tinggi
-                  title="Peta Indonesia"
-                  loading="lazy"
-                />
-                {selectedLocation && (
-                  <div className="absolute bottom-4 left-4 right-4 bg-gray-800/90 backdrop-blur-sm rounded-lg p-3 border border-gray-700/50">
-                    <div className="text-xs text-gray-300">
-                      <div className="font-medium text-white mb-1">
-                        📍 {selectedLocation.districtName}
-                      </div>
-                      <div className="grid grid-cols-2 gap-2 text-xs">
-                        <div>
-                          <span className="text-gray-400">Lat:</span>{" "}
-                          {selectedLocation.latitude?.toFixed(6)}
-                        </div>
-                        <div>
-                          <span className="text-gray-400">Lng:</span>{" "}
-                          {selectedLocation.longitude?.toFixed(6)}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
+            <CardContent className="p-4 h-full flex flex-col items-center justify-center text-center">
+              {/* Teks placeholder atau spinner jika diperlukan */}
+              <div className="text-muted-foreground">
+                <MapPin className="h-12 w-12 mx-auto mb-4" />
+                <p>Peta akan muncul di Dashboard Utama</p>
+                <p className="text-xs">Silakan pilih wilayah terlebih dahulu.</p>
               </div>
             </CardContent>
           </Card>

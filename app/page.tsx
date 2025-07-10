@@ -3,6 +3,11 @@
 
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+// Perlu mengimport CSS Leaflet secara global di client-side
+// Ini PENTING untuk react-leaflet agar styling peta muncul
+import 'leaflet/dist/leaflet.css';
+
+
 import { Header } from '@/components/layout/Header';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { WeatherDisplay } from '@/components/weather/WeatherDisplay';
@@ -14,7 +19,6 @@ import { Badge } from '@/components/ui/Badge';
 import {
   MapPin,
   Bell,
-  TrendingUp,
   Users,
   Shield,
   Activity,
@@ -23,17 +27,23 @@ import {
   CloudRain,
   Waves,
   Globe,
-  Map // Pastikan Map dari lucide-react diimpor
 } from 'lucide-react';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
 import {
-  WEATHER_MOCK_DATA,
   FLOOD_MOCK_ALERTS,
-  DASHBOARD_STATS_MOCK
+  DASHBOARD_STATS_MOCK,
+  DEFAULT_MAP_CENTER,
+  DEFAULT_MAP_ZOOM
 } from '@/lib/constants';
-import { cn } from '@/lib/utils';
+import { cn, formatNumber } from '@/lib/utils';
 import { RegionDropdown } from '@/components/region-selector/RegionDropdown';
-import { useRegionData } from '@/hooks/useRegionData'; // Diperlukan untuk allDistricts
+import { FloodMap } from '@/components/map/FloodMap';
+
+// Import untuk memanggil Overpass API dan OpenWeatherMap API
+import { fetchDisasterProneData, OverpassElement, fetchWeatherData, WeatherData } from '@/lib/api';
+
+// API Key OpenWeatherMap Anda
+const OPEN_WEATHER_API_KEY = 'b48e2782f52bd9c6783ef14a35856abc';
 
 // Definisikan tipe untuk lokasi yang dipilih, kini sampai tingkat kecamatan dengan koordinat
 interface SelectedLocationDetails {
@@ -51,8 +61,16 @@ export default function Home() {
   const [selectedLocation, setSelectedLocation] = useState<SelectedLocationDetails | null>(null);
   const isMobile = useMediaQuery('(max-width: 768px)');
 
-  // Untuk menampilkan nama kecamatan di "Peta Siap Dimuat" jika belum ada selectedLocation
-  const { data: allDistricts } = useRegionData({ type: 'districts', enabled: true });
+  // State untuk data bencana dari Overpass API
+  const [disasterProneAreas, setDisasterProneAreas] = useState<OverpassElement[]>([]);
+  const [loadingDisasterData, setLoadingDisasterData] = useState(false);
+  const [disasterDataError, setDisasterDataError] = useState<string | null>(null);
+
+  // State untuk data cuaca dari OpenWeatherMap API
+  const [currentWeatherData, setCurrentWeatherData] = useState<WeatherData | null>(null);
+  const [loadingWeather, setLoadingWeather] = useState(false);
+  const [weatherError, setWeatherError] = useState<string | null>(null);
+
 
   useEffect(() => {
     setIsSidebarOpen(!isMobile);
@@ -78,148 +96,92 @@ export default function Home() {
       geometry
     };
     setSelectedLocation(newLocation);
-    // Log ini tetap penting untuk memastikan data masuk dengan benar
     console.log('DEBUG page.tsx: Lokasi Terpilih (newLocation dari dropdown):', newLocation);
-  };
 
-  // Fungsi getMapUrl (dipindahkan dari RegionDropdown ke sini dan diperbaiki)
-  const getMapUrl = () => {
-    if (selectedLocation?.latitude != null && selectedLocation?.longitude != null) {
-      const lat = selectedLocation.latitude;
-      const lng = selectedLocation.longitude;
-      const zoom = 12; // Zoom level saat lokasi dipilih
+    if (latitude != null && longitude != null) {
+      // Panggil Overpass API untuk data bencana
+      const buffer = 0.05; // sekitar 5.5 km, sesuaikan jika perlu
+      const south = latitude - buffer;
+      const west = longitude - buffer;
+      const north = latitude + buffer;
+      const east = longitude + buffer;
 
-      // HTML untuk peta dengan lokasi spesifik
-      // Perbaikan: Style langsung di div id="map" untuk memastikan dimensi Leaflet
-      //           Tambahkan display: block;
-      return `data:text/html;charset=utf-8,
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <title>Peta Wilayah Monitoring</title>
-          <meta charset="utf-8" />
-          <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-          <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-          <style>
-            body { margin: 0; padding: 0; font-family: Arial, sans-serif; background: #1f2937; }
-            #map { height: 100% !important; width: 100% !important; display: block; } /* Pastikan height/width 100% dan display:block */
-            .leaflet-container { background: #1f2937; } /* Tambahkan background agar tidak transparan */
-            .location-info {
-              position: absolute;
-              top: 10px;
-              left: 10px;
-              background: rgba(0, 0, 0, 0.8);
-              color: white;
-              padding: 12px;
-              border-radius: 8px;
-              font-size: 12px;
-              z-index: 1000;
-              border: 1px solid rgba(255, 255, 255, 0.1);
-            }
-          </style>
-        </head>
-        <body>
-          <div class="location-info">
-            <div style="font-weight: bold; color: #06b6d4; margin-bottom: 5px;">📍 ${selectedLocation.districtName}</div>
-            <div style="color: #9ca3af; font-size: 11px;">
-              Lat: ${lat.toFixed(6)}<br>
-              Lng: ${lng.toFixed(6)}
-            </div>
-          </div>
-          <div id="map" style="height: 100%; width: 100%;"></div> <script>
-            console.log('Leaflet script starting in iframe');
-            // Pastikan map id ada sebelum init
-            if (document.getElementById('map')) {
-              var map = L.map('map').setView([${lat}, ${lng}], ${zoom});
-              console.log('Leaflet map initialized'); // Log setelah inisialisasi
+      setLoadingDisasterData(true);
+      setDisasterDataError(null);
+      fetchDisasterProneData(south, west, north, east)
+        .then(data => {
+          setDisasterProneAreas(data.elements);
+          console.log("Disaster Prone Data from Overpass:", data.elements);
+        })
+        .catch(err => {
+          console.error("Error fetching disaster prone data:", err);
+          setDisasterDataError(err.message);
+          setDisasterProneAreas([]);
+        })
+        .finally(() => {
+          setLoadingDisasterData(false);
+        });
 
-              L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '© OpenStreetMap contributors'
-              }).addTo(map);
+      // Panggil OpenWeatherMap API untuk data cuaca
+      setLoadingWeather(true);
+      setWeatherError(null);
+      fetchWeatherData(latitude, longitude, OPEN_WEATHER_API_KEY)
+        .then(data => {
+          setCurrentWeatherData(data);
+          console.log("Weather Data from OpenWeatherMap:", data);
+        })
+        .catch(err => {
+          console.error("Error fetching weather data:", err);
+          setWeatherError(err.message);
+          setCurrentWeatherData(null);
+        })
+        .finally(() => {
+          setLoadingWeather(false);
+        });
 
-              var marker = L.marker([${lat}, ${lng}]).addTo(map);
-              marker.bindPopup('<div style="text-align: center;"><b>${selectedLocation.districtName}</b><br><small>Wilayah monitoring banjir</small></div>').openPopup();
-
-              var circle = L.circle([${lat}, ${lng}], {
-                color: '#06b6d4',
-                fillColor: '#06b6d4',
-                fillOpacity: 0.2,
-                radius: 5000
-              }).addTo(map);
-              circle.bindPopup('<div style="text-align: center;"><b>Area Monitoring</b><br><small>Radius 5km</small></div>');
-
-              // Invalidate size untuk memastikan peta dimuat dengan benar
-              setTimeout(() => { map.invalidateSize(); console.log('map.invalidateSize() called (200ms)'); }, 200);
-              setTimeout(() => { map.invalidateSize(); console.log('map.invalidateSize() called (1000ms)'); }, 1000); // Panggil lagi untuk robustness
-            } else {
-              console.error('Div with ID "map" not found in iframe!');
-            }
-            console.log('Leaflet script finished in iframe');
-          </script>
-        </body>
-        </html>
-      `;
     } else {
-      // HTML untuk peta default (tanpa lokasi spesifik)
-      return `data:text/html;charset=utf-8,
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <title>Peta Indonesia</title>
-          <meta charset="utf-8" />
-          <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-          <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-          <style>
-            body { margin: 0; padding: 0; font-family: Arial, sans-serif; background: #1f2937; }
-            #map { height: 100%; width: 100%; } /* Ini penting */
-            .welcome-info {
-              position: absolute;
-              top: 50%;
-              left: 50%;
-              transform: translate(-50%, -50%);
-              background: rgba(0, 0, 0, 0.8);
-              color: white;
-              padding: 20px;
-              border-radius: 10px;
-              text-align: center;
-              z-index: 1000;
-              border: 1px solid rgba(255, 255, 255, 0.1);
-              backdrop-filter: blur(10px);
-            }
-            .welcome-info h3 { margin: 0 0 10px 0; color: #06b6d4; }
-            .welcome-info p { margin: 0; color: #9ca3af; font-size: 14px; }
-          </style>
-        </head>
-        <body>
-          <div id="map" style="height: 100%; width: 100%;"></div> <div class="welcome-info">
-            <h3>🗺️ Peta Indonesia</h3>
-            <p>Pilih wilayah di sebelah kiri untuk<br>menampilkan lokasi di peta</p>
-          </div>
-          <script>
-            console.log('Leaflet script starting in default iframe');
-            if (document.getElementById('map')) {
-              var map = L.map('map').setView([-2.5, 118], 5); // Default view untuk seluruh Indonesia
-
-              L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '© OpenStreetMap contributors'
-              }).addTo(map);
-
-              setTimeout(() => { map.invalidateSize(); console.log('map.invalidateSize() called in default iframe'); }, 200);
-              setTimeout(() => { map.invalidateSize(); console.log('map.invalidateSize() called again in default iframe after 1s'); }, 1000);
-            } else {
-              console.error('Div with ID "map" not found in default iframe!');
-            }
-            console.log('Leaflet script finished in default iframe');
-          </script>
-        </body>
-        </html>
-      `;
+      // Reset data bencana dan cuaca jika tidak ada koordinat
+      setDisasterProneAreas([]);
+      setLoadingDisasterData(false);
+      setCurrentWeatherData(null);
+      setLoadingWeather(false);
     }
   };
 
-  const heroCards = [/* ... tidak berubah ... */];
+  const heroCards = [
+    {
+      title: 'Total Wilayah',
+      description: 'Wilayah yang dipantau',
+      count: DASHBOARD_STATS_MOCK.totalRegions,
+      icon: MapPin,
+      color: 'text-primary',
+      bgColor: 'bg-primary/20'
+    },
+    {
+      title: 'Peringatan Aktif',
+      description: 'Peringatan banjir saat ini',
+      count: DASHBOARD_STATS_MOCK.activeAlerts,
+      icon: Bell,
+      color: 'text-warning',
+      bgColor: 'bg-warning/20'
+    },
+    {
+      title: 'Zona Banjir',
+      description: 'Area yang rawan banjir',
+      count: DASHBOARD_STATS_MOCK.floodZones,
+      icon: Shield,
+      color: 'text-danger',
+      bgColor: 'bg-danger/20'
+    },
+    {
+      title: 'Orang Berisiko',
+      description: 'Estimasi populasi berisiko',
+      count: formatNumber(DASHBOARD_STATS_MOCK.peopleAtRisk),
+      icon: Users,
+      color: 'text-secondary',
+      bgColor: 'bg-secondary/20'
+    }
+  ];
 
   return (
     <div className="min-h-screen bg-background">
@@ -360,24 +322,29 @@ export default function Home() {
                 <CardHeader>
                   <CardTitle className="flex items-center space-x-2">
                     <MapPin className="h-5 w-5 text-primary" />
-                    <span>Peta Banjir - {selectedLocation?.districtName || selectedLocation?.regencyCode || selectedLocation?.provinceCode || 'Indonesia'}</span>
+                    <span>Peta Banjir - {selectedLocation?.districtName || 'Indonesia'}</span>
                     <Badge variant="success" className="ml-auto">Live</Badge>
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div
-                    // Memberikan tinggi eksplisit yang pasti untuk container iframe
-                    style={{ height: '600px', width: '100%' }} // Atur tinggi sesuai kebutuhan
+                    style={{ height: '600px', width: '100%' }}
                     className="w-full rounded-lg border border-gray-700/30 relative overflow-hidden"
                   >
-                    {/* Mengganti placeholder dengan iframe map */}
-                    <iframe
-                      src={getMapUrl()}
-                      className="w-full h-full border-0 rounded-lg"
-                      title="Peta Wilayah"
-                      loading="lazy"
+                    <FloodMap
+                      center={
+                        selectedLocation?.latitude != null && selectedLocation?.longitude != null
+                          ? [selectedLocation.latitude, selectedLocation.longitude]
+                          : DEFAULT_MAP_CENTER
+                      }
+                      zoom={selectedLocation ? 12 : DEFAULT_MAP_ZOOM}
+                      className="h-full w-full"
+                      // === TERUSKAN DATA BANJIR/BENCANA DARI OVERPASS KE FLOODMAP ===
+                      floodProneData={disasterProneAreas}
+                      loadingFloodData={loadingDisasterData}
+                      floodDataError={disasterDataError}
                     />
-                    {selectedLocation && ( // Tampilkan info lokasi di atas peta
+                    {selectedLocation && (
                       <div className="absolute bottom-4 left-4 right-4 bg-gray-800/90 backdrop-blur-sm rounded-lg p-3 border border-gray-700/50">
                         <div className="text-xs text-gray-300">
                           <div className="font-medium text-white mb-1">
@@ -409,7 +376,12 @@ export default function Home() {
               className="space-y-6"
             >
               {/* Weather Display */}
-              <WeatherDisplay data={WEATHER_MOCK_DATA} />
+              <WeatherDisplay
+                // === TERUSKAN DATA CUACA NYATA KE WEATHERDISPLAY ===
+                data={currentWeatherData}
+                loading={loadingWeather}
+                error={weatherError}
+              />
 
               {/* Quick Actions */}
               <Card>
