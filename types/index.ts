@@ -1,0 +1,175 @@
+export interface Region {
+  id: string;
+  name: string;
+  code: string;
+  level: 'province' | 'city' | 'district' | 'village';
+  parentId?: string;
+  coordinates: [number, number];
+  bounds: [[number, number], [number, number]];
+  population?: number;
+  area?: number;
+}
+
+export interface WeatherData {
+  id: string;
+  regionId: string;
+  temperature: number;
+  humidity: number;
+  windSpeed: number;
+  windDirection: string;
+  pressure: number;
+  visibility: number;
+  uvIndex: number;
+  condition: 'sunny' | 'cloudy' | 'rainy' | 'stormy' | 'foggy';
+  description: string;
+  icon: string;
+  timestamp: string;
+  forecast?: WeatherForecast[];
+}
+
+export interface WeatherForecast {
+  date: string;
+  temperature: {
+    min: number;
+    max: number;
+  };
+  condition: string;
+  icon: string;
+  precipitation: number;
+  windSpeed: number;
+}
+
+export interface FloodZone {
+  id: string;
+  regionId: string;
+  name: string;
+  riskLevel: 'low' | 'medium' | 'high' | 'critical';
+  coordinates: [number, number][];
+  area: number;
+  population: number;
+  lastUpdate: string;
+  description?: string;
+  evacuationRoutes?: EvacuationRoute[];
+}
+
+export interface EvacuationRoute {
+  id: string;
+  name: string;
+  coordinates: [number, number][];
+  capacity: number;
+  estimatedTime: number;
+  status: 'active' | 'blocked' | 'maintenance';
+}
+
+export interface FloodAlert {
+  id: string;
+  regionId: string;
+  level: 'info' | 'warning' | 'danger' | 'critical';
+  title: string;
+  message: string;
+  timestamp: string;
+  isActive: boolean;
+  affectedAreas: string[];
+  actions: string[];
+  estimatedDuration?: number;
+}
+
+export interface FloodStatistics {
+  regionId: string;
+  totalAlerts: number;
+  activeAlerts: number;
+  floodProneAreas: number;
+  peopleAtRisk: number;
+  lastFloodEvent?: {
+    date: string;
+    severity: string;
+    affectedAreas: number;
+  };
+}
+
+export interface MapBounds {
+  center: [number, number];
+  zoom: number;
+  bounds: [[number, number], [number, number]];
+}
+
+export interface ThemeConfig {
+  isDark: boolean;
+  colors: {
+    primary: string;
+    secondary: string;
+    accent: string;
+    background: string;
+    foreground: string;
+  };
+}
+
+export interface AnimationConfig {
+  duration: number;
+  easing: string;
+  delay?: number;
+}
+
+export interface ApiResponse<T> {
+  success: boolean;
+  data: T;
+  message?: string;
+  error?: string;
+}
+
+export interface LoadingState {
+  isLoading: boolean;
+  error: string | null;
+  data: any;
+}
+
+export interface NotificationConfig {
+  title: string;
+  message: string;
+  type: 'success' | 'error' | 'warning' | 'info';
+  duration?: number;
+  action?: {
+    label: string;
+    onClick: () => void;
+  };
+}
+
+export interface DashboardStats {
+  totalRegions: number;
+  activeAlerts: number;
+  floodZones: number;
+  peopleAtRisk: number;
+  weatherStations: number;
+  lastUpdate: string;
+}
+
+export interface ChartData {
+  labels: string[];
+  datasets: {
+    label: string;
+    data: number[];
+    backgroundColor: string;
+    borderColor: string;
+    borderWidth: number;
+  }[];
+}
+
+export interface MapMarker {
+  id: string;
+  position: [number, number];
+  type: 'weather' | 'flood' | 'evacuation' | 'warning';
+  title: string;
+  description: string;
+  severity?: 'low' | 'medium' | 'high' | 'critical';
+  icon?: string;
+  popup?: React.ReactNode;
+}
+
+export interface NavigationItem {
+  id: string;
+  label: string;
+  href: string;
+  icon: string;
+  badge?: string;
+  children?: NavigationItem[];
+}
