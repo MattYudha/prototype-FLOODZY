@@ -196,7 +196,9 @@ export interface WaterLevelPost {
 }
 
 export async function fetchWaterLevelData(): Promise<WaterLevelPost[]> {
-  const apiUrl = `/api/water-level-proxy`; // Panggil API Route proxy lokal Anda
+  // --- BARIS YANG DIKOREKSI ---
+  const apiUrl = `/api/water-level-proxy`; // Ini adalah URL yang benar untuk proxy level air
+  // --- AKHIR KOREKSI ---
 
   const response = await fetch(apiUrl);
 
@@ -245,5 +247,77 @@ export async function fetchPumpStatusData(): Promise<PumpData[]> {
 
   const data: PumpData[] = await response.json();
 
+  return data;
+}
+
+// === FUNGSI BARU UNTUK BMKG GEMPA TERKINI ===
+export interface BmkgGempaData {
+  Tanggal: string;
+  Jam: string;
+  DateTime: string;
+  Coordinates: string;
+  Lintang: string;
+  Bujur: string;
+  Magnitude: string;
+  Kedalaman: string;
+  Wilayah: string;
+  Potensi: string; // Misal: "Tidak berpotensi tsunami"
+  Dirasakan: string; // Misal: "IV MMI di Garut, III MMI di Bandung"
+  Shakemap: string; // URL shakemap
+}
+
+export async function fetchBmkgLatestQuake(): Promise<BmkgGempaData> {
+  const url = "https://data.bmkg.go.id/DataMKG/TEWS/autogempa.json";
+  const response = await fetch(url, { cache: 'no-store' }); // Pastikan selalu data terbaru
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch BMKG earthquake data: ${response.statusText}`);
+  }
+
+  const data = await response.json();
+  // BMKG API kadang mengembalikan data dalam properti "Infogempa.gempa"
+  if (data && data.Infogempa && data.Infogempa.gempa) {
+    return data.Infogempa.gempa;
+  }
+  throw new Error("Invalid BMKG earthquake data format.");
+}
+
+// === FUNGSI BARU UNTUK PETABENCANA.ID REPORTS ===
+export interface PetabencanaReport {
+  _id: string;
+  appid: string;
+  cat: string; // Kategori: flood, earthquake, haze, volcano
+  detail: {
+    en: string;
+    id: string; // Detail lokasi dalam Bahasa Indonesia
+  };
+  event_type: string; // Misal: "Ketinggian Air", "Gempa", "Asap"
+  geom: {
+    coordinates: [number, number]; // [longitude, latitude]
+    type: "Point";
+  };
+  image?: string; // URL gambar
+  source: string; // Misal: "PetaBencana", "Twitter"
+  status: string; // Misal: "Siaga", "Waspada", "Aman"
+  timestamp: number; // Unix timestamp
+  url: string; // URL ke laporan di Petabencana.id
+}
+
+export async function fetchPetabencanaReports(
+  hazardType: string = "flood", // flood, earthquake, volcano, haze, etc.
+  timeframe: string = "1h" // 1h, 6h, 24h, 3d, 7d
+): Promise<PetabencanaReport[]> {
+  // Panggil API Route proxy lokal Anda untuk PetaBencana.id
+  // Mohon pastikan baris ini persis seperti ini, tanpa kesalahan ketik!
+  const apiUrl = `/api/petabencana-proxy?hazardType=${hazardType}&timeframe=${timeframe}`;
+  const response = await fetch(apiUrl, { cache: 'no-store' });
+
+  if (!response.ok) {
+    const errorData = await response.json(); // Coba parse error response dari proxy
+    throw new Error(errorData.error || `Failed to fetch PetaBencana.id reports from proxy: ${response.statusText}`);
+  }
+
+  const data = await response.json();
+  // Asumsikan data adalah array laporan, sesuaikan jika format berbeda
   return data;
 }

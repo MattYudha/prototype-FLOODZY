@@ -2,16 +2,17 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  Layers, 
-  Eye, 
-  EyeOff, 
-  Cloud, 
+import {
+  Layers,
+  Eye,
+  EyeOff,
+  Cloud,
   MapPin,
   Navigation,
   Maximize2,
   Minimize2,
-  Settings
+  Settings,
+  AlertTriangle // Import AlertTriangle untuk ikon peringatan
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
@@ -27,6 +28,8 @@ interface MapControlsProps {
   showFloodZones: boolean;
   onWeatherToggle: () => void;
   showWeatherStations: boolean;
+  onRealtimeAlertsToggle: () => void; // Properti baru untuk toggle peringatan real-time
+  showRealtimeAlerts: boolean; // Properti baru untuk status peringatan real-time
 }
 
 const mapLayers = [
@@ -44,6 +47,8 @@ export function MapControls({
   showFloodZones,
   onWeatherToggle,
   showWeatherStations,
+  onRealtimeAlertsToggle, // Destrukturisasi properti baru
+  showRealtimeAlerts, // Destrukturisasi properti baru
 }: MapControlsProps) {
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -65,7 +70,7 @@ export function MapControls({
           >
             <Settings size={16} />
           </Button>
-          
+
           <Button
             variant="ghost"
             size="icon"
@@ -129,7 +134,7 @@ export function MapControls({
                       <EyeOff size={14} className="text-muted-foreground" />
                     )}
                   </Button>
-                  
+
                   <Button
                     variant="ghost"
                     size="sm"
@@ -141,6 +146,24 @@ export function MapControls({
                       Stasiun Cuaca
                     </div>
                     {showWeatherStations ? (
+                      <Eye size={14} className="text-success" />
+                    ) : (
+                      <EyeOff size={14} className="text-muted-foreground" />
+                    )}
+                  </Button>
+
+                  {/* Tombol Toggle Peringatan Real-time Baru */}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={onRealtimeAlertsToggle}
+                    className="w-full justify-between h-8"
+                  >
+                    <div className="flex items-center">
+                      <AlertTriangle size={14} className="mr-2" />
+                      Peringatan Real-time
+                    </div>
+                    {showRealtimeAlerts ? (
                       <Eye size={14} className="text-success" />
                     ) : (
                       <EyeOff size={14} className="text-muted-foreground" />

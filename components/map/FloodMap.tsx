@@ -27,6 +27,8 @@ import {
   Mountain, // ICON untuk longsor
   Waves as WavesIcon, // Rename Waves untuk menghindari konflik dengan komponen Waves
   CircleDot, // Icon untuk risiko umum/rendah
+  Info, // Icon untuk level info
+  XCircle, // Icon untuk level danger/critical
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -40,17 +42,17 @@ import {
   FLOOD_ZONES_MOCK,
   WEATHER_MOCK_DATA,
 } from "@/lib/constants";
-import { FloodZone, WeatherData } from "@/types";
+import { FloodZone, WeatherData, FloodAlert } from "@/types"; // Import FloodAlert
 import { cn } from "@/lib/utils";
 import { OverpassElement } from "@/lib/api";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 
 // Custom marker icons
-const createCustomIcon = (color: string, icon: string) => {
+const createCustomIcon = (color: string, iconHtml: string) => { // Ganti icon menjadi iconHtml
   const svgString = `
     <svg width="25" height="25" viewBox="0 0 25 25" fill="none" xmlns="http://www.w3.org/2000/svg">
       <circle cx="12.5" cy="12.5" r="12" fill="${color}" stroke="white" stroke-width="2"/>
-      <text x="12.5" y="17" text-anchor="middle" fill="white" font-size="12">${icon}</text>
+      <text x="12.5" y="17" text-anchor="middle" fill="white" font-size="12">${iconHtml}</text>
     </svg>
   `;
 
@@ -131,6 +133,9 @@ interface FloodMapProps {
   floodProneData?: OverpassElement[];
   loadingFloodData?: boolean;
   floodDataError?: string | null;
+  realtimeFloodAlerts?: FloodAlert[]; // Properti baru untuk peringatan real-time
+  loadingRealtimeAlerts?: boolean; // Properti baru untuk status loading
+  realtimeAlertsError?: string | null; // Properti baru untuk error
 }
 
 export function FloodMap({
@@ -142,14 +147,18 @@ export function FloodMap({
   floodProneData = [],
   loadingFloodData = false,
   floodDataError = null,
+  realtimeFloodAlerts = [], // Inisialisasi
+  loadingRealtimeAlerts = false, // Inisialisasi
+  realtimeAlertsError = null, // Inisialisasi
 }: FloodMapProps) {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [selectedLayer, setSelectedLayer] = useState("street");
   const [showFloodZones, setShowFloodZones] = useState(true); // Untuk mock data FLOOD_ZONES_MOCK
   const [showWeatherStations, setShowWeatherStations] = useState(true);
+  const [showRealtimeAlerts, setShowRealtimeAlerts] = useState(true); // State baru untuk toggle peringatan real-time
   const [floodZones] = useState<FloodZone[]>(FLOOD_ZONES_MOCK); // Mock data asli
   const [weatherData] = useState<WeatherData>(WEATHER_MOCK_DATA);
-  const mapRef = useRef<L.Map | null>(null);
+  const mapRef = useRef<L.Map | null>(null); // PERBAIKAN: Inisialisasi dengan null
 
   const toggleFullscreen = () => {
     setIsFullscreen(!isFullscreen);
@@ -245,6 +254,56 @@ export function FloodMap({
       riskLabel,
     };
   };
+
+  // FUNGSI HELPER BARU: untuk mendapatkan info visual dari FloodAlert
+  const getAlertInfo = (alert: FloodAlert) => {
+    let iconToUse;
+    let color;
+    let cardTitle;
+    let cardTitleColor;
+    let badgeVariant: "info" | "warning" | "danger" | "success" = "info";
+
+    switch (alert.level) {
+      case "critical":
+        iconToUse = createCustomIcon(FLOOD_RISK_COLORS.critical, "💀");
+        color = FLOOD_RISK_COLORS.critical;
+        cardTitle = "Peringatan KRITIS!";
+        cardTitleColor = "text-red-800";
+        badgeVariant = "danger";
+        break;
+      case "danger":
+        iconToUse = createCustomIcon(FLOOD_RISK_COLORS.high, "🚨");
+        color = FLOOD_RISK_COLORS.high;
+        cardTitle = "Peringatan BAHAYA!";
+        cardTitleColor = "text-red-500";
+        badgeVariant = "danger";
+        break;
+      case "warning":
+        iconToUse = createCustomIcon(FLOOD_RISK_COLORS.medium, "⚠️");
+        color = FLOOD_RISK_COLORS.medium;
+        cardTitle = "Peringatan!";
+        cardTitleColor = "text-yellow-500";
+        badgeVariant = "warning";
+        break;
+      case "info":
+      default:
+        iconToUse = createCustomIcon(FLOOD_RISK_COLORS.low, "ℹ️");
+        color = FLOOD_RISK_COLORS.low;
+        cardTitle = "Informasi";
+        cardTitleColor = "text-blue-500";
+        badgeVariant = "info";
+        break;
+    }
+
+    return {
+      iconToUse,
+      color,
+      cardTitle,
+      cardTitleColor,
+      badgeVariant,
+    };
+  };
+
 
   return (
     <motion.div
@@ -415,7 +474,7 @@ export function FloodMap({
             const { iconToUse, color, cardTitle, cardTitleColor, detailText } =
               disasterInfo;
 
-            // RENDEr POLYGON UNTUK ELEMENT DENGAN GEOMETRI (WAY/RELATION)
+            // RENDER POLYGON UNTUK ELEMENT DENGAN GEOMETRI (WAY/RELATION)
             if (element.geometry && element.geometry.length > 0) {
               const positions = element.geometry.map(
                 (coord) => [coord.lat, coord.lon] as LatLngExpression
@@ -505,6 +564,115 @@ export function FloodMap({
             }
             return null;
           })}
+
+        {/* === MENAMPILKAN DATA PERINGATAN BANJIR REAL-TIME === */}
+        {loadingRealtimeAlerts && (
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[1001] bg-gray-800/70 p-4 rounded-lg text-white text-sm">
+            Memuat peringatan banjir...
+            <LoadingSpinner className="ml-2 inline-block" />
+          </div>
+        )}
+        {realtimeAlertsError && (
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[1001] bg-red-800/70 p-4 rounded-lg text-white text-sm">
+            Error memuat peringatan banjir: {realtimeAlertsError}
+          </div>
+        )}
+        {!loadingRealtimeAlerts &&
+          !realtimeAlertsError &&
+          realtimeFloodAlerts.length > 0 &&
+          showRealtimeAlerts &&
+          realtimeFloodAlerts.map((alert) => {
+            const { iconToUse, color, cardTitle, cardTitleColor, badgeVariant } =
+              getAlertInfo(alert);
+
+            // Render Polygon jika ada polygonCoordinates
+            if (alert.polygonCoordinates && alert.polygonCoordinates.length > 0) {
+              // Flattern array jika nested ([[lat,lng],[lat,lng]]) -> [[lat,lng],[lat,lng]]
+              const flatCoordinates = alert.polygonCoordinates.flat().map(
+                (coords) => [coords[0], coords[1]] as LatLngExpression
+              );
+
+              return (
+                <Polygon
+                  key={`alert-poly-${alert.id}`}
+                  positions={flatCoordinates}
+                  pathOptions={{
+                    color: color,
+                    fillColor: color,
+                    fillOpacity: 0.4,
+                    weight: 3,
+                  }}
+                >
+                  <Popup>
+                    <Card className="min-w-[200px] p-3">
+                      <div className="flex items-center justify-between">
+                        <h4 className={`font-semibold ${cardTitleColor}`}>
+                          {cardTitle}
+                        </h4>
+                        <Badge variant={badgeVariant}>{alert.level.toUpperCase()}</Badge>
+                      </div>
+                      <p className="text-sm mt-2">{alert.title}</p>
+                      <p className="text-xs text-muted-foreground">{alert.message}</p>
+                      <div className="mt-2 text-xs text-gray-400">
+                        <strong>Wilayah Terdampak:</strong>
+                        <ul className="list-disc list-inside">
+                          {alert.affectedAreas.map((area, index) => (
+                            <li key={index}>{area}</li>
+                          ))}
+                        </ul>
+                      </div>
+                      <div className="mt-2 text-xs text-gray-400">
+                        <strong>Tindakan Disarankan:</strong>
+                        <ul className="list-disc list-inside">
+                          {alert.actions.map((action, index) => (
+                            <li key={index}>{action}</li>
+                          ))}
+                        </ul>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-2">
+                        Pembaruan terakhir: {new Date(alert.timestamp).toLocaleString()}
+                      </p>
+                    </Card>
+                  </Popup>
+                </Polygon>
+              );
+            }
+            // Render Marker jika ada coordinates (dan tidak ada polygon)
+            else if (alert.coordinates) {
+              return (
+                <Marker
+                  key={`alert-marker-${alert.id}`}
+                  position={alert.coordinates}
+                  icon={iconToUse}
+                >
+                  <Popup>
+                    <Card className="min-w-[180px] p-3">
+                      <div className="flex items-center justify-between">
+                        <h4 className={`font-semibold ${cardTitleColor}`}>
+                          {cardTitle}
+                        </h4>
+                        <Badge variant={badgeVariant}>{alert.level.toUpperCase()}</Badge>
+                      </div>
+                      <p className="text-sm mt-2">{alert.title}</p>
+                      <p className="text-xs text-muted-foreground">{alert.message}</p>
+                      <div className="mt-2 text-xs text-gray-400">
+                        <strong>Wilayah Terdampak:</strong>
+                        <ul className="list-disc list-inside">
+                          {alert.affectedAreas.map((area, index) => (
+                            <li key={index}>{area}</li>
+                          ))}
+                        </ul>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-2">
+                        Pembaruan terakhir: {new Date(alert.timestamp).toLocaleString()}
+                      </p>
+                    </Card>
+                  </Popup>
+                </Marker>
+              );
+            }
+            return null; // Jangan render jika tidak ada data geografis
+          })}
       </MapContainer>
 
       {/* Map Controls */}
@@ -517,6 +685,8 @@ export function FloodMap({
         showFloodZones={showFloodZones}
         onWeatherToggle={() => setShowWeatherStations(!showWeatherStations)}
         showWeatherStations={showWeatherStations}
+        onRealtimeAlertsToggle={() => setShowRealtimeAlerts(!showRealtimeAlerts)} // Properti baru
+        showRealtimeAlerts={showRealtimeAlerts} // Properti baru
       />
 
       {/* Map Legend */}

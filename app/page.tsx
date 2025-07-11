@@ -1,20 +1,19 @@
-// src/app/page.tsx
 "use client";
 
-import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
-// Perlu mengimport CSS Leaflet secara global di client-side
-// Ini PENTING untuk react-leaflet agar styling peta muncul
+import { useState, useEffect, useMemo } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import "leaflet/dist/leaflet.css";
 
 import { Header } from "@/components/layout/Header";
-import { Sidebar } from "@/components/layout/Sidebar";
+import { Sidebar } from "@/components/layout/Sidebar"; // <--- BARIS INI YANG DIKOREKSI
 import { WeatherDisplay } from "@/components/weather/WeatherDisplay";
-import { FloodAlertList } from "@/components/flood/FloodAlert";
+import { FloodAlert } from "@/components/flood/FloodAlert";
 import { DashboardStats } from "@/components/dashboard/DashboardStats";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Loader2 } from "lucide-react";
 import {
   MapPin,
   Bell,
@@ -29,16 +28,15 @@ import {
 } from "lucide-react";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 import {
-  FLOOD_MOCK_ALERTS,
+  FLOOD_MOCK_ALERTS, // Digunakan untuk memastikan jumlah berita cukup untuk rotasi
   DASHBOARD_STATS_MOCK,
   DEFAULT_MAP_CENTER,
   DEFAULT_MAP_ZOOM,
 } from "@/lib/constants";
-import { cn, formatNumber } from "@/lib/utils";
+import { cn, formatNumber, getTimeAgo } from "@/lib/utils";
 import { RegionDropdown } from "@/components/region-selector/RegionDropdown";
 import { FloodMap } from "@/components/map/FloodMap";
 
-// Import untuk memanggil API
 import {
   fetchDisasterProneData,
   OverpassElement,
@@ -46,14 +44,17 @@ import {
   WeatherData,
   fetchWaterLevelData,
   WaterLevelPost,
-  fetchPumpStatusData, // === IMPORT BARU: untuk data pompa banjir ===
-  PumpData, // === IMPORT BARU: untuk interface data pompa ===
+  fetchPumpStatusData,
+  PumpData,
+  fetchBmkgLatestQuake,
+  BmkgGempaData,
+  // fetchBmkgFeltQuakes, // DIHAPUS TOTAL IMPORNYA
 } from "@/lib/api";
 
-// API Key OpenWeatherMap Anda
 const OPEN_WEATHER_API_KEY = "b48e2782f52bd9c6783ef14a35856abc";
+const ROTATION_INTERVAL_MS = 10000; // Ganti berita setiap 10 detik (10000 ms)
+const DATA_FETCH_INTERVAL_MS = 10 * 60 * 1000; // Fetch data setiap 10 menit (600000 ms)
 
-// Definisikan tipe untuk lokasi yang dipilih, kini sampai tingkat kecamatan dengan koordinat
 interface SelectedLocationDetails {
   districtCode: string;
   districtName: string;
@@ -64,38 +65,106 @@ interface SelectedLocationDetails {
   geometry?: string;
 }
 
+interface FloodAlertItem {
+  id: string;
+  regionId: string;
+  level: 'info' | 'warning' | 'danger';
+  title: string;
+  message: string;
+  timestamp: string;
+  isActive: boolean;
+  affectedAreas: string[];
+  actions?: string[];
+}
+
+// === KOMPONEN CyclingAlertCard ===
+const CyclingAlertCard = ({ alerts, initialOffset = 0 }: { alerts: FloodAlertItem[]; initialOffset?: number }) => {
+  const [currentIndex, setCurrentIndex] = useState(initialOffset);
+
+  useEffect(() => {
+    if (alerts.length > 0) {
+      setCurrentIndex((initialOffset) => initialOffset % alerts.length); // Pastikan index awal valid
+
+      const interval = setInterval(() => {
+        setCurrentIndex((prevIndex) => (prevIndex + 1) % alerts.length);
+      }, ROTATION_INTERVAL_MS);
+
+      return () => clearInterval(interval);
+    } else {
+      setCurrentIndex(0);
+    }
+  }, [alerts.length, initialOffset]);
+
+  if (alerts.length === 0) {
+    return (
+        <Alert variant="info" className="w-full">
+            <Bell className="h-4 w-4" />
+            <AlertTitle>Tidak ada peringatan aktif</AlertTitle>
+            <AlertDescription>Mohon maaf, tidak ada berita atau peringatan yang tersedia saat ini.</AlertDescription>
+        </Alert>
+    );
+  }
+
+  const currentAlert = alerts[currentIndex];
+
+  if (!currentAlert || !currentAlert.id) {
+    console.warn("CyclingAlertCard: currentAlert atau currentAlert.id tidak terdefinisi.", currentAlert);
+    return (
+        <Alert variant="warning" className="w-full">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertTitle>Peringatan tidak valid</AlertTitle>
+            <AlertDescription>Terjadi masalah saat memuat peringatan. Mencoba lagi...</AlertDescription>
+        </Alert>
+    );
+  }
+
+  return (
+    <AnimatePresence mode="wait">
+      <motion.div
+        key={currentAlert.id + '-' + currentIndex}
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -20 }}
+        transition={{ duration: 0.5 }}
+      >
+        <FloodAlert alert={currentAlert} />
+      </motion.div>
+    </AnimatePresence>
+  );
+};
+
+
 export default function Home() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [selectedLocation, setSelectedLocation] =
     useState<SelectedLocationDetails | null>(null);
-  const isMobile = useMediaQuery("(max-width: 768px)");
+  const isMobile = useMediaQuery('(max-width: 768px)');
 
-  // State untuk data bencana dari Overpass API
-  const [disasterProneAreas, setDisasterProneAreas] = useState<
-    OverpassElement[]
-  >([]);
+  const [disasterProneAreas, setDisasterProneAreas] = useState<OverpassElement[]>([]);
   const [loadingDisasterData, setLoadingDisasterData] = useState(false);
-  const [disasterDataError, setDisasterDataError] = useState<string | null>(
-    null
-  );
+  const [disasterDataError, setLoadingDisasterDataError] = useState<string | null>(null);
 
-  // State untuk data cuaca dari OpenWeatherMap API
-  const [currentWeatherData, setCurrentWeatherData] =
-    useState<WeatherData | null>(null);
+  const [currentWeatherData, setCurrentWeatherData] = useState<WeatherData | null>(null);
   const [loadingWeather, setLoadingWeather] = useState(false);
   const [weatherError, setWeatherError] = useState<string | null>(null);
 
-  // State untuk data Tinggi Muka Air dari PUPR API
   const [waterLevelPosts, setWaterLevelPosts] = useState<WaterLevelPost[]>([]);
   const [loadingWaterLevel, setLoadingWaterLevel] = useState(false);
   const [waterLevelError, setWaterLevelError] = useState<string | null>(null);
 
-  // === STATE BARU: Untuk data status pompa banjir ===
   const [pumpStatusData, setPumpStatusData] = useState<PumpData[]>([]);
   const [loadingPumpStatus, setLoadingPumpStatus] = useState(false);
   const [pumpStatusError, setPumpStatusError] = useState<string | null>(null);
 
-  // === STATE BARU: Untuk bounding box peta saat ini (untuk memicu fetch bencana) ===
+  const [latestBmkgQuake, setLatestBmkgQuake] = useState<BmkgGempaData | null>(null);
+  const [loadingBmkgQuake, setLoadingBmkgQuake] = useState(false);
+  const [bmkgQuakeError, setBmkgQuakeError] = useState<string | null>(null);
+
+  // const [feltBmkgQuakes, setFeltBmkgQuakes] = useState<BmkgGempaData[]>([]);
+  // const [loadingFeltQuakes, setLoadingFeltQuakes] = useState(false);
+  // const [feltQuakesError, setFeltQuakesError] = useState<string | null>(null);
+
+
   const [currentMapBounds, setCurrentMapBounds] = useState<{
     south: number;
     west: number;
@@ -107,7 +176,6 @@ export default function Home() {
     setIsSidebarOpen(!isMobile);
   }, [isMobile]);
 
-  // === CALLBACK BARU: Menerima batas peta dari FloodMap (untuk memicu fetch bencana) ===
   const handleMapBoundsChange = (
     south: number,
     west: number,
@@ -117,13 +185,12 @@ export default function Home() {
     setCurrentMapBounds({ south, west, north, east });
   };
 
-  // === useEffect BARU: Memanggil fetchDisasterProneData saat currentMapBounds berubah ===
   useEffect(() => {
     if (currentMapBounds) {
       const { south, west, north, east } = currentMapBounds;
 
       setLoadingDisasterData(true);
-      setDisasterDataError(null);
+      setLoadingDisasterDataError(null);
       fetchDisasterProneData(south, west, north, east)
         .then((data) => {
           setDisasterProneAreas(data.elements);
@@ -137,16 +204,36 @@ export default function Home() {
             "Error fetching disaster prone data (from map move):",
             err
           );
-          setDisasterDataError(err.message);
+          setLoadingDisasterDataError(err.message);
           setDisasterProneAreas([]);
         })
         .finally(() => {
           setLoadingDisasterData(false);
         });
     }
-  }, [currentMapBounds]); // Terpicu saat currentMapBounds berubah (dari geseran peta)
+  }, [currentMapBounds]);
 
-  // Handler saat RegionDropdown memilih kecamatan
+  useEffect(() => {
+    const getLatestQuake = async () => {
+      setLoadingBmkgQuake(true);
+      setBmkgQuakeError(null);
+      try {
+        const data = await fetchBmkgLatestQuake();
+        setLatestBmkgQuake(data);
+        console.log("BMKG Latest Earthquake Data:", data);
+      } catch (err: any) {
+        console.error("Error fetching BMKG latest earthquake:", err);
+        setBmkgQuakeError(err.message);
+      } finally {
+        setLoadingBmkgQuake(false);
+      }
+    };
+
+    getLatestQuake();
+    const interval = setInterval(getLatestQuake, DATA_FETCH_INTERVAL_MS);
+    return () => clearInterval(interval);
+  }, []);
+
   const handleRegionSelect = (
     districtCode: string,
     districtName: string,
@@ -172,7 +259,6 @@ export default function Home() {
     );
 
     if (latitude != null && longitude != null) {
-      // Panggil OpenWeatherMap API untuk data cuaca
       setLoadingWeather(true);
       setWeatherError(null);
       fetchWeatherData(latitude, longitude, OPEN_WEATHER_API_KEY)
@@ -189,20 +275,12 @@ export default function Home() {
           setLoadingWeather(false);
         });
 
-      // PANGGIL PUPR API UNTUK TINGGI MUKA AIR
       setLoadingWaterLevel(true);
       setWaterLevelError(null);
       fetchWaterLevelData()
         .then((data) => {
-          const nearbyPosts = data.filter(
-            (post) =>
-              post.lat &&
-              post.lon &&
-              Math.abs(post.lat - latitude) < 0.1 &&
-              Math.abs(post.lon - longitude) < 0.1
-          );
-          setWaterLevelPosts(nearbyPosts);
-          console.log("Water Level Posts from PUPR API:", nearbyPosts);
+          setWaterLevelPosts(data);
+          console.log("Water Level Posts from PUPR API (all):", data);
         })
         .catch((err) => {
           console.error("Error fetching water level data:", err);
@@ -213,21 +291,12 @@ export default function Home() {
           setLoadingWaterLevel(false);
         });
 
-      // === PANGGIL API UNTUK STATUS POMPA BANJIR ===
       setLoadingPumpStatus(true);
       setPumpStatusError(null);
       fetchPumpStatusData()
         .then((data) => {
-          // Filter pompa yang dekat dengan lokasi yang dipilih (opsional, jika data pompa sangat banyak)
-          const nearbyPumps = data.filter(
-            (pump) =>
-              pump.latitude != null &&
-              pump.longitude != null &&
-              Math.abs(pump.latitude - latitude) < 0.5 && // Buffer lebih besar untuk pompa
-              Math.abs(pump.longitude - longitude) < 0.5
-          );
-          setPumpStatusData(nearbyPumps);
-          console.log("Pump Status Data:", nearbyPumps);
+          setPumpStatusData(data);
+          console.log("Pump Status Data (all):", data);
         })
         .catch((err) => {
           console.error("Error fetching pump status data:", err);
@@ -238,27 +307,125 @@ export default function Home() {
           setLoadingPumpStatus(false);
         });
 
-      // === SAAT LOKASI DIPILIH: Inisialisasi peta dengan bounding box dari lokasi pilihan ===
-      // Ini akan memicu useEffect di atas (currentMapBounds)
       const buffer = 0.05;
       const south = latitude - buffer;
       const west = longitude - buffer;
       const north = latitude + buffer;
       const east = longitude + buffer;
-      setCurrentMapBounds({ south, west, north, east }); // Ini akan memicu fetchDisasterProneData
+      setCurrentMapBounds({ south, west, north, east });
     } else {
-      // Reset semua data jika tidak ada koordinat
       setDisasterProneAreas([]);
       setLoadingDisasterData(false);
       setCurrentWeatherData(null);
       setLoadingWeather(false);
       setWaterLevelPosts([]);
       setLoadingWaterLevel(false);
-      setPumpStatusData([]); // Reset data pompa
-      setLoadingPumpStatus(false); // Reset loading pompa
+      setPumpStatusData([]);
+      setLoadingPumpStatus(false);
       setCurrentMapBounds(null);
     }
   };
+
+  const realTimeAlerts = useMemo(() => {
+    const alerts: FloodAlertItem[] = [];
+
+    if (latestBmkgQuake) {
+      const quakeTimestampISO = latestBmkgQuake.DateTime.replace(' ', 'T') + '+07:00';
+
+      alerts.push({
+        id: `bmkg-quake-${latestBmkgQuake.DateTime}`,
+        regionId: latestBmkgQuake.Wilayah,
+        level: parseFloat(latestBmkgQuake.Magnitude) >= 5 ? 'danger' : 'info',
+        title: `Gempa Bumi M${latestBmkgQuake.Magnitude} di ${latestBmkgQuake.Wilayah}`,
+        message: `Terjadi gempa bumi berkekuatan ${latestBmkgQuake.Magnitude} SR pada ${latestBmkgQuake.Tanggal}, Pukul ${latestBmkgQuake.Jam} WIB dengan kedalaman ${latestBmkgQuake.Kedalaman}. ${latestBmkgQuake.Potensi}. Dirasakan: ${latestBmkgQuake.Dirasakan}`,
+        timestamp: quakeTimestampISO,
+        isActive: true,
+        affectedAreas: latestBmkgQuake.Wilayah.split(',').map(s => s.trim()),
+        actions: ['Tetap tenang', 'Periksa bangunan', 'Ikuti informasi resmi BMKG']
+      });
+    }
+
+    if (waterLevelPosts.length > 0) {
+      waterLevelPosts.forEach(post => {
+        let level: FloodAlertItem['level'] = 'info';
+        let message = `Tinggi muka air di pos ${post.name}: ${post.water_level || 'N/A'} ${post.unit || ''}.`;
+        let actions: string[] = [];
+
+        if (post.status) {
+          switch (post.status.toLowerCase()) {
+            case 'siaga':
+              level = 'warning';
+              message += ` Status: SIAGA!`;
+              actions.push('Waspada banjir', 'Siapkan rencana evakuasi');
+              break;
+            case 'awas':
+              level = 'danger';
+              message += ` Status: AWAS!`;
+              actions.push('Segera evakuasi', 'Ikuti arahan petugas');
+              break;
+            case 'normal':
+              level = 'info';
+              message += ` Status: Normal.`;
+              break;
+            default:
+              level = 'info';
+              break;
+          }
+        } else if (post.water_level !== undefined && post.water_level > 100) {
+            level = 'warning';
+            message += ` Ketinggian air signifikan!`;
+            actions.push('Waspada', 'Monitor situasi');
+        }
+
+        alerts.push({
+          id: `tma-${post.id}`,
+          regionId: post.name,
+          level: level,
+          title: `Update Tinggi Muka Air - ${post.name}`,
+          message: message,
+          // === KOREKSI: Gunakan timestamp asli dari API jika ada, fallback ke waktu saat ini ===
+          timestamp: post.timestamp || new Date().toISOString(),
+          isActive: true,
+          affectedAreas: [post.name],
+          actions: actions.length > 0 ? actions : ['Monitor situasi']
+        });
+      });
+    }
+
+    if (currentWeatherData) {
+      let level: FloodAlertItem['level'] = 'info';
+      let title = "Update Cuaca";
+      let message = `Cuaca saat ini: ${currentWeatherData.description}. Suhu ${currentWeatherData.temperature}°C.`;
+      let actions: string[] = ['Pantau prakiraan cuaca', 'Siapkan payung/jas hujan'];
+
+      if (currentWeatherData.rain1h !== undefined && currentWeatherData.rain1h > 5) {
+        level = 'warning';
+        title = "Peringatan Hujan Lebat";
+        message = `Hujan lebat diperkirakan ${currentWeatherData.rain1h}mm/jam di area Anda. Waspada potensi banjir!`;
+        actions.push('Hindari daerah rawan banjir', 'Pastikan saluran air bersih');
+      } else if (currentWeatherData.description.toLowerCase().includes('hujan') || currentWeatherData.description.toLowerCase().includes('badai')) {
+        level = 'info';
+        title = `Update Cuaca - ${currentWeatherData.description}`;
+      }
+
+      alerts.push({
+        id: `weather-${currentWeatherData.description}-${Date.now()}`,
+        regionId: selectedLocation?.districtName || "Lokasi Anda",
+        level: level,
+        title: title,
+        message: message,
+        // === KOREKSI: Gunakan timestamp asli dari API jika ada, fallback ke waktu saat ini ===
+        timestamp: currentWeatherData.dt ? new Date(currentWeatherData.dt * 1000).toISOString() : new Date().toISOString(),
+        isActive: true,
+        affectedAreas: selectedLocation?.districtName ? [selectedLocation.districtName] : [],
+        actions: actions
+      });
+    }
+
+    FLOOD_MOCK_ALERTS.forEach(mockAlert => alerts.push(mockAlert));
+
+    return alerts.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+  }, [latestBmkgQuake, waterLevelPosts, currentWeatherData, selectedLocation]);
 
   const heroCards = [
     {
@@ -417,8 +584,6 @@ export default function Home() {
           <Card className="bg-gray-900/60 border-gray-800/50 backdrop-blur-lg rounded-xl shadow-xl overflow-hidden">
             <CardHeader>
               <CardTitle className="flex items-center space-x-2 text-aqua-400">
-                <Globe className="h-5 w-5" />
-                <span>Pilih Lokasi Wilayah Anda</span>
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -436,7 +601,7 @@ export default function Home() {
                 }
                 currentWeatherData={currentWeatherData}
                 loadingWeather={loadingWeather}
-                weatherError={weatherError}
+                error={weatherError}
               />
             </CardContent>
           </Card>
@@ -455,7 +620,6 @@ export default function Home() {
               waterLevelPosts={waterLevelPosts}
               loadingWaterLevel={loadingWaterLevel}
               waterLevelError={waterLevelError}
-              // === TERUSKAN DATA POMPA BANJIR KE DASHBOARDSTATS ===
               pumpStatusData={pumpStatusData}
               loadingPumpStatus={loadingPumpStatus}
               pumpStatusError={pumpStatusError}
@@ -588,7 +752,7 @@ export default function Home() {
             </motion.div>
           </div>
 
-          {/* Flood Alerts */}
+          {/* Flood Alerts Section - Combined real-time alerts */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -599,7 +763,7 @@ export default function Home() {
                 <div className="flex items-center justify-between">
                   <CardTitle className="flex items-center space-x-2">
                     <Bell className="h-5 w-5 text-warning" />
-                    <span>Peringatan Banjir Terkini</span>
+                    <span>Peringatan Bencana Terkini</span>
                   </CardTitle>
                   <Button variant="outline" size="sm">
                     <span>Lihat Semua</span>
@@ -608,7 +772,40 @@ export default function Home() {
                 </div>
               </CardHeader>
               <CardContent>
-                <FloodAlertList alerts={FLOOD_MOCK_ALERTS} />
+                {/* Menampilkan loading state jika data masih dimuat */}
+                {(loadingBmkgQuake || loadingWaterLevel || loadingWeather) ? (
+                  <div className="p-4 text-center text-muted-foreground flex items-center justify-center space-x-2">
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                    <span>Memuat peringatan...</span>
+                  </div>
+                ) : (
+                  // Jika tidak loading, tampilkan CyclingAlertCard untuk setiap slot
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {/* Slot 1 */}
+                    <CyclingAlertCard alerts={realTimeAlerts} initialOffset={0} />
+                    {/* Slot 2 */}
+                    <CyclingAlertCard alerts={realTimeAlerts} initialOffset={1} />
+                    {/* Slot 3 */}
+                    <CyclingAlertCard alerts={realTimeAlerts} initialOffset={2} />
+                  </div>
+                )}
+
+                {/* Display Error State if any API failed */}
+                {(bmkgQuakeError || waterLevelError || weatherError) && (
+                  <Alert variant="destructive" className="mt-4">
+                    <AlertTriangle className="h-4 w-4" />
+                    <AlertTitle>Error Memuat Peringatan!</AlertTitle>
+                    <AlertDescription>
+                      {bmkgQuakeError || waterLevelError || weatherError || "Terjadi kesalahan saat mengambil data peringatan."}
+                    </AlertDescription>
+                  </Alert>
+                )}
+                 {/* Display "No active alerts" message if no data loaded and no errors */}
+                 {!loadingBmkgQuake && !loadingWaterLevel && !loadingWeather && realTimeAlerts.length === 0 && !(bmkgQuakeError || waterLevelError || weatherError) && (
+                  <p className="text-center text-muted-foreground mt-4">
+                    Tidak ada peringatan bencana real-time aktif saat ini.
+                  </p>
+                )}
               </CardContent>
             </Card>
           </motion.div>

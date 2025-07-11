@@ -37,9 +37,17 @@ export function formatTime(date: string | Date): string {
 export function getTimeAgo(date: string | Date): string {
   const now = new Date();
   const past = new Date(date);
+  
+  // Jika 'past' tidak valid atau tanggal di masa depan (bisa menyebabkan NaN)
+  if (isNaN(past.getTime())) {
+    return 'Waktu tidak valid'; 
+  }
+
   const diffInSeconds = Math.floor((now.getTime() - past.getTime()) / 1000);
 
-  if (diffInSeconds < 60) {
+  if (diffInSeconds < 0) { // Jika tanggal di masa depan
+    return 'Di masa depan';
+  } else if (diffInSeconds < 60) {
     return 'Baru saja';
   } else if (diffInSeconds < 3600) {
     const minutes = Math.floor(diffInSeconds / 60);
