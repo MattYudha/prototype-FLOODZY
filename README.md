@@ -336,7 +336,7 @@ The app is optimized for deployment on:
 
 - **Issues**: [GitHub Issues](https://github.com/mattyudha/floodzy/issues)
 - **Discussions**: [GitHub Discussions](https://github.com/mattyudha/floodzy/discussions)
-- **Email**: support@floodzy.com
+- **Email**: dewarahmat12334@gmail.com
 
 ---
 
