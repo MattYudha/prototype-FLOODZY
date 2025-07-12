@@ -1,8 +1,9 @@
+// components/layout/Sidebar.tsx
 "use client";
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import Link from "next/link"; // Pastikan Link sudah diimpor
+import Link from "next/link";
 import {
   Home,
   Map,
@@ -23,11 +24,12 @@ import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { cn } from "@/lib/utils";
+import { useAlertCount } from "@/components/contexts/AlertCountContext";
 
 interface NavItem {
   id: string;
   label: string;
-  href: string; // <-- Ubah tipe href menjadi string yang lebih umum
+  href: string;
   icon: React.ElementType;
   color?: string;
   badge?: string | number;
@@ -66,10 +68,10 @@ const navigationItems: NavItem[] = [
   {
     id: "alerts",
     label: "Peringatan",
-    href: "/peringatan", // <--- INI SUDAH DIPERBAIKI DARI '/alerts' MENJADI '/peringatan'
+    href: "/peringatan",
     icon: Bell,
     color: "text-warning",
-    badge: 3, // Menggunakan badge 3 sesuai UI Anda
+    // badge akan diisi secara dinamis dari context
   },
   {
     id: "stats",
@@ -114,7 +116,6 @@ const quickActions: QuickActionItem[] = [
 interface SidebarProps {
   isOpen: boolean;
   onClose: () => void;
-  // Tambahkan props ini untuk kontrol collapse dari layout
   isCollapsed: boolean;
   setIsCollapsed: (collapsed: boolean) => void;
 }
@@ -126,11 +127,12 @@ export function Sidebar({
   setIsCollapsed,
 }: SidebarProps) {
   const isMobile = useMediaQuery("(max-width: 768px)");
+  const { highAlertCount, loadingAlerts } = useAlertCount();
 
   const sidebarVariants = {
     open: { x: 0, opacity: 1 },
     closed: {
-      x: isMobile ? -280 : isCollapsed ? -16 : -200, // Sesuaikan nilai x jika perlu
+      x: isMobile ? -280 : isCollapsed ? -16 : -200,
       opacity: isMobile ? 0 : 1,
     },
   };
@@ -167,12 +169,12 @@ export function Sidebar({
           "fixed left-0 top-16 h-[calc(100vh-4rem)] z-50 flex flex-col",
           "bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60",
           "border-r border-border shadow-xl",
-          isMobile ? "w-70" : isCollapsed ? "w-16" : "w-64" // Gunakan isCollapsed dari props
+          isMobile ? "w-70" : isCollapsed ? "w-16" : "w-64"
         )}
       >
         {/* Header sidebar */}
         <div className="flex items-center justify-between p-4 border-b">
-          {!isCollapsed && ( // Gunakan isCollapsed dari props
+          {!isCollapsed && (
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -187,7 +189,7 @@ export function Sidebar({
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => setIsCollapsed(!isCollapsed)} // Panggil setIsCollapsed dari props
+              onClick={() => setIsCollapsed(!isCollapsed)}
               className="h-8 w-8"
             >
               {isCollapsed ? (
@@ -201,42 +203,63 @@ export function Sidebar({
 
         {/* Navigation */}
         <nav className="flex-1 overflow-y-auto p-4 space-y-2">
-          {navigationItems.map((item, index) => (
-            <motion.div
-              key={item.id}
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: index * 0.05 }}
-            >
-              <Link href={item.href} passHref>
-                <Button
-                  variant="ghost"
-                  className={cn(
-                    "w-full justify-start h-12 font-medium transition-all duration-200",
-                    "hover:bg-muted hover:translate-x-1",
-                    isCollapsed && "justify-center" // Gunakan isCollapsed dari props
-                  )}
-                >
-                  <item.icon className={cn("h-5 w-5", item.color)} />
-                  {!isCollapsed && ( // Gunakan isCollapsed dari props
-                    <>
-                      <span className="ml-3">{item.label}</span>
-                      {item.badge && (
-                        <Badge variant="danger" size="sm" className="ml-auto">
-                          {item.badge}
-                        </Badge>
-                      )}
-                    </>
-                  )}
-                </Button>
-              </Link>
-            </motion.div>
-          ))}
+          {navigationItems.map((item, index) => {
+            // ✅ Tentukan badge secara dinamis untuk item "Peringatan"
+            const currentBadge =
+              item.id === "alerts" && highAlertCount > 0 && !loadingAlerts
+                ? highAlertCount
+                : item.badge;
+
+            return (
+              <motion.div
+                key={item.id}
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: index * 0.05 }}
+              >
+                <Link href={item.href} passHref>
+                  <Button
+                    variant="ghost"
+                    className={cn(
+                      "w-full justify-start h-12 font-medium transition-all duration-200",
+                      "hover:bg-muted hover:translate-x-1",
+                      isCollapsed && "justify-center"
+                    )}
+                  >
+                    <item.icon className={cn("h-5 w-5", item.color)} />
+                    {!isCollapsed && (
+                      <>
+                        <span className="ml-3">{item.label}</span>
+                        {currentBadge !== undefined && currentBadge > 0 && (
+                          <Badge variant="danger" size="sm" className="ml-auto">
+                            {currentBadge}
+                          </Badge>
+                        )}
+                        {item.id === "alerts" &&
+                          loadingAlerts && ( // Indikator loading untuk alerts
+                            <motion.div
+                              className="absolute right-3 h-2 w-2 bg-warning rounded-full"
+                              animate={{ scale: [1, 1.2, 1] }}
+                              // ✅ UBAH TYPE KE "tween"
+                              transition={{
+                                duration: 1,
+                                repeat: Infinity,
+                                type: "tween",
+                              }}
+                            />
+                          )}
+                      </>
+                    )}
+                  </Button>
+                </Link>
+              </motion.div>
+            );
+          })}
         </nav>
 
         {/* Quick Actions */}
         <div className="p-4 border-t">
-          {!isCollapsed && ( // Gunakan isCollapsed dari props
+          {!isCollapsed && (
             <motion.h3
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -250,7 +273,7 @@ export function Sidebar({
           <div
             className={cn(
               "space-y-2",
-              isCollapsed && "flex flex-col items-center" // Gunakan isCollapsed dari props
+              isCollapsed && "flex flex-col items-center"
             )}
           >
             {quickActions.map((action, index) => (
@@ -262,12 +285,12 @@ export function Sidebar({
               >
                 <Button
                   variant="outline"
-                  size={isCollapsed ? "icon" : "sm"} // Gunakan isCollapsed dari props
+                  size={isCollapsed ? "icon" : "sm"}
                   className="w-full justify-start hover:scale-105"
-                  onClick={action.onClick} // Add onClick handler
+                  onClick={action.onClick}
                 >
                   <action.icon className={cn("h-4 w-4", action.color)} />
-                  {!isCollapsed && ( // Gunakan isCollapsed dari props
+                  {!isCollapsed && (
                     <span className="ml-2">{action.label}</span>
                   )}{" "}
                 </Button>
@@ -282,7 +305,7 @@ export function Sidebar({
             variant="ghost"
             className={cn(
               "w-full justify-start h-10",
-              isCollapsed && "justify-center" // Gunakan isCollapsed dari props
+              isCollapsed && "justify-center"
             )}
           >
             <Settings className="h-4 w-4 text-muted-foreground" />

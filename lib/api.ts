@@ -1,4 +1,4 @@
-// src/lib/api.ts
+// mattyudha/floodzy/Floodzy-04cbe0509e23f883f290033cafa7f880e929fe65/lib/api.ts
 // Pastikan hanya ini isi file api.ts
 export interface RegionData {
   province_code?: number;
@@ -16,8 +16,9 @@ export async function fetchRegions(
   type: "provinces" | "regencies" | "districts" | "villages",
   parentCode?: number | string
 ): Promise<RegionData[]> {
-  console.log(`fetchRegions called with type: ${type}, parentCode: ${parentCode}`);
-  
+  console.log(
+    `fetchRegions called with type: ${type}, parentCode: ${parentCode}`
+  );
   const params = new URLSearchParams({ type });
   if (parentCode) {
     params.append("parent_code", String(parentCode));
@@ -25,24 +26,20 @@ export async function fetchRegions(
 
   const url = `/api/regions?${params.toString()}`;
   console.log(`Fetching from URL: ${url}`);
-  
   const response = await fetch(url, {
-    method: 'GET',
+    method: "GET",
     headers: {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
     },
-    cache: 'no-cache'
+    cache: "no-cache",
   });
-  
   console.log(`Response status: ${response.status}`);
-  
   if (!response.ok) {
     const errorText = await response.text();
     console.error(`API Error: ${response.status} - ${errorText}`);
     const errorData = await response.json();
     throw new Error(errorData.error || `Failed to fetch ${type}`);
   }
-  
   const data = await response.json();
   console.log(`Received data:`, data);
   return data;
@@ -76,49 +73,52 @@ export async function fetchDisasterProneData(
   north: number,
   east: number
 ): Promise<OverpassResponse> {
-  const query = `[out:json][timeout:25];
-  (
-    // Tag-tag kerawanan bencana yang sudah ada
-    node["flood_prone"="yes"](${south},${west},${north},${east});
-    way["flood_prone"="yes"](${south},${west},${north},${east});
-    relation["flood_prone"="yes"](${south},${west},${north},${east});
+  // === PERBAIKAN QUERY OVERPASS QL ===
+  // Menghilangkan baris kosong yang tidak perlu dan memastikan sintaks yang tepat
+  const query = `
+[out:json][timeout:25];
+(
+  node["flood_prone"="yes"](${south},${west},${north},${east});
+  way["flood_prone"="yes"](${south},${west},${north},${east});
+  relation["flood_prone"="yes"](${south},${west},${north},${east});
 
-    node["hazard"="flood"](${south},${west},${north},${east});
-    way["hazard"="flood"](${south},${west},${north},${east});
-    relation["hazard"="flood"](${south},${west},${north},${east});
+  node["hazard"="flood"](${south},${west},${north},${east});
+  way["hazard"="flood"](${south},${west},${north},${east});
+  relation["hazard"="flood"](${south},${west},${north},${east});
 
-    node["natural"="landslide"](${south},${west},${north},${east});
-    way["natural"="landslide"](${south},${west},${north},${east});
-    relation["natural"="landslide"](${south},${west},${north},${east});
-    
-    node["hazard"="landslide"](${south},${west},${north},${east});
-    way["hazard"="landslide"](${south},${west},${north},${east});
-    relation["hazard"="landslide"](${south},${west},${north},${east});
+  node["natural"="landslide"](${south},${west},${north},${east});
+  way["natural"="landslide"](${south},${west},${north},${east});
+  relation["natural"="landslide"](${south},${west},${north},${east});
+  
+  node["hazard"="landslide"](${south},${west},${north},${east});
+  way["hazard"="landslide"](${south},${west},${north},${east});
+  relation["hazard"="landslide"](${south},${west},${north},${east});
 
-    // === PERBAIKAN DAN PENAMBAHAN TAGS UNTUK DETAIL LEBIH LENGKAP (Fokus pada Air & Drainase) ===
-    // Setiap kueri dalam blok ini diakhiri dengan semicolon (;) untuk kejelasan sintaks Overpass QL
-    node["waterway"~"^(river|stream|canal|drain|ditch)$"](${south},${west},${north},${east});
-    way["waterway"~"^(river|stream|canal|drain|ditch)$"](${south},${west},${north},${east});
-    relation["waterway"~"^(river|stream|canal|drain|ditch)$"](${south},${west},${north},${east});
+  // Fokus pada Air & Drainase untuk detail lebih lengkap
+  node["waterway"~"^(river|stream|canal|drain|ditch)$"](${south},${west},${north},${east});
+  way["waterway"~"^(river|stream|canal|drain|ditch)$"](${south},${west},${north},${east});
+  relation["waterway"~"^(river|stream|canal|drain|ditch)$"](${south},${west},${north},${east});
 
-    node["natural"="water"](${south},${west},${north},${east});
-    way["natural"="water"](${south},${west},${north},${east});
-    relation["natural"="water"](${south},${west},${north},${east});
-    
-    node["man_made"="dyke"](${south},${west},${north},${east});
-    way["man_made"="dyke"](${south},${west},${north},${east});
-    relation["man_made"="dyke"](${south},${west},${north},${east});
+  node["natural"="water"](${south},${west},${north},${east});
+  way["natural"="water"](${south},${west},${north},${east});
+  relation["natural"="water"](${south},${west},${north},${east});
+  
+  node["man_made"="dyke"](${south},${west},${north},${east});
+  way["man_made"="dyke"](${south},${west},${north},${east});
+  relation["man_made"="dyke"](${south},${west},${north},${east});
 
-    node["landuse"="basin"](${south},${west},${north},${east});
-    way["landuse"="basin"](${south},${west},${north},${east});
-    relation["landuse"="basin"](${south},${west},${north},${east});
+  node["landuse"="basin"](${south},${west},${north},${east});
+  way["landuse"="basin"](${south},${west},${north},${east});
+  relation["landuse"="basin"](${south},${west},${north},${east});
 
-    node["natural"="wetland"](${south},${west},${north},${east});
-    way["natural"="wetland"](${south},${west},${north},${east});
-    relation["natural"="wetland"](${south},${west},${north},${east});
-  );
-  out body geom;
-  `;
+  node["natural"="wetland"](${south},${west},${north},${east});
+  way["natural"="wetland"](${south},${west},${north},${east});
+  relation["natural"="wetland"](${south},${west},${north},${east});
+);
+out body geom;
+`.trim(); // Menggunakan .trim() untuk menghilangkan spasi/newline di awal/akhir string
+
+  console.log("Overpass API Query:", query); // Log query yang dikirim
 
   const response = await fetch("https://overpass-api.de/api/interpreter", {
     method: "POST",
@@ -197,9 +197,7 @@ export interface WaterLevelPost {
 
 export async function fetchWaterLevelData(): Promise<WaterLevelPost[]> {
   // --- BARIS YANG DIKOREKSI ---
-  const apiUrl = `/api/water-level-proxy`; // Ini adalah URL yang benar untuk proxy level air
-  // --- AKHIR KOREKSI ---
-
+  const apiUrl = `/api/water-level-proxy`; // Ini adalah URL yang benar untuk proxy level air // --- AKHIR KOREKSI ---
   const response = await fetch(apiUrl);
 
   if (!response.ok) {
@@ -268,14 +266,15 @@ export interface BmkgGempaData {
 
 export async function fetchBmkgLatestQuake(): Promise<BmkgGempaData> {
   const url = "https://data.bmkg.go.id/DataMKG/TEWS/autogempa.json";
-  const response = await fetch(url, { cache: 'no-store' }); // Pastikan selalu data terbaru
+  const response = await fetch(url, { cache: "no-store" }); // Pastikan selalu data terbaru
 
   if (!response.ok) {
-    throw new Error(`Failed to fetch BMKG earthquake data: ${response.statusText}`);
+    throw new Error(
+      `Failed to fetch BMKG earthquake data: ${response.statusText}`
+    );
   }
 
-  const data = await response.json();
-  // BMKG API kadang mengembalikan data dalam properti "Infogempa.gempa"
+  const data = await response.json(); // BMKG API kadang mengembalikan data dalam properti "Infogempa.gempa"
   if (data && data.Infogempa && data.Infogempa.gempa) {
     return data.Infogempa.gempa;
   }
@@ -301,6 +300,7 @@ export interface PetabencanaReport {
   status: string; // Misal: "Siaga", "Waspada", "Aman"
   timestamp: number; // Unix timestamp
   url: string; // URL ke laporan di Petabencana.id
+  severity?: number; // <--- BARIS INI HARUS ADA!
 }
 
 export async function fetchPetabencanaReports(
@@ -310,14 +310,16 @@ export async function fetchPetabencanaReports(
   // Panggil API Route proxy lokal Anda untuk PetaBencana.id
   // Mohon pastikan baris ini persis seperti ini, tanpa kesalahan ketik!
   const apiUrl = `/api/petabencana-proxy?hazardType=${hazardType}&timeframe=${timeframe}`;
-  const response = await fetch(apiUrl, { cache: 'no-store' });
+  const response = await fetch(apiUrl, { cache: "no-store" });
 
   if (!response.ok) {
     const errorData = await response.json(); // Coba parse error response dari proxy
-    throw new Error(errorData.error || `Failed to fetch PetaBencana.id reports from proxy: ${response.statusText}`);
+    throw new Error(
+      errorData.error ||
+        `Failed to fetch PetaBencana.id reports from proxy: ${response.statusText}`
+    );
   }
 
-  const data = await response.json();
-  // Asumsikan data adalah array laporan, sesuaikan jika format berbeda
+  const data = await response.json(); // Asumsikan data adalah array laporan, sesuaikan jika format berbeda
   return data;
 }

@@ -1,3 +1,4 @@
+// components/layout/Header.tsx
 "use client";
 
 import { useState } from "react";
@@ -21,6 +22,7 @@ import { Badge } from "@/components/ui/Badge";
 import { useTheme } from "@/hooks/useTheme";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { cn } from "@/lib/utils";
+import { useAlertCount } from "@/components/contexts/AlertCountContext";
 
 interface HeaderProps {
   onMenuToggle?: () => void;
@@ -31,6 +33,8 @@ export function Header({ onMenuToggle, isMenuOpen }: HeaderProps) {
   const { theme, setTheme, isDark } = useTheme();
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const isMobile = useMediaQuery("(max-width: 768px)");
+
+  const { highAlertCount, loadingAlerts } = useAlertCount();
 
   const themeIcons = {
     light: Sun,
@@ -67,6 +71,7 @@ export function Header({ onMenuToggle, isMenuOpen }: HeaderProps) {
           >
             <div className="relative">
               <Shield className="h-8 w-8 text-primary" />
+              {/* Animasi ini tidak menggunakan type: "spring", jadi aman */}
               <motion.div
                 className="absolute -top-1 -right-1 h-3 w-3 bg-secondary rounded-full"
                 animate={{ scale: [1, 1.2, 1] }}
@@ -149,15 +154,25 @@ export function Header({ onMenuToggle, isMenuOpen }: HeaderProps) {
             <ThemeIcon size={20} />
           </Button>
 
-          {/* Notifications */}
+          {/* Notifications - ✅ Perbaikan di sini */}
           <Button variant="ghost" size="icon" className="relative">
             <Bell size={20} />
-            <Badge
-              variant="danger"
-              size="sm"
-              count={3}
-              className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0"
-            />
+            {highAlertCount > 0 && !loadingAlerts && (
+              <Badge
+                variant="danger"
+                size="sm"
+                count={highAlertCount}
+                className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0"
+              />
+            )}
+            {loadingAlerts && ( // Indikator loading
+              <motion.div
+                className="absolute -top-1 -right-1 h-3 w-3 bg-secondary rounded-full"
+                animate={{ scale: [1, 1.2, 1] }}
+                // ✅ UBAH TYPE KE "tween"
+                transition={{ duration: 1, repeat: Infinity, type: "tween" }}
+              />
+            )}
           </Button>
 
           {/* User Menu */}
