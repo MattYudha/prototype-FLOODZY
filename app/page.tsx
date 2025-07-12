@@ -4,8 +4,11 @@ import { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import "leaflet/dist/leaflet.css";
 
-import { Header } from "@/components/layout/Header";
-import { Sidebar } from "@/components/layout/Sidebar"; // <--- BARIS INI YANG DIKOREKSI
+// --- HAPUS BARIS IMPOR Header dan Sidebar INI ---
+// import { Header } from "@/components/layout/Header";
+// import { Sidebar } from "@/components/layout/Sidebar";
+// --- AKHIR PENGHAPUSAN IMPOR ---
+
 import { WeatherDisplay } from "@/components/weather/WeatherDisplay";
 import { FloodAlert } from "@/components/flood/FloodAlert";
 import { DashboardStats } from "@/components/dashboard/DashboardStats";
@@ -68,7 +71,7 @@ interface SelectedLocationDetails {
 interface FloodAlertItem {
   id: string;
   regionId: string;
-  level: 'info' | 'warning' | 'danger';
+  level: "info" | "warning" | "danger";
   title: string;
   message: string;
   timestamp: string;
@@ -78,7 +81,13 @@ interface FloodAlertItem {
 }
 
 // === KOMPONEN CyclingAlertCard ===
-const CyclingAlertCard = ({ alerts, initialOffset = 0 }: { alerts: FloodAlertItem[]; initialOffset?: number }) => {
+const CyclingAlertCard = ({
+  alerts,
+  initialOffset = 0,
+}: {
+  alerts: FloodAlertItem[];
+  initialOffset?: number;
+}) => {
   const [currentIndex, setCurrentIndex] = useState(initialOffset);
 
   useEffect(() => {
@@ -97,31 +106,38 @@ const CyclingAlertCard = ({ alerts, initialOffset = 0 }: { alerts: FloodAlertIte
 
   if (alerts.length === 0) {
     return (
-        <Alert variant="info" className="w-full">
-            <Bell className="h-4 w-4" />
-            <AlertTitle>Tidak ada peringatan aktif</AlertTitle>
-            <AlertDescription>Mohon maaf, tidak ada berita atau peringatan yang tersedia saat ini.</AlertDescription>
-        </Alert>
+      <Alert variant="info" className="w-full">
+        <Bell className="h-4 w-4" />
+        <AlertTitle>Tidak ada peringatan aktif</AlertTitle>
+        <AlertDescription>
+          Mohon maaf, tidak ada berita atau peringatan yang tersedia saat ini.
+        </AlertDescription>
+      </Alert>
     );
   }
 
   const currentAlert = alerts[currentIndex];
 
   if (!currentAlert || !currentAlert.id) {
-    console.warn("CyclingAlertCard: currentAlert atau currentAlert.id tidak terdefinisi.", currentAlert);
+    console.warn(
+      "CyclingAlertCard: currentAlert atau currentAlert.id tidak terdefinisi.",
+      currentAlert
+    );
     return (
-        <Alert variant="warning" className="w-full">
-            <AlertTriangle className="h-4 w-4" />
-            <AlertTitle>Peringatan tidak valid</AlertTitle>
-            <AlertDescription>Terjadi masalah saat memuat peringatan. Mencoba lagi...</AlertDescription>
-        </Alert>
+      <Alert variant="warning" className="w-full">
+        <AlertTriangle className="h-4 w-4" />
+        <AlertTitle>Peringatan tidak valid</AlertTitle>
+        <AlertDescription>
+          Terjadi masalah saat memuat peringatan. Mencoba lagi...
+        </AlertDescription>
+      </Alert>
     );
   }
 
   return (
     <AnimatePresence mode="wait">
       <motion.div
-        key={currentAlert.id + '-' + currentIndex}
+        key={currentAlert.id + "-" + currentIndex}
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: -20 }}
@@ -133,18 +149,26 @@ const CyclingAlertCard = ({ alerts, initialOffset = 0 }: { alerts: FloodAlertIte
   );
 };
 
-
+// --- INI ADALAH KOMPONEN UTAMA UNTUK HALAMAN ROOT ---
 export default function Home() {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  // --- HAPUS STATE INI KARENA SUDAH DITANGANI DI LAYOUT.TSX ---
+  // const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  // --- AKHIR PENGHAPUSAN STATE ---
+
   const [selectedLocation, setSelectedLocation] =
     useState<SelectedLocationDetails | null>(null);
-  const isMobile = useMediaQuery('(max-width: 768px)');
+  const isMobile = useMediaQuery("(max-width: 768px)");
 
-  const [disasterProneAreas, setDisasterProneAreas] = useState<OverpassElement[]>([]);
+  const [disasterProneAreas, setDisasterProneAreas] = useState<
+    OverpassElement[]
+  >([]);
   const [loadingDisasterData, setLoadingDisasterData] = useState(false);
-  const [disasterDataError, setLoadingDisasterDataError] = useState<string | null>(null);
+  const [disasterDataError, setLoadingDisasterDataError] = useState<
+    string | null
+  >(null);
 
-  const [currentWeatherData, setCurrentWeatherData] = useState<WeatherData | null>(null);
+  const [currentWeatherData, setCurrentWeatherData] =
+    useState<WeatherData | null>(null);
   const [loadingWeather, setLoadingWeather] = useState(false);
   const [weatherError, setWeatherError] = useState<string | null>(null);
 
@@ -156,14 +180,11 @@ export default function Home() {
   const [loadingPumpStatus, setLoadingPumpStatus] = useState(false);
   const [pumpStatusError, setPumpStatusError] = useState<string | null>(null);
 
-  const [latestBmkgQuake, setLatestBmkgQuake] = useState<BmkgGempaData | null>(null);
+  const [latestBmkgQuake, setLatestBmkgQuake] = useState<BmkgGempaData | null>(
+    null
+  );
   const [loadingBmkgQuake, setLoadingBmkgQuake] = useState(false);
   const [bmkgQuakeError, setBmkgQuakeError] = useState<string | null>(null);
-
-  // const [feltBmkgQuakes, setFeltBmkgQuakes] = useState<BmkgGempaData[]>([]);
-  // const [loadingFeltQuakes, setLoadingFeltQuakes] = useState(false);
-  // const [feltQuakesError, setFeltQuakesError] = useState<string | null>(null);
-
 
   const [currentMapBounds, setCurrentMapBounds] = useState<{
     south: number;
@@ -172,9 +193,11 @@ export default function Home() {
     east: number;
   } | null>(null);
 
-  useEffect(() => {
-    setIsSidebarOpen(!isMobile);
-  }, [isMobile]);
+  // --- HAPUS useEffect INI KARENA LOGIKA isSidebarOpen DITANGANI LAYOUT.TSX ---
+  // useEffect(() => {
+  //   setIsSidebarOpen(!isMobile);
+  // }, [isMobile]);
+  // --- AKHIR PENGHAPUSAN useEffect ---
 
   const handleMapBoundsChange = (
     south: number,
@@ -330,51 +353,58 @@ export default function Home() {
     const alerts: FloodAlertItem[] = [];
 
     if (latestBmkgQuake) {
-      const quakeTimestampISO = latestBmkgQuake.DateTime.replace(' ', 'T') + '+07:00';
+      const quakeTimestampISO =
+        latestBmkgQuake.DateTime.replace(" ", "T") + "+07:00";
 
       alerts.push({
         id: `bmkg-quake-${latestBmkgQuake.DateTime}`,
         regionId: latestBmkgQuake.Wilayah,
-        level: parseFloat(latestBmkgQuake.Magnitude) >= 5 ? 'danger' : 'info',
+        level: parseFloat(latestBmkgQuake.Magnitude) >= 5 ? "danger" : "info",
         title: `Gempa Bumi M${latestBmkgQuake.Magnitude} di ${latestBmkgQuake.Wilayah}`,
         message: `Terjadi gempa bumi berkekuatan ${latestBmkgQuake.Magnitude} SR pada ${latestBmkgQuake.Tanggal}, Pukul ${latestBmkgQuake.Jam} WIB dengan kedalaman ${latestBmkgQuake.Kedalaman}. ${latestBmkgQuake.Potensi}. Dirasakan: ${latestBmkgQuake.Dirasakan}`,
         timestamp: quakeTimestampISO,
         isActive: true,
-        affectedAreas: latestBmkgQuake.Wilayah.split(',').map(s => s.trim()),
-        actions: ['Tetap tenang', 'Periksa bangunan', 'Ikuti informasi resmi BMKG']
+        affectedAreas: latestBmkgQuake.Wilayah.split(",").map((s) => s.trim()),
+        actions: [
+          "Tetap tenang",
+          "Periksa bangunan",
+          "Ikuti informasi resmi BMKG",
+        ],
       });
     }
 
     if (waterLevelPosts.length > 0) {
-      waterLevelPosts.forEach(post => {
-        let level: FloodAlertItem['level'] = 'info';
-        let message = `Tinggi muka air di pos ${post.name}: ${post.water_level || 'N/A'} ${post.unit || ''}.`;
+      waterLevelPosts.forEach((post) => {
+        let level: FloodAlertItem["level"] = "info";
+        let message = `Tinggi muka air di pos ${post.name}: ${
+          post.water_level || "N/A"
+        } ${post.unit || ""}.`;
         let actions: string[] = [];
 
         if (post.status) {
           switch (post.status.toLowerCase()) {
-            case 'siaga':
-              level = 'warning';
+            case "siaga":
+              level = "warning";
               message += ` Status: SIAGA!`;
-              actions.push('Waspada banjir', 'Siapkan rencana evakuasi');
+              actions.push("Waspada banjir", "Siapkan rencana evakuasi");
               break;
-            case 'awas':
-              level = 'danger';
+            case "awas":
+              level = "danger";
               message += ` Status: AWAS!`;
-              actions.push('Segera evakuasi', 'Ikuti arahan petugas');
+              actions.push("Segera evakuasi", "Ikuti arahan petugas");
               break;
-            case 'normal':
-              level = 'info';
+            case "normal":
+              level = "info";
               message += ` Status: Normal.`;
               break;
             default:
-              level = 'info';
+              level = "info";
               break;
           }
         } else if (post.water_level !== undefined && post.water_level > 100) {
-            level = 'warning';
-            message += ` Ketinggian air signifikan!`;
-            actions.push('Waspada', 'Monitor situasi');
+          level = "warning";
+          message += ` Ketinggian air signifikan!`;
+          actions.push("Waspada", "Monitor situasi");
         }
 
         alerts.push({
@@ -387,24 +417,36 @@ export default function Home() {
           timestamp: post.timestamp || new Date().toISOString(),
           isActive: true,
           affectedAreas: [post.name],
-          actions: actions.length > 0 ? actions : ['Monitor situasi']
+          actions: actions.length > 0 ? actions : ["Monitor situasi"],
         });
       });
     }
 
     if (currentWeatherData) {
-      let level: FloodAlertItem['level'] = 'info';
+      let level: FloodAlertItem["level"] = "info";
       let title = "Update Cuaca";
       let message = `Cuaca saat ini: ${currentWeatherData.description}. Suhu ${currentWeatherData.temperature}°C.`;
-      let actions: string[] = ['Pantau prakiraan cuaca', 'Siapkan payung/jas hujan'];
+      let actions: string[] = [
+        "Pantau prakiraan cuaca",
+        "Siapkan payung/jas hujan",
+      ];
 
-      if (currentWeatherData.rain1h !== undefined && currentWeatherData.rain1h > 5) {
-        level = 'warning';
+      if (
+        currentWeatherData.rain1h !== undefined &&
+        currentWeatherData.rain1h > 5
+      ) {
+        level = "warning";
         title = "Peringatan Hujan Lebat";
         message = `Hujan lebat diperkirakan ${currentWeatherData.rain1h}mm/jam di area Anda. Waspada potensi banjir!`;
-        actions.push('Hindari daerah rawan banjir', 'Pastikan saluran air bersih');
-      } else if (currentWeatherData.description.toLowerCase().includes('hujan') || currentWeatherData.description.toLowerCase().includes('badai')) {
-        level = 'info';
+        actions.push(
+          "Hindari daerah rawan banjir",
+          "Pastikan saluran air bersih"
+        );
+      } else if (
+        currentWeatherData.description.toLowerCase().includes("hujan") ||
+        currentWeatherData.description.toLowerCase().includes("badai")
+      ) {
+        level = "info";
         title = `Update Cuaca - ${currentWeatherData.description}`;
       }
 
@@ -415,16 +457,23 @@ export default function Home() {
         title: title,
         message: message,
         // === KOREKSI: Gunakan timestamp asli dari API jika ada, fallback ke waktu saat ini ===
-        timestamp: currentWeatherData.dt ? new Date(currentWeatherData.dt * 1000).toISOString() : new Date().toISOString(),
+        timestamp: currentWeatherData.dt
+          ? new Date(currentWeatherData.dt * 1000).toISOString()
+          : new Date().toISOString(),
         isActive: true,
-        affectedAreas: selectedLocation?.districtName ? [selectedLocation.districtName] : [],
-        actions: actions
+        affectedAreas: selectedLocation?.districtName
+          ? [selectedLocation.districtName]
+          : [],
+        actions: actions,
       });
     }
 
-    FLOOD_MOCK_ALERTS.forEach(mockAlert => alerts.push(mockAlert));
+    FLOOD_MOCK_ALERTS.forEach((mockAlert) => alerts.push(mockAlert));
 
-    return alerts.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+    return alerts.sort(
+      (a, b) =>
+        new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+    );
   }, [latestBmkgQuake, waterLevelPosts, currentWeatherData, selectedLocation]);
 
   const heroCards = [
@@ -464,18 +513,21 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Header
+      {/* --- HAPUS BARIS INI KARENA HEADER DITANGANI LAYOUT.TSX --- */}
+      {/* <Header
         onMenuToggle={() => setIsSidebarOpen(!isSidebarOpen)}
         isMenuOpen={isSidebarOpen}
-      />
-      <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
+      /> */}
+      {/* --- AKHIR PENGHAPUSAN --- */}
 
-      <main
-        className={cn(
-          "transition-all duration-300 ease-in-out",
-          isSidebarOpen && !isMobile ? "ml-64" : "ml-0"
-        )}
-      >
+      {/* --- HAPUS BARIS INI KARENA SIDEBAR DITANGANI LAYOUT.TSX --- */}
+      {/* <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} /> */}
+      {/* --- AKHIR PENGHAPUSAN --- */}
+
+      {/* --- SESUAIKAN className MAIN INI --- */}
+      <main className="flex-1">
+        {" "}
+        {/* Layout dan margin ditangani oleh app/layout.tsx */}
         {/* Hero Section */}
         <section className="relative overflow-hidden bg-gradient-to-br from-primary via-primary-800 to-secondary text-white">
           <div className="absolute inset-0 bg-black/20" />
@@ -578,13 +630,11 @@ export default function Home() {
             />
           </div>
         </section>
-
         {/* Region Selector Section */}
         <section className="container mx-auto px-4 py-8 space-y-4">
           <Card className="bg-gray-900/60 border-gray-800/50 backdrop-blur-lg rounded-xl shadow-xl overflow-hidden">
             <CardHeader>
-              <CardTitle className="flex items-center space-x-2 text-aqua-400">
-              </CardTitle>
+              <CardTitle className="flex items-center space-x-2 text-aqua-400"></CardTitle>
             </CardHeader>
             <CardContent>
               <RegionDropdown
@@ -606,7 +656,6 @@ export default function Home() {
             </CardContent>
           </Card>
         </section>
-
         {/* Main Dashboard */}
         <section className="container mx-auto px-4 py-8 space-y-8">
           {/* Dashboard Stats */}
@@ -773,7 +822,7 @@ export default function Home() {
               </CardHeader>
               <CardContent>
                 {/* Menampilkan loading state jika data masih dimuat */}
-                {(loadingBmkgQuake || loadingWaterLevel || loadingWeather) ? (
+                {loadingBmkgQuake || loadingWaterLevel || loadingWeather ? (
                   <div className="p-4 text-center text-muted-foreground flex items-center justify-center space-x-2">
                     <Loader2 className="h-5 w-5 animate-spin" />
                     <span>Memuat peringatan...</span>
@@ -782,11 +831,20 @@ export default function Home() {
                   // Jika tidak loading, tampilkan CyclingAlertCard untuk setiap slot
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {/* Slot 1 */}
-                    <CyclingAlertCard alerts={realTimeAlerts} initialOffset={0} />
+                    <CyclingAlertCard
+                      alerts={realTimeAlerts}
+                      initialOffset={0}
+                    />
                     {/* Slot 2 */}
-                    <CyclingAlertCard alerts={realTimeAlerts} initialOffset={1} />
+                    <CyclingAlertCard
+                      alerts={realTimeAlerts}
+                      initialOffset={1}
+                    />
                     {/* Slot 3 */}
-                    <CyclingAlertCard alerts={realTimeAlerts} initialOffset={2} />
+                    <CyclingAlertCard
+                      alerts={realTimeAlerts}
+                      initialOffset={2}
+                    />
                   </div>
                 )}
 
@@ -796,16 +854,23 @@ export default function Home() {
                     <AlertTriangle className="h-4 w-4" />
                     <AlertTitle>Error Memuat Peringatan!</AlertTitle>
                     <AlertDescription>
-                      {bmkgQuakeError || waterLevelError || weatherError || "Terjadi kesalahan saat mengambil data peringatan."}
+                      {bmkgQuakeError ||
+                        waterLevelError ||
+                        weatherError ||
+                        "Terjadi kesalahan saat mengambil data peringatan."}
                     </AlertDescription>
                   </Alert>
                 )}
-                 {/* Display "No active alerts" message if no data loaded and no errors */}
-                 {!loadingBmkgQuake && !loadingWaterLevel && !loadingWeather && realTimeAlerts.length === 0 && !(bmkgQuakeError || waterLevelError || weatherError) && (
-                  <p className="text-center text-muted-foreground mt-4">
-                    Tidak ada peringatan bencana real-time aktif saat ini.
-                  </p>
-                )}
+                {/* Display "No active alerts" message if no data loaded and no errors */}
+                {!loadingBmkgQuake &&
+                  !loadingWaterLevel &&
+                  !loadingWeather &&
+                  realTimeAlerts.length === 0 &&
+                  !(bmkgQuakeError || waterLevelError || weatherError) && (
+                    <p className="text-center text-muted-foreground mt-4">
+                      Tidak ada peringatan bencana real-time aktif saat ini.
+                    </p>
+                  )}
               </CardContent>
             </Card>
           </motion.div>

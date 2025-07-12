@@ -1,13 +1,14 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  Home, 
-  Map, 
-  Cloud, 
-  Bell, 
-  BarChart, 
+import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import Link from "next/link"; // Pastikan Link sudah diimpor
+import {
+  Home,
+  Map,
+  Cloud,
+  Bell,
+  BarChart,
   Settings,
   ChevronLeft,
   ChevronRight,
@@ -16,87 +17,127 @@ import {
   Users,
   AlertTriangle,
   MapPin,
-  TrendingUp
-} from 'lucide-react';
-import { Button } from '@/components/ui/Button';
-import { Badge } from '@/components/ui/Badge';
-import { useMediaQuery } from '@/hooks/useMediaQuery';
-import { cn } from '@/lib/utils';
+  TrendingUp,
+} from "lucide-react";
+import { Button } from "@/components/ui/Button";
+import { Badge } from "@/components/ui/Badge";
+import { useMediaQuery } from "@/hooks/useMediaQuery";
+import { cn } from "@/lib/utils";
+
+interface NavItem {
+  id: string;
+  label: string;
+  href: string; // <-- Ubah tipe href menjadi string yang lebih umum
+  icon: React.ElementType;
+  color?: string;
+  badge?: string | number;
+}
+
+interface QuickActionItem {
+  id: string;
+  label: string;
+  icon: React.ElementType;
+  color?: string;
+  onClick?: () => void;
+}
+
+const navigationItems: NavItem[] = [
+  {
+    id: "home",
+    label: "Dashboard",
+    href: "/",
+    icon: Home,
+    color: "text-primary",
+  },
+  {
+    id: "map",
+    label: "Peta Banjir",
+    href: "/map",
+    icon: Map,
+    color: "text-blue-500",
+  },
+  {
+    id: "weather",
+    label: "Prakiraan Cuaca",
+    href: "/weather",
+    icon: Cloud,
+    color: "text-sky-500",
+  },
+  {
+    id: "alerts",
+    label: "Peringatan",
+    href: "/peringatan", // <--- INI SUDAH DIPERBAIKI DARI '/alerts' MENJADI '/peringatan'
+    icon: Bell,
+    color: "text-warning",
+    badge: 3, // Menggunakan badge 3 sesuai UI Anda
+  },
+  {
+    id: "stats",
+    label: "Statistik Data",
+    href: "/stats",
+    icon: BarChart,
+    color: "text-green-500",
+  },
+];
+
+const quickActions: QuickActionItem[] = [
+  {
+    id: "report-flood",
+    label: "Lapor Banjir",
+    icon: AlertTriangle,
+    color: "text-red-500",
+    onClick: () => console.log("Lapor Banjir clicked"),
+  },
+  {
+    id: "evacuation-info",
+    label: "Info Evakuasi",
+    icon: Users,
+    color: "text-purple-500",
+    onClick: () => console.log("Evakuasi clicked"),
+  },
+  {
+    id: "current-weather",
+    label: "Cuaca Sekarang",
+    icon: Cloud,
+    color: "text-sky-500",
+    onClick: () => console.log("Cuaca clicked"),
+  },
+  {
+    id: "sensor-data",
+    label: "Data Sensor",
+    icon: TrendingUp,
+    color: "text-green-500",
+    onClick: () => console.log("Sensor clicked"),
+  },
+];
 
 interface SidebarProps {
   isOpen: boolean;
   onClose: () => void;
+  // Tambahkan props ini untuk kontrol collapse dari layout
+  isCollapsed: boolean;
+  setIsCollapsed: (collapsed: boolean) => void;
 }
 
-const navigationItems = [
-  { 
-    id: 'dashboard', 
-    label: 'Dashboard', 
-    icon: Home, 
-    href: '/', 
-    badge: null,
-    color: 'text-primary'
-  },
-  { 
-    id: 'map', 
-    label: 'Peta Banjir', 
-    icon: Map, 
-    href: '/map', 
-    badge: null,
-    color: 'text-secondary'
-  },
-  { 
-    id: 'weather', 
-    label: 'Cuaca', 
-    icon: Cloud, 
-    href: '/weather', 
-    badge: null,
-    color: 'text-accent'
-  },
-  { 
-    id: 'alerts', 
-    label: 'Peringatan', 
-    icon: Bell, 
-    href: '/alerts', 
-    badge: '7',
-    color: 'text-warning'
-  },
-  { 
-    id: 'zones', 
-    label: 'Zona Rawan', 
-    icon: AlertTriangle, 
-    href: '/zones', 
-    badge: null,
-    color: 'text-danger'
-  },
-  { 
-    id: 'statistics', 
-    label: 'Statistik', 
-    icon: BarChart, 
-    href: '/statistics', 
-    badge: null,
-    color: 'text-success'
-  },
-];
-
-const quickActions = [
-  { id: 'emergency', label: 'Darurat', icon: Shield, color: 'text-danger' },
-  { id: 'report', label: 'Lapor', icon: Activity, color: 'text-warning' },
-  { id: 'evacuate', label: 'Evakuasi', icon: Users, color: 'text-success' },
-];
-
-export function Sidebar({ isOpen, onClose }: SidebarProps) {
-  const [isCollapsed, setIsCollapsed] = useState(false);
-  const isMobile = useMediaQuery('(max-width: 768px)');
+export function Sidebar({
+  isOpen,
+  onClose,
+  isCollapsed,
+  setIsCollapsed,
+}: SidebarProps) {
+  const isMobile = useMediaQuery("(max-width: 768px)");
 
   const sidebarVariants = {
     open: { x: 0, opacity: 1 },
-    closed: { x: isMobile ? -280 : -200, opacity: isMobile ? 0 : 1 }
+    closed: {
+      x: isMobile ? -280 : isCollapsed ? -16 : -200, // Sesuaikan nilai x jika perlu
+      opacity: isMobile ? 0 : 1,
+    },
   };
 
   const overlayVariants = {
     open: { opacity: 1 },
-    closed: { opacity: 0 }
+    closed: { opacity: 0 },
   };
 
   return (
@@ -121,17 +162,17 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         initial="closed"
         animate={isOpen ? "open" : "closed"}
         variants={sidebarVariants}
-        transition={{ type: 'spring', damping: 20, stiffness: 300 }}
+        transition={{ type: "spring", damping: 20, stiffness: 300 }}
         className={cn(
-          'fixed left-0 top-16 h-[calc(100vh-4rem)] z-50 flex flex-col',
-          'bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60',
-          'border-r border-border shadow-xl',
-          isMobile ? 'w-70' : isCollapsed ? 'w-16' : 'w-64'
+          "fixed left-0 top-16 h-[calc(100vh-4rem)] z-50 flex flex-col",
+          "bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60",
+          "border-r border-border shadow-xl",
+          isMobile ? "w-70" : isCollapsed ? "w-16" : "w-64" // Gunakan isCollapsed dari props
         )}
       >
-        {/* Header */}
+        {/* Header sidebar */}
         <div className="flex items-center justify-between p-4 border-b">
-          {!isCollapsed && (
+          {!isCollapsed && ( // Gunakan isCollapsed dari props
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -141,15 +182,19 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
               <p className="text-sm text-muted-foreground">Sistem Monitoring</p>
             </motion.div>
           )}
-          
+
           {!isMobile && (
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => setIsCollapsed(!isCollapsed)}
+              onClick={() => setIsCollapsed(!isCollapsed)} // Panggil setIsCollapsed dari props
               className="h-8 w-8"
             >
-              {isCollapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
+              {isCollapsed ? (
+                <ChevronRight size={16} />
+              ) : (
+                <ChevronLeft size={16} />
+              )}{" "}
             </Button>
           )}
         </div>
@@ -163,37 +208,35 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: index * 0.05 }}
             >
-              <Button
-                variant="ghost"
-                className={cn(
-                  'w-full justify-start h-12 font-medium transition-all duration-200',
-                  'hover:bg-muted hover:translate-x-1',
-                  isCollapsed && 'justify-center'
-                )}
-              >
-                <item.icon className={cn('h-5 w-5', item.color)} />
-                {!isCollapsed && (
-                  <>
-                    <span className="ml-3">{item.label}</span>
-                    {item.badge && (
-                      <Badge
-                        variant="danger"
-                        size="sm"
-                        className="ml-auto"
-                      >
-                        {item.badge}
-                      </Badge>
-                    )}
-                  </>
-                )}
-              </Button>
+              <Link href={item.href} passHref>
+                <Button
+                  variant="ghost"
+                  className={cn(
+                    "w-full justify-start h-12 font-medium transition-all duration-200",
+                    "hover:bg-muted hover:translate-x-1",
+                    isCollapsed && "justify-center" // Gunakan isCollapsed dari props
+                  )}
+                >
+                  <item.icon className={cn("h-5 w-5", item.color)} />
+                  {!isCollapsed && ( // Gunakan isCollapsed dari props
+                    <>
+                      <span className="ml-3">{item.label}</span>
+                      {item.badge && (
+                        <Badge variant="danger" size="sm" className="ml-auto">
+                          {item.badge}
+                        </Badge>
+                      )}
+                    </>
+                  )}
+                </Button>
+              </Link>
             </motion.div>
           ))}
         </nav>
 
         {/* Quick Actions */}
         <div className="p-4 border-t">
-          {!isCollapsed && (
+          {!isCollapsed && ( // Gunakan isCollapsed dari props
             <motion.h3
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -203,11 +246,13 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
               Aksi Cepat
             </motion.h3>
           )}
-          
-          <div className={cn(
-            'space-y-2',
-            isCollapsed && 'flex flex-col items-center'
-          )}>
+
+          <div
+            className={cn(
+              "space-y-2",
+              isCollapsed && "flex flex-col items-center" // Gunakan isCollapsed dari props
+            )}
+          >
             {quickActions.map((action, index) => (
               <motion.div
                 key={action.id}
@@ -217,11 +262,14 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
               >
                 <Button
                   variant="outline"
-                  size={isCollapsed ? "icon" : "sm"}
+                  size={isCollapsed ? "icon" : "sm"} // Gunakan isCollapsed dari props
                   className="w-full justify-start hover:scale-105"
+                  onClick={action.onClick} // Add onClick handler
                 >
-                  <action.icon className={cn('h-4 w-4', action.color)} />
-                  {!isCollapsed && <span className="ml-2">{action.label}</span>}
+                  <action.icon className={cn("h-4 w-4", action.color)} />
+                  {!isCollapsed && ( // Gunakan isCollapsed dari props
+                    <span className="ml-2">{action.label}</span>
+                  )}{" "}
                 </Button>
               </motion.div>
             ))}
@@ -233,12 +281,12 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
           <Button
             variant="ghost"
             className={cn(
-              'w-full justify-start h-10',
-              isCollapsed && 'justify-center'
+              "w-full justify-start h-10",
+              isCollapsed && "justify-center" // Gunakan isCollapsed dari props
             )}
           >
             <Settings className="h-4 w-4 text-muted-foreground" />
-            {!isCollapsed && <span className="ml-3">Pengaturan</span>}
+            {!isCollapsed && <span className="ml-3">Pengaturan</span>}{" "}
           </Button>
         </div>
       </motion.aside>
