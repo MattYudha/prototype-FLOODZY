@@ -147,6 +147,7 @@ export interface WeatherData {
   icon: string;
   uvIndex?: number;
   rain1h?: number;
+  dt?: number; // Add dt for timestamp
 }
 
 export async function fetchWeatherData(
@@ -176,6 +177,7 @@ export async function fetchWeatherData(
     description: data.weather[0].description,
     icon: data.weather[0].icon,
     rain1h: data.rain?.["1h"] || 0,
+    dt: data.dt, // Assign dt from API response
   };
 
   return weather;
@@ -196,8 +198,7 @@ export interface WaterLevelPost {
 }
 
 export async function fetchWaterLevelData(): Promise<WaterLevelPost[]> {
-  // --- BARIS YANG DIKOREKSI ---
-  const apiUrl = `/api/water-level-proxy`; // Ini adalah URL yang benar untuk proxy level air // --- AKHIR KOREKSI ---
+  const apiUrl = `/api/water-level-proxy`; // Ini adalah URL yang benar untuk proxy level air
   const response = await fetch(apiUrl);
 
   if (!response.ok) {
@@ -307,19 +308,59 @@ export async function fetchPetabencanaReports(
   hazardType: string = "flood", // flood, earthquake, volcano, haze, etc.
   timeframe: string = "1h" // 1h, 6h, 24h, 3d, 7d
 ): Promise<PetabencanaReport[]> {
-  // Panggil API Route proxy lokal Anda untuk PetaBencana.id
-  // Mohon pastikan baris ini persis seperti ini, tanpa kesalahan ketik!
   const apiUrl = `/api/petabencana-proxy?hazardType=${hazardType}&timeframe=${timeframe}`;
   const response = await fetch(apiUrl, { cache: "no-store" });
 
   if (!response.ok) {
-    const errorData = await response.json(); // Coba parse error response dari proxy
+    const errorData = await response.json();
     throw new Error(
       errorData.error ||
         `Failed to fetch PetaBencana.id reports from proxy: ${response.statusText}`
     );
   }
 
-  const data = await response.json(); // Asumsikan data adalah array laporan, sesuaikan jika format berbeda
+  const data = await response.json();
+  return data;
+}
+
+// === INTERFACE UNTUK OPENSTREETMAP NOMINATIM GEOCODING ===
+export interface NominatimResult {
+  place_id: number;
+  licence: string;
+  osm_type: string;
+  osm_id: number;
+  boundingbox: [string, string, string, string]; // [lat_min, lat_max, lon_min, lon_max]
+  lat: string;
+  lon: string;
+  display_name: string;
+  class: string;
+  type: string;
+  importance: number;
+  icon?: string;
+}
+
+export async function geocodeLocation(
+  query: string
+): Promise<NominatimResult[]> {
+  const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(
+    query
+  )}&format=json&limit=1&countrycodes=id`;
+  console.log(`[Geocoding API] Fetching from URL: ${url}`);
+
+  const response = await fetch(url, {
+    headers: {
+      "User-Agent": "FloodzyApp/1.0 (your-email@example.com)", // Penting untuk Nominatim
+    },
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(
+      `Failed to geocode location '${query}': ${response.status} - ${errorText}`
+    );
+  }
+
+  const data: NominatimResult[] = await response.json();
+  console.log(`[Geocoding API] Received data for '${query}':`, data);
   return data;
 }

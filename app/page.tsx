@@ -1,20 +1,15 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import "leaflet/dist/leaflet.css";
-
-// --- HAPUS BARIS IMPOR Header dan Sidebar INI ---
-// import { Header } from "@/components/layout/Header";
-// import { Sidebar } from "@/components/layout/Sidebar";
-// --- AKHIR PENGHAPUSAN IMPOR ---
 
 import { WeatherDisplay } from "@/components/weather/WeatherDisplay";
 import { FloodAlert } from "@/components/flood/FloodAlert";
 import { DashboardStats } from "@/components/dashboard/DashboardStats";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
-import { Button } from "@/components/ui/Button";
-import { Badge } from "@/components/ui/Badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Loader2 } from "lucide-react";
 import {
@@ -28,10 +23,19 @@ import {
   CloudRain,
   Waves,
   Globe,
+  Send,
+  Bot,
+  User,
+  Droplets,
+  Info,
+  Clock,
+  Zap,
+  MessageSquare, // New import for chatbot icon
+  X, // New import for close icon
 } from "lucide-react";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 import {
-  FLOOD_MOCK_ALERTS, // Digunakan untuk memastikan jumlah berita cukup untuk rotasi
+  FLOOD_MOCK_ALERTS,
   DASHBOARD_STATS_MOCK,
   DEFAULT_MAP_CENTER,
   DEFAULT_MAP_ZOOM,
@@ -51,7 +55,6 @@ import {
   PumpData,
   fetchBmkgLatestQuake,
   BmkgGempaData,
-  // fetchBmkgFeltQuakes, // DIHAPUS TOTAL IMPORNYA
 } from "@/lib/api";
 
 const OPEN_WEATHER_API_KEY = "b48e2782f52bd9c6783ef14a35856abc";
@@ -151,10 +154,6 @@ const CyclingAlertCard = ({
 
 // --- INI ADALAH KOMPONEN UTAMA UNTUK HALAMAN ROOT ---
 export default function Home() {
-  // --- HAPUS STATE INI KARENA SUDAH DITANGANI DI LAYOUT.TSX ---
-  // const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  // --- AKHIR PENGHAPUSAN STATE ---
-
   const [selectedLocation, setSelectedLocation] =
     useState<SelectedLocationDetails | null>(null);
   const isMobile = useMediaQuery("(max-width: 768px)");
@@ -193,19 +192,72 @@ export default function Home() {
     east: number;
   } | null>(null);
 
-  // --- HAPUS useEffect INI KARENA LOGIKA isSidebarOpen DITANGANI LAYOUT.TSX ---
-  // useEffect(() => {
-  //   setIsSidebarOpen(!isMobile);
-  // }, [isMobile]);
-  // --- AKHIR PENGHAPUSAN useEffect ---
+  // === State untuk Chatbot (UPDATED) ===
+  const [chatInput, setChatInput] = useState<string>("");
+  const [chatHistory, setChatHistory] = useState<
+    {
+      sender: "user" | "bot";
+      message: string;
+      timestamp: Date;
+      isError?: boolean;
+    }[]
+  >([]);
+  const [isChatLoading, setIsChatLoading] = useState(false);
+  const [chatError, setChatError] = useState<string | null>(null);
+  const [isTyping, setIsTyping] = useState(false); // New state for typing indicator
+  const [isChatbotOpen, setIsChatbotOpen] = useState(false); // State to control chatbot visibility
 
-  const handleMapBoundsChange = (
-    south: number,
-    west: number,
-    north: number,
-    east: number
+  // Ref to scroll to the bottom of the chat history
+  const chatScrollRef = useRef<HTMLDivElement>(null);
+  // ==========================
+
+  // Quick action buttons for chatbot
+  const quickActions = [
+    {
+      icon: Droplets,
+      text: "Status Banjir",
+      query: "Bagaimana status banjir saat ini?",
+    },
+    {
+      icon: MapPin,
+      text: "Lokasi Rawan",
+      query: "Dimana lokasi rawan banjir?",
+    },
+    {
+      icon: AlertTriangle,
+      text: "Peringatan",
+      query: "Apakah ada peringatan banjir?",
+    },
+    {
+      icon: Info,
+      text: "Info Cuaca",
+      query: "Bagaimana kondisi cuaca hari ini?",
+    },
+  ];
+
+  // Helper to format time for chat messages
+  const formatTime = (timestamp: Date) => {
+    return timestamp.toLocaleTimeString("id-ID", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
+
+  // Simulate typing effect for bot responses
+  const simulateTyping = (
+    message: string,
+    isError: boolean = false,
+    callback: () => void
   ) => {
-    setCurrentMapBounds({ south, west, north, east });
+    setIsTyping(true);
+    setTimeout(() => {
+      setIsTyping(false);
+      setChatHistory((prev) => [
+        ...prev,
+        { sender: "bot", message, timestamp: new Date(), isError },
+      ]);
+      callback(); // Call the callback after typing simulation
+    }, 1000 + Math.random() * 2000);
   };
 
   useEffect(() => {
@@ -256,6 +308,22 @@ export default function Home() {
     const interval = setInterval(getLatestQuake, DATA_FETCH_INTERVAL_MS);
     return () => clearInterval(interval);
   }, []);
+
+  // Effect to scroll to the bottom of the chat history when it updates (UPDATED)
+  useEffect(() => {
+    if (chatScrollRef.current) {
+      chatScrollRef.current.scrollTop = chatScrollRef.current.scrollHeight;
+    }
+  }, [chatHistory, isTyping]); // Added isTyping to dependencies for auto-scroll
+
+  const handleMapBoundsChange = (
+    south: number,
+    west: number,
+    north: number,
+    east: number
+  ) => {
+    setCurrentMapBounds({ south, west, north, east });
+  };
 
   const handleRegionSelect = (
     districtCode: string,
@@ -413,7 +481,6 @@ export default function Home() {
           level: level,
           title: `Update Tinggi Muka Air - ${post.name}`,
           message: message,
-          // === KOREKSI: Gunakan timestamp asli dari API jika ada, fallback ke waktu saat ini ===
           timestamp: post.timestamp || new Date().toISOString(),
           isActive: true,
           affectedAreas: [post.name],
@@ -456,7 +523,6 @@ export default function Home() {
         level: level,
         title: title,
         message: message,
-        // === KOREKSI: Gunakan timestamp asli dari API jika ada, fallback ke waktu saat ini ===
         timestamp: currentWeatherData.dt
           ? new Date(currentWeatherData.dt * 1000).toISOString()
           : new Date().toISOString(),
@@ -511,23 +577,73 @@ export default function Home() {
     },
   ];
 
+  // === Fungsi untuk Mengirim Pertanyaan Chatbot (UPDATED) ===
+  const sendChatMessage = async (customMessage: string | null = null) => {
+    const messageToSend = customMessage || chatInput.trim();
+    if (!messageToSend || isChatLoading) return;
+
+    const userMessage = {
+      sender: "user" as const, // Explicitly cast to "user" literal type
+      message: messageToSend,
+      timestamp: new Date(),
+    };
+
+    setChatHistory((prev) => [...prev, userMessage]);
+    setChatInput("");
+    setIsChatLoading(true); // Set loading to true initially
+    setChatError(null);
+
+    try {
+      const response = await fetch("/api/chatbot", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ question: messageToSend }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(
+          errorData.message || "Gagal mendapatkan respons dari chatbot."
+        );
+      }
+
+      const data = await response.json();
+      // Pass a callback to simulateTyping to set isChatLoading to false after typing
+      simulateTyping(data.answer, false, () => setIsChatLoading(false));
+    } catch (err: any) {
+      console.error("Error sending message to chatbot:", err);
+      setChatError(
+        err.message || "Terjadi kesalahan saat memproses pertanyaan."
+      );
+      // Pass a callback to simulateTyping to set isChatLoading to false after typing
+      simulateTyping(
+        `Maaf, saya tidak dapat memproses permintaan Anda saat ini. (${err.message})`,
+        true,
+        () => setIsChatLoading(false)
+      );
+    } finally {
+      // Ensure loading state is always reset, even if simulateTyping doesn't run or has issues
+      if (isChatLoading) {
+        // Only reset if it's still true
+        setIsChatLoading(false);
+      }
+    }
+  };
+  // ===============================================
+
+  const handleQuickAction = (query: string) => {
+    sendChatMessage(query);
+  };
+
+  const toggleChatbot = () => {
+    setIsChatbotOpen((prev) => !prev);
+  };
+
   return (
     <div className="min-h-screen bg-background">
-      {/* --- HAPUS BARIS INI KARENA HEADER DITANGANI LAYOUT.TSX --- */}
-      {/* <Header
-        onMenuToggle={() => setIsSidebarOpen(!isSidebarOpen)}
-        isMenuOpen={isSidebarOpen}
-      /> */}
-      {/* --- AKHIR PENGHAPUSAN --- */}
-
-      {/* --- HAPUS BARIS INI KARENA SIDEBAR DITANGANI LAYOUT.TSX --- */}
-      {/* <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} /> */}
-      {/* --- AKHIR PENGHAPUSAN --- */}
-
-      {/* --- SESUAIKAN className MAIN INI --- */}
       <main className="flex-1">
-        {" "}
-        {/* Layout dan margin ditangani oleh app/layout.tsx */}
         {/* Hero Section */}
         <section className="relative overflow-hidden bg-gradient-to-br from-primary via-primary-800 to-secondary text-white">
           <div className="absolute inset-0 bg-black/20" />
@@ -630,11 +746,14 @@ export default function Home() {
             />
           </div>
         </section>
+
         {/* Region Selector Section */}
         <section className="container mx-auto px-4 py-8 space-y-4">
           <Card className="bg-gray-900/60 border-gray-800/50 backdrop-blur-lg rounded-xl shadow-xl overflow-hidden">
             <CardHeader>
-              <CardTitle className="flex items-center space-x-2 text-aqua-400"></CardTitle>
+              <CardTitle className="flex items-center space-x-2 text-aqua-400">
+                {/* Title content for RegionDropdown if needed */}
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <RegionDropdown
@@ -656,6 +775,7 @@ export default function Home() {
             </CardContent>
           </Card>
         </section>
+
         {/* Main Dashboard */}
         <section className="container mx-auto px-4 py-8 space-y-8">
           {/* Dashboard Stats */}
@@ -675,14 +795,14 @@ export default function Home() {
             />
           </motion.div>
 
-          {/* Main Content Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* Flood Map */}
+          {/* Main Content Grid: Map, Weather/Actions, and Chatbot */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Flood Map - Mengambil 2 kolom di layar besar */}
             <motion.div
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.5, delay: 0.4 }}
-              className="lg:col-span-1"
+              className="lg:col-span-2"
             >
               <Card>
                 <CardHeader>
@@ -743,69 +863,78 @@ export default function Home() {
               </Card>
             </motion.div>
 
-            {/* Weather & Alerts */}
-            <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.5, delay: 0.5 }}
-              className="space-y-6"
-            >
+            {/* Kolom untuk Weather & Quick Actions */}
+            <div className="lg:col-span-1 flex flex-col gap-8">
               {/* Weather Display */}
-              <WeatherDisplay
-                data={currentWeatherData}
-                loading={loadingWeather}
-                error={weatherError}
-              />
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.5 }}
+                className="flex-1"
+              >
+                <WeatherDisplay
+                  data={currentWeatherData}
+                  loading={loadingWeather}
+                  error={weatherError}
+                />
+              </motion.div>
 
               {/* Quick Actions */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center space-x-2">
-                    <Activity className="h-5 w-5 text-secondary" />
-                    <span>Aksi Cepat</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-2 gap-4">
-                    <Button
-                      variant="outline"
-                      className="h-12 flex-col space-y-1"
-                    >
-                      <AlertTriangle className="h-4 w-4" />
-                      <span className="text-xs">Lapor Banjir</span>
-                    </Button>
-                    <Button
-                      variant="outline"
-                      className="h-12 flex-col space-y-1"
-                    >
-                      <Users className="h-4 w-4" />
-                      <span className="text-xs">Evakuasi</span>
-                    </Button>
-                    <Button
-                      variant="outline"
-                      className="h-12 flex-col space-y-1"
-                    >
-                      <CloudRain className="h-4 w-4" />
-                      <span className="text-xs">Cuaca</span>
-                    </Button>
-                    <Button
-                      variant="outline"
-                      className="h-12 flex-col space-y-1"
-                    >
-                      <Waves className="h-4 w-4" />
-                      <span className="text-xs">Sensor</span>
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            </motion.div>
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.6 }}
+                className="flex-1"
+              >
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center space-x-2">
+                      <Activity className="h-5 w-5 text-secondary" />
+                      <span>Aksi Cepat</span>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-2 gap-4">
+                      <Button
+                        variant="outline"
+                        className="h-12 flex-col space-y-1"
+                      >
+                        <AlertTriangle className="h-4 w-4" />
+                        <span className="text-xs">Lapor Banjir</span>
+                      </Button>
+                      <Button
+                        variant="outline"
+                        className="h-12 flex-col space-y-1"
+                      >
+                        <Users className="h-4 w-4" />
+                        <span className="text-xs">Evakuasi</span>
+                      </Button>
+                      <Button
+                        variant="outline"
+                        className="h-12 flex-col space-y-1"
+                      >
+                        <CloudRain className="h-4 w-4" />
+                        <span className="text-xs">Cuaca</span>
+                      </Button>
+                      <Button
+                        variant="outline"
+                        className="h-12 flex-col space-y-1"
+                      >
+                        <Waves className="h-4 w-4" />
+                        <span className="text-xs">Sensor</span>
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            </div>
           </div>
 
           {/* Flood Alerts Section - Combined real-time alerts */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.6 }}
+            transition={{ duration: 0.5, delay: 0.8 }} // Menyesuaikan delay
           >
             <Card>
               <CardHeader>
@@ -876,6 +1005,290 @@ export default function Home() {
           </motion.div>
         </section>
       </main>
+
+      {/* Floating Chatbot Button */}
+      <motion.button
+        className="fixed bottom-6 right-6 bg-cyan-600 hover:bg-cyan-700 text-white p-4 rounded-full shadow-lg z-50 transition-all duration-300 ease-in-out transform hover:scale-110 active:scale-90 focus:outline-none focus:ring-4 focus:ring-cyan-500 focus:ring-opacity-75"
+        onClick={toggleChatbot}
+        initial={{ opacity: 0, scale: 0 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.5, delay: 1 }}
+      >
+        <MessageSquare className="w-6 h-6" />
+      </motion.button>
+
+      {/* Chatbot Pop-up */}
+      <AnimatePresence>
+        {isChatbotOpen && (
+          <motion.div
+            // Adjusted height and padding for a more compact UI
+            className="fixed bottom-24 right-6 w-[320px] h-[400px] bg-gray-900 border border-gray-800 rounded-xl shadow-2xl overflow-hidden z-50 flex flex-col"
+            initial={{ opacity: 0, y: 50, scale: 0.8 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 50, scale: 0.8 }}
+            transition={{ duration: 0.3 }}
+          >
+            {/* Header */}
+            <div className="bg-gradient-to-r from-cyan-600 to-blue-600 p-3 flex items-center justify-between flex-shrink-0">
+              {" "}
+              {/* Reduced padding and added flex-shrink-0 */}
+              <div className="flex items-center space-x-3">
+                <div className="w-9 h-9 bg-white/20 rounded-full flex items-center justify-center">
+                  {" "}
+                  {/* Slightly smaller icon container */}
+                  <Bot className="w-5 h-5 text-white" />{" "}
+                  {/* Slightly smaller icon */}
+                </div>
+                <div>
+                  <h3 className="text-white font-semibold text-base">
+                    {" "}
+                    {/* Reduced font size */}
+                    Floodzie Assistant
+                  </h3>
+                  <p className="text-cyan-100 text-xs">
+                    {" "}
+                    {/* Reduced font size */}
+                    Sistem Informasi Banjir Real-time
+                  </p>
+                </div>
+                <div className="ml-auto flex items-center space-x-1">
+                  <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                  <span className="text-cyan-100 text-xs">Online</span>
+                </div>
+              </div>
+              <button
+                onClick={toggleChatbot}
+                className="text-white hover:text-gray-200 p-1" // Added padding to button
+              >
+                <X className="w-5 h-5" /> {/* Slightly smaller icon */}
+              </button>
+            </div>
+
+            {/* Chat Area */}
+            <div className="flex-1 flex flex-col overflow-hidden">
+              {" "}
+              {/* Added overflow-hidden to handle content */}
+              <div
+                ref={chatScrollRef}
+                className="flex-1 overflow-y-auto p-3 space-y-3 bg-gray-900" // Reduced padding and spacing
+              >
+                {/* Welcome message and Quick Actions (CONDITIONAL) */}
+                {chatHistory.length === 0 && (
+                  <>
+                    <div className="text-center py-4">
+                      {" "}
+                      {/* Reduced vertical padding */}
+                      <Bot className="w-10 h-10 text-cyan-400 mx-auto mb-2" />{" "}
+                      {/* Slightly smaller icon */}
+                      <p className="text-gray-400 mb-1 text-sm">
+                        {" "}
+                        {/* Reduced font size */}
+                        Selamat datang di Floodzie Assistant!
+                      </p>
+                      <p className="text-gray-500 text-xs">
+                        {" "}
+                        {/* Reduced font size */}
+                        Tanyakan tentang status banjir, cuaca, atau kondisi
+                        wilayah
+                      </p>
+                    </div>
+                    {/* Quick Actions moved inside this conditional block */}
+                    <div className="px-0 pb-2">
+                      {" "}
+                      {/* Adjusted padding */}
+                      <p className="text-gray-400 text-xs mb-1">
+                        {" "}
+                        {/* Reduced font size and margin */}
+                        Pertanyaan Cepat:
+                      </p>
+                      <div className="grid grid-cols-2 gap-1.5">
+                        {" "}
+                        {/* Reduced gap */}
+                        {quickActions.map((action, index) => (
+                          <button
+                            key={index}
+                            onClick={() => handleQuickAction(action.query)}
+                            className="flex items-center space-x-1 p-2 bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded-lg transition-colors duration-200 group text-sm" // Reduced padding, spacing, and font size
+                            disabled={isChatLoading}
+                          >
+                            <action.icon className="w-3.5 h-3.5 text-cyan-400 group-hover:text-cyan-300" />{" "}
+                            {/* Smaller icon */}
+                            <span className="text-gray-300 text-xs">
+                              {" "}
+                              {/* Smaller font size */}
+                              {action.text}
+                            </span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                {/* Chat History Messages */}
+                {chatHistory.length > 0 &&
+                  chatHistory.map((msg, index) => (
+                    <div
+                      key={index}
+                      className={`flex ${
+                        msg.sender === "user" ? "justify-end" : "justify-start"
+                      } animate-fade-in`}
+                    >
+                      <div
+                        className={`flex items-start space-x-2 max-w-[80%] ${
+                          msg.sender === "user"
+                            ? "flex-row-reverse space-x-reverse"
+                            : ""
+                        }`}
+                      >
+                        {/* Avatar */}
+                        <div
+                          className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 ${
+                            msg.sender === "user"
+                              ? "bg-blue-600"
+                              : msg.isError
+                              ? "bg-red-600"
+                              : "bg-cyan-600"
+                          }`}
+                        >
+                          {" "}
+                          {/* Smaller avatar */}
+                          {msg.sender === "user" ? (
+                            <User className="w-3.5 h-3.5 text-white" />
+                          ) : (
+                            <Bot className="w-3.5 h-3.5 text-white" />
+                          )}{" "}
+                          {/* Smaller icon */}
+                        </div>
+
+                        {/* Message Bubble */}
+                        <div
+                          className={`rounded-xl px-3 py-2 ${
+                            msg.sender === "user"
+                              ? "bg-blue-600 text-white"
+                              : msg.isError
+                              ? "bg-red-900/50 text-red-300 border border-red-600"
+                              : "bg-gray-800 text-gray-100 border border-gray-700"
+                          }`}
+                        >
+                          {" "}
+                          {/* Adjusted padding and border radius */}
+                          <p className="text-xs leading-relaxed">
+                            {" "}
+                            {/* Smaller font size */}
+                            {msg.message}
+                          </p>
+                          <div className="flex items-center justify-between mt-1">
+                            {" "}
+                            {/* Reduced margin-top */}
+                            <span
+                              className={`text-xxs ${
+                                msg.sender === "user"
+                                  ? "text-blue-200"
+                                  : msg.isError
+                                  ? "text-red-400"
+                                  : "text-gray-400"
+                              }`}
+                            >
+                              {" "}
+                              {/* Smaller font size */}
+                              {formatTime(msg.timestamp)}
+                            </span>
+                            {msg.sender === "user" && (
+                              <div className="flex space-x-0.5">
+                                {" "}
+                                {/* Reduced spacing */}
+                                <div className="w-1 h-1 bg-blue-300 rounded-full"></div>
+                                <div className="w-1 h-1 bg-blue-300 rounded-full"></div>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+
+                {/* Typing Indicator */}
+                {isTyping && (
+                  <div className="flex justify-start animate-fade-in">
+                    <div className="flex items-start space-x-2">
+                      <div className="w-7 h-7 bg-cyan-600 rounded-full flex items-center justify-center">
+                        {" "}
+                        {/* Smaller avatar */}
+                        <Bot className="w-3.5 h-3.5 text-white" />{" "}
+                        {/* Smaller icon */}
+                      </div>
+                      <div className="bg-gray-800 border border-gray-700 rounded-xl px-3 py-2">
+                        {" "}
+                        {/* Adjusted padding and border radius */}
+                        <div className="flex space-x-1">
+                          <div className="w-1.5 h-1.5 bg-cyan-400 rounded-full animate-bounce"></div>{" "}
+                          {/* Smaller dots */}
+                          <div
+                            className="w-1.5 h-1.5 bg-cyan-400 rounded-full animate-bounce"
+                            style={{ animationDelay: "0.1s" }}
+                          ></div>
+                          <div
+                            className="w-1.5 h-1.5 bg-cyan-400 rounded-full animate-bounce"
+                            style={{ animationDelay: "0.2s" }}
+                          ></div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+              {/* Input Area */}
+              <div className="border-t border-gray-800 p-3 bg-gray-900 flex-shrink-0">
+                {" "}
+                {/* Reduced padding */}
+                <div className="flex items-center space-x-2">
+                  {" "}
+                  {/* Reduced spacing */}
+                  <div className="flex-1 relative">
+                    <input
+                      type="text"
+                      value={chatInput}
+                      onChange={(e) => setChatInput(e.target.value)}
+                      onKeyPress={(e) => {
+                        if (e.key === "Enter" && !isChatLoading) {
+                          sendChatMessage();
+                        }
+                      }}
+                      placeholder="Tanyakan tentang status banjir, cuaca, atau kondisi wilayah..."
+                      className="w-full bg-gray-800 border border-gray-700 rounded-full px-3 py-2.5 pr-10 text-sm text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition-all duration-200" // Adjusted padding, font size, and pr
+                      disabled={isChatLoading}
+                    />
+                    {isChatLoading && (
+                      <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                        {" "}
+                        {/* Adjusted right position */}
+                        <Zap className="w-3.5 h-3.5 text-cyan-400 animate-spin" />{" "}
+                        {/* Smaller icon */}
+                      </div>
+                    )}
+                  </div>
+                  <button
+                    onClick={() => sendChatMessage()}
+                    disabled={isChatLoading || !chatInput.trim()}
+                    className="bg-cyan-600 hover:bg-cyan-700 disabled:bg-gray-700 disabled:cursor-not-allowed text-white p-2.5 rounded-full transition-all duration-200 transform hover:scale-105 active:scale-95" // Adjusted padding
+                  >
+                    <Send className="w-3.5 h-3.5" /> {/* Smaller icon */}
+                  </button>
+                </div>
+                {chatError && (
+                  <div className="mt-1.5 p-1.5 bg-red-900/50 border border-red-600 rounded-lg">
+                    {" "}
+                    {/* Reduced margin and padding */}
+                    <p className="text-red-300 text-xs">{chatError}</p>{" "}
+                    {/* Reduced font size */}
+                  </div>
+                )}
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
