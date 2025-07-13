@@ -228,7 +228,7 @@ export function DashboardStats({
                 </div>
               ) : (
                 <div className="text-center text-sm text-muted-foreground h-[120px] flex items-center justify-center">
-                  <span>Tidak ada data pompa ditemukan.</span>
+                  <span>Pilih wilayah untuk melihat pompa.</span>
                 </div>
               )}
             </CardContent>
@@ -307,7 +307,8 @@ export function DashboardStats({
                   !waterLevelError &&
                   waterLevelPosts.length === 0 ? (
                   <p className="text-sm text-muted-foreground text-center">
-                    Tidak ada data Pos Duga Air di dekat wilayah ini.
+                    Pilih wilayah untuk melihat data Pos Duga Air di dekat
+                    wilayah anda.
                   </p>
                 ) : null}
 
@@ -315,32 +316,22 @@ export function DashboardStats({
                 <div className="flex items-center space-x-3">
                   <div className="w-2 h-2 bg-warning rounded-full" />
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium">
-                      Peringatan banjir Jakarta Utara
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {getTimeAgo(new Date(Date.now() - 3600000))}
-                    </p>
+                    <p className="text-sm font-medium">Peringatan banjir</p>
+                    <p className="text-xs text-muted-foreground"></p>
                   </div>
                 </div>
                 <div className="flex items-center space-x-3">
                   <div className="w-2 h-2 bg-success rounded-full" />
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium">
-                      Sensor Ciliwung online
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {getTimeAgo(new Date(Date.now() - 7200000))}
-                    </p>
+                    <p className="text-sm font-medium">Sensor online</p>
+                    <p className="text-xs text-muted-foreground"></p>
                   </div>
                 </div>
                 <div className="flex items-center space-x-3">
-                  <div className="w-2 h-2 bg-info rounded-full" />
+                  <div className="w-2 h-2 bg-success rounded-full" />
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium">Update data cuaca</p>
-                    <p className="text-xs text-muted-foreground">
-                      {getTimeAgo(new Date(Date.now() - 10800000))}
-                    </p>
+                    <p className="text-xs text-muted-foreground"></p>
                   </div>
                 </div>
               </div>

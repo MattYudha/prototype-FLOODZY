@@ -210,6 +210,12 @@ export function Sidebar({
                 ? highAlertCount
                 : item.badge;
 
+            // Pastikan currentBadge adalah number sebelum perbandingan numerik
+            const badgeValue =
+              typeof currentBadge === "string"
+                ? parseInt(currentBadge, 10)
+                : currentBadge;
+
             return (
               <motion.div
                 key={item.id}
@@ -230,9 +236,10 @@ export function Sidebar({
                     {!isCollapsed && (
                       <>
                         <span className="ml-3">{item.label}</span>
-                        {currentBadge !== undefined && currentBadge > 0 && (
+                        {/* ✅ Gunakan badgeValue untuk perbandingan numerik */}
+                        {badgeValue !== undefined && badgeValue > 0 && (
                           <Badge variant="danger" size="sm" className="ml-auto">
-                            {currentBadge}
+                            {badgeValue}
                           </Badge>
                         )}
                         {item.id === "alerts" &&
