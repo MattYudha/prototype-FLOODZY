@@ -61,7 +61,7 @@ const navigationItems: NavItem[] = [
   {
     id: "weather",
     label: "Prakiraan Cuaca",
-    href: "/weather",
+    href: "/prakiraan-cuaca",
     icon: Cloud,
     color: "text-sky-500",
   },
@@ -76,7 +76,7 @@ const navigationItems: NavItem[] = [
   {
     id: "stats",
     label: "Statistik Data",
-    href: "/statistika", // ✅ Diubah dari "/statistik" menjadi "/statistika"
+    href: "/statistika",
     icon: BarChart,
     color: "text-green-500",
   },
