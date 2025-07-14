@@ -54,7 +54,7 @@ const navigationItems: NavItem[] = [
   {
     id: "map",
     label: "Peta Banjir",
-    href: "/map",
+    href: "/peta-banjir",
     icon: Map,
     color: "text-blue-500",
   },

@@ -48,7 +48,8 @@ import { OverpassElement } from "@/lib/api";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 
 // Custom marker icons
-const createCustomIcon = (color: string, iconHtml: string) => { // Ganti icon menjadi iconHtml
+const createCustomIcon = (color: string, iconHtml: string) => {
+  // Ganti icon menjadi iconHtml
   const svgString = `
     <svg width="25" height="25" viewBox="0 0 25 25" fill="none" xmlns="http://www.w3.org/2000/svg">
       <circle cx="12.5" cy="12.5" r="12" fill="${color}" stroke="white" stroke-width="2"/>
@@ -303,7 +304,6 @@ export function FloodMap({
       badgeVariant,
     };
   };
-
 
   return (
     <motion.div
@@ -582,15 +582,23 @@ export function FloodMap({
           realtimeFloodAlerts.length > 0 &&
           showRealtimeAlerts &&
           realtimeFloodAlerts.map((alert) => {
-            const { iconToUse, color, cardTitle, cardTitleColor, badgeVariant } =
-              getAlertInfo(alert);
+            const {
+              iconToUse,
+              color,
+              cardTitle,
+              cardTitleColor,
+              badgeVariant,
+            } = getAlertInfo(alert);
 
             // Render Polygon jika ada polygonCoordinates
-            if (alert.polygonCoordinates && alert.polygonCoordinates.length > 0) {
+            if (
+              alert.polygonCoordinates &&
+              alert.polygonCoordinates.length > 0
+            ) {
               // Flattern array jika nested ([[lat,lng],[lat,lng]]) -> [[lat,lng],[lat,lng]]
-              const flatCoordinates = alert.polygonCoordinates.flat().map(
-                (coords) => [coords[0], coords[1]] as LatLngExpression
-              );
+              const flatCoordinates = alert.polygonCoordinates
+                .flat()
+                .map((coords) => [coords[0], coords[1]] as LatLngExpression);
 
               return (
                 <Polygon
@@ -609,10 +617,14 @@ export function FloodMap({
                         <h4 className={`font-semibold ${cardTitleColor}`}>
                           {cardTitle}
                         </h4>
-                        <Badge variant={badgeVariant}>{alert.level.toUpperCase()}</Badge>
+                        <Badge variant={badgeVariant}>
+                          {alert.level.toUpperCase()}
+                        </Badge>
                       </div>
                       <p className="text-sm mt-2">{alert.title}</p>
-                      <p className="text-xs text-muted-foreground">{alert.message}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {alert.message}
+                      </p>
                       <div className="mt-2 text-xs text-gray-400">
                         <strong>Wilayah Terdampak:</strong>
                         <ul className="list-disc list-inside">
@@ -630,7 +642,8 @@ export function FloodMap({
                         </ul>
                       </div>
                       <p className="text-xs text-muted-foreground mt-2">
-                        Pembaruan terakhir: {new Date(alert.timestamp).toLocaleString()}
+                        Pembaruan terakhir:{" "}
+                        {new Date(alert.timestamp).toLocaleString()}
                       </p>
                     </Card>
                   </Popup>
@@ -651,10 +664,14 @@ export function FloodMap({
                         <h4 className={`font-semibold ${cardTitleColor}`}>
                           {cardTitle}
                         </h4>
-                        <Badge variant={badgeVariant}>{alert.level.toUpperCase()}</Badge>
+                        <Badge variant={badgeVariant}>
+                          {alert.level.toUpperCase()}
+                        </Badge>
                       </div>
                       <p className="text-sm mt-2">{alert.title}</p>
-                      <p className="text-xs text-muted-foreground">{alert.message}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {alert.message}
+                      </p>
                       <div className="mt-2 text-xs text-gray-400">
                         <strong>Wilayah Terdampak:</strong>
                         <ul className="list-disc list-inside">
@@ -664,7 +681,8 @@ export function FloodMap({
                         </ul>
                       </div>
                       <p className="text-xs text-muted-foreground mt-2">
-                        Pembaruan terakhir: {new Date(alert.timestamp).toLocaleString()}
+                        Pembaruan terakhir:{" "}
+                        {new Date(alert.timestamp).toLocaleString()}
                       </p>
                     </Card>
                   </Popup>
@@ -685,7 +703,9 @@ export function FloodMap({
         showFloodZones={showFloodZones}
         onWeatherToggle={() => setShowWeatherStations(!showWeatherStations)}
         showWeatherStations={showWeatherStations}
-        onRealtimeAlertsToggle={() => setShowRealtimeAlerts(!showRealtimeAlerts)} // Properti baru
+        onRealtimeAlertsToggle={() =>
+          setShowRealtimeAlerts(!showRealtimeAlerts)
+        } // Properti baru
         showRealtimeAlerts={showRealtimeAlerts} // Properti baru
       />
 
