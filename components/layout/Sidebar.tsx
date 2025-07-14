@@ -9,7 +9,7 @@ import {
   Map,
   Cloud,
   Bell,
-  BarChart,
+  BarChart, // Ini adalah ikon untuk Statistik Data
   Settings,
   ChevronLeft,
   ChevronRight,
@@ -76,7 +76,7 @@ const navigationItems: NavItem[] = [
   {
     id: "stats",
     label: "Statistik Data",
-    href: "/stats",
+    href: "/statistika", // ✅ Diubah dari "/statistik" menjadi "/statistika"
     icon: BarChart,
     color: "text-green-500",
   },

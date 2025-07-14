@@ -1,16 +1,17 @@
+// mattyudha/floodzy/Floodzy-04cbe0509e23f883f290033cafa7f880e929fe65/app/api/gemini-alerts/route.ts
 import { NextResponse } from "next/server";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
-// ✅ Load API key from .env
+// Load API key from .env
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
-// ✅ Debug log untuk memastikan API key ter-load
+// Debug log untuk memastikan API key ter-load
 console.log(
   "[Gemini API] Key Loaded:",
   GEMINI_API_KEY ? "✅ Yes" : "❌ Missing"
 );
 
-// ✅ Inisialisasi AI instance (PERBAIKAN DI SINI)
+// Inisialisasi AI instance
 const genAI = GEMINI_API_KEY ? new GoogleGenerativeAI(GEMINI_API_KEY) : null;
 
 export async function POST(request: Request) {
@@ -45,10 +46,50 @@ export async function POST(request: Request) {
       affectedAreas,
       estimatedPopulation,
       severity,
+      newsContent,
+      historicalData, // New field for historical incident data
+      userPrompt, // New field for user's specific prompt for analysis
+      requestType,
     } = alertData;
 
-    if (!level || !location || !timestamp || !reason || severity == null) {
-      console.warn("[Gemini API] ⚠️ Required fields missing.");
+    let prompt: string;
+    let modelName = "gemini-1.5-flash"; // Default model
+
+    if (requestType === "news_summary" && newsContent) {
+      // Prompt for news summary
+      prompt = `
+Anda adalah seorang analis berita yang ahli dalam merangkum informasi penting terkait bencana.
+Berikan ringkasan singkat (maksimal 3-5 poin penting dalam bahasa Indonesia yang ringkas dan padat) dari berita berikut.
+Fokus pada inti kejadian, lokasi, dampak, dan rekomendasi jika ada.
+
+Judul Berita: ${reason}
+Sumber: ${location}
+Waktu: ${timestamp}
+Konten Berita:
+---
+${newsContent}
+---
+
+Ringkasan:
+`;
+    } else if (requestType === "historical_analysis" && historicalData) {
+      // Prompt for historical incident analysis
+      prompt = `
+Anda adalah seorang ilmuwan data dan analis bencana yang ahli dalam mengidentifikasi pola dan insight dari data historis.
+Berdasarkan data insiden historis berikut, lakukan analisis mendalam dan berikan laporan atau insight penting.
+
+Fokus pada permintaan pengguna: "${userPrompt}"
+
+Data Insiden Historis:
+---
+${historicalData}
+---
+
+Analisis Mendalam (dalam bahasa Indonesia, berformat markdown untuk keterbacaan):
+`;
+    } else if (!level || !location || !timestamp || !reason || severity == null) {
+      // Original prompt for disaster analysis
+      console.warn("[Gemini API] ⚠️ Required fields missing for alert analysis.");
       return NextResponse.json(
         {
           error: "Missing required fields in 'alertData'.",
@@ -62,10 +103,9 @@ export async function POST(request: Request) {
         },
         { status: 400 }
       );
-    }
-
-    // ✅ Professional disaster analysis prompt dengan struktur output yang menarik
-    const prompt = `
+    } else {
+      // Original prompt for disaster analysis
+      prompt = `
 Anda adalah Ahli Mitigasi Bencana dan Analisis Risiko profesional dengan spesialisasi dalam komunikasi krisis. Buatlah laporan peringatan bencana yang SANGAT MENARIK, PROFESIONAL, dan TERSTRUKTUR.
 
 📊 DATA PERINGATAN BENCANA:
@@ -75,11 +115,11 @@ Anda adalah Ahli Mitigasi Bencana dan Analisis Risiko profesional dengan spesial
 ⏰ Waktu Kejadian: ${timestamp}
 💡 Penyebab Utama: ${reason}
 🏘️ Wilayah Terdampak: ${
-      affectedAreas?.length ? affectedAreas.join(", ") : "Tidak diketahui"
-    }
+        affectedAreas?.length ? affectedAreas.join(", ") : "Tidak diketahui"
+      }
 👥 Estimasi Populasi: ${
-      estimatedPopulation?.toLocaleString("id-ID") ?? "Tidak diketahui"
-    } jiwa
+        estimatedPopulation?.toLocaleString("id-ID") ?? "Tidak diketahui"
+      } jiwa
 ⚠️ Tingkat Keparahan: ${severity}/10
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -151,7 +191,7 @@ Buatlah laporan dengan format yang SANGAT MENARIK dan PROFESIONAL berikut:
 ───────────────────────────────────────
 [Highlight risiko spesifik yang perlu perhatian ekstra]
 
-PENTING: 
+PENTING:
 - Gunakan data numerik yang realistis dan spesifik
 - Sertakan persentase, estimasi waktu, dan ukuran yang konkret
 - Buat tampilan yang visual dengan emoji dan formatting yang menarik
@@ -159,12 +199,14 @@ PENTING:
 - Pastikan semua informasi actionable dan praktis
 - Berikan sense of urgency yang tepat tanpa menimbulkan panik
     `.trim();
+    }
+
 
     console.log(
-      "[Gemini API] ✉️ Sending PROFESSIONAL disaster analysis prompt to Gemini..."
+      `[Gemini API] ✉️ Sending ${requestType === "news_summary" ? "NEWS SUMMARY" : requestType === "historical_analysis" ? "HISTORICAL ANALYSIS" : "DISASTER ANALYSIS"} prompt to Gemini...`
     );
     const model = genAI.getGenerativeModel({
-      model: "gemini-1.5-flash",
+      model: modelName,
       generationConfig: {
         temperature: 0.7,
         topK: 40,
@@ -177,103 +219,106 @@ PENTING:
     const response = result.response;
     const explanation = await response.text();
 
-    // ✅ Generate statistical data untuk dashboard
-    const generateStatisticalData = (alertData: any) => {
-      const { severity, estimatedPopulation, affectedAreas, level } = alertData;
+    let statisticalData = {};
+    if (requestType !== "news_summary" && requestType !== "historical_analysis") {
+      // Generate statistical data for dashboard only for alert analysis
+      const generateStatisticalData = (alertData: any) => {
+        const { severity, estimatedPopulation } = alertData; // Removed affectedAreas from destructuring as it's not always used directly here
 
-      // Generate realistic statistics based on severity and population
-      const baseImpact = severity * 0.1;
-      const populationAtRisk = estimatedPopulation || 10000;
+        const baseImpact = severity * 0.1;
+        const populationAtRisk = estimatedPopulation || 10000;
 
-      return {
-        overviewStats: {
-          totalAlertsToday: Math.floor(Math.random() * 50) + 10,
-          activeAlerts: Math.floor(Math.random() * 15) + 5,
-          resolvedAlerts: Math.floor(Math.random() * 30) + 15,
-          criticalAlerts:
-            severity >= 7
-              ? Math.floor(Math.random() * 8) + 2
-              : Math.floor(Math.random() * 3),
-        },
-        impactAnalysis: {
-          populationAtRisk: populationAtRisk,
-          evacuationCenters: Math.floor(populationAtRisk / 2000) + 2,
-          emergencyResponders: Math.floor(populationAtRisk / 1000) + 10,
-          affectedInfrastructure: Math.floor(severity * 12) + 5,
-        },
-        riskDistribution: {
-          highRisk: Math.floor(baseImpact * 100 * 0.3) + "%",
-          mediumRisk: Math.floor(baseImpact * 100 * 0.4) + "%",
-          lowRisk: Math.floor(baseImpact * 100 * 0.3) + "%",
-        },
-        timeSeriesData: Array.from({ length: 24 }, (_, i) => ({
-          hour: i,
-          riskLevel: Math.floor(Math.random() * severity) + 1,
-          incidents: Math.floor(Math.random() * 10) + 1,
-          responses: Math.floor(Math.random() * 8) + 1,
-        })),
-        departmentResponse: {
-          fireDepart: {
-            deployed: Math.floor(severity * 5) + 3,
-            available: Math.floor(severity * 3) + 2,
-            utilization: Math.floor(baseImpact * 80) + 20,
+        return {
+          overviewStats: {
+            totalAlertsToday: Math.floor(Math.random() * 50) + 10,
+            activeAlerts: Math.floor(Math.random() * 15) + 5,
+            resolvedAlerts: Math.floor(Math.random() * 30) + 15,
+            criticalAlerts:
+              severity >= 7
+                ? Math.floor(Math.random() * 8) + 2
+                : Math.floor(Math.random() * 3),
           },
-          medicalTeam: {
-            deployed: Math.floor(severity * 3) + 2,
-            available: Math.floor(severity * 2) + 1,
-            utilization: Math.floor(baseImpact * 70) + 15,
+          impactAnalysis: {
+            populationAtRisk: populationAtRisk,
+            evacuationCenters: Math.floor(populationAtRisk / 2000) + 2,
+            emergencyResponders: Math.floor(populationAtRisk / 1000) + 10,
+            affectedInfrastructure: Math.floor(severity * 12) + 5,
           },
-          police: {
-            deployed: Math.floor(severity * 4) + 2,
-            available: Math.floor(severity * 2) + 1,
-            utilization: Math.floor(baseImpact * 60) + 25,
+          riskDistribution: {
+            highRisk: Math.floor(baseImpact * 100 * 0.3) + "%",
+            mediumRisk: Math.floor(baseImpact * 100 * 0.4) + "%",
+            lowRisk: Math.floor(baseImpact * 100 * 0.3) + "%",
           },
-          volunteers: {
-            deployed: Math.floor(severity * 8) + 5,
-            available: Math.floor(severity * 5) + 3,
-            utilization: Math.floor(baseImpact * 50) + 30,
+          timeSeriesData: Array.from({ length: 24 }, (_, i) => ({
+            hour: i,
+            riskLevel: Math.floor(Math.random() * severity) + 1,
+            incidents: Math.floor(Math.random() * 10) + 1,
+            responses: Math.floor(Math.random() * 8) + 1,
+          })),
+          departmentResponse: {
+            fireDepart: {
+              deployed: Math.floor(severity * 5) + 3,
+              available: Math.floor(severity * 3) + 2,
+              utilization: Math.floor(baseImpact * 80) + 20,
+            },
+            medicalTeam: {
+              deployed: Math.floor(severity * 3) + 2,
+              available: Math.floor(severity * 2) + 1,
+              utilization: Math.floor(baseImpact * 70) + 15,
+            },
+            police: {
+              deployed: Math.floor(severity * 4) + 2,
+              available: Math.floor(severity * 2) + 1,
+              utilization: Math.floor(baseImpact * 60) + 25,
+            },
+            volunteers: {
+              deployed: Math.floor(severity * 8) + 5,
+              available: Math.floor(severity * 5) + 3,
+              utilization: Math.floor(baseImpact * 50) + 30,
+            },
           },
-        },
-        resourceAllocation:
-          affectedAreas?.map((area: string, index: number) => ({
-            area: area,
-            priority: severity >= 7 ? "HIGH" : severity >= 4 ? "MEDIUM" : "LOW",
-            resources: Math.floor(severity * 15) + 10,
-            personnel: Math.floor(severity * 8) + 5,
-            equipment: Math.floor(severity * 6) + 3,
-            status:
-              index % 3 === 0
-                ? "ACTIVE"
-                : index % 3 === 1
-                ? "STANDBY"
-                : "DEPLOYED",
-          })) || [],
-        performanceMetrics: {
-          responseTime: Math.floor(severity * 2) + 3 + " minutes",
-          resolutionRate: Math.floor(90 - severity * 3) + "%",
-          publicSatisfaction: Math.floor(85 - severity * 2) + "%",
-          resourceEfficiency: Math.floor(80 - severity * 1.5) + "%",
-        },
+          resourceAllocation:
+            alertData?.affectedAreas?.map((area: string, index: number) => ({
+              area: area,
+              priority: severity >= 7 ? "HIGH" : severity >= 4 ? "MEDIUM" : "LOW",
+              resources: Math.floor(severity * 15) + 10,
+              personnel: Math.floor(severity * 8) + 5,
+              equipment: Math.floor(severity * 6) + 3,
+              status:
+                index % 3 === 0
+                  ? "ACTIVE"
+                  : index % 3 === 1
+                  ? "STANDBY"
+                  : "DEPLOYED",
+            })) || [],
+          performanceMetrics: {
+            responseTime: Math.floor(severity * 2) + 3 + " minutes",
+            resolutionRate: Math.floor(90 - severity * 3) + "%",
+            publicSatisfaction: Math.floor(85 - severity * 2) + "%",
+            resourceEfficiency: Math.floor(80 - severity * 1.5) + "%",
+          },
+        };
       };
-    };
+      statisticalData = generateStatisticalData(alertData);
+    }
 
-    const statisticalData = generateStatisticalData(alertData);
 
     console.log(
-      "[Gemini API] ✅ PROFESSIONAL disaster analysis with statistics generated."
+      `[Gemini API] ✅ ${requestType === "news_summary" ? "NEWS SUMMARY" : requestType === "historical_analysis" ? "HISTORICAL ANALYSIS" : "DISASTER ANALYSIS"} generated.`
     );
     return NextResponse.json(
       {
         explanation,
-        statistics: statisticalData,
+        statistics: statisticalData, // This will be empty for news summaries and historical analysis
         metadata: {
           generatedAt: new Date().toISOString(),
-          modelUsed: "gemini-1.5-flash",
-          promptVersion: "professional-v2.0",
+          modelUsed: modelName,
+          promptVersion: requestType === "news_summary" ? "news_summary_v1.0" : requestType === "historical_analysis" ? "historical_analysis_v1.0" : "professional-v2.0",
           responseLength: explanation.length,
           alertLevel: level,
           severityScore: severity,
-          includesStatistics: true,
+          includesStatistics: requestType !== "news_summary" && requestType !== "historical_analysis",
+          requestType: requestType,
         },
       },
       { status: 200 }
