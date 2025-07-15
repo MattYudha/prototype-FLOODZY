@@ -7,9 +7,9 @@ import "leaflet/dist/leaflet.css";
 import { WeatherDisplay } from "@/components/weather/WeatherDisplay";
 import { FloodAlert } from "@/components/flood/FloodAlert";
 import { DashboardStats } from "@/components/dashboard/DashboardStats";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { Badge } from "@/components/ui/Badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Loader2 } from "lucide-react";
 import {

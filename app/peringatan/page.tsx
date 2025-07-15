@@ -23,8 +23,8 @@ import {
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"; // Import Card components
-import { Badge } from "@/components/ui/badge"; // Import Badge
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card"; // Import Card components
+import { Badge } from "@/components/ui/Badge"; // Import Badge
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"; // Import Alert components
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"; // Import Tabs components
 
@@ -582,7 +582,7 @@ export default function PeringatanPage() {
               {isNewsLoading ? (
                 <div className="col-span-full text-center text-gray-400 py-8">
                   <Loader2 className="h-10 w-10 animate-spin text-orange-400 mx-auto mb-4" />
-                  <p>Memuat dan merangkum berita...</p>
+                  <p>Memuat dan merangkum berita mohon tungggu beberapa menit...</p>
                 </div>
               ) : newsError ? (
                 <div className="col-span-full bg-red-500/10 border border-red-500/20 rounded-lg p-4">
