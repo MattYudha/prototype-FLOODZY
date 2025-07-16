@@ -3,20 +3,39 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import axios from "axios";
-import {
-  MapContainer,
-  TileLayer,
-  Marker,
-  Popup,
-  useMap,
-} from "react-leaflet";
+import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import L from "leaflet";
 import {
-  Search, MapPin, Cloud, CloudRain, Wind, Thermometer, Droplets, Eye, Gauge,
-  Loader2, ChevronLeft, Filter, Layers, Maximize2, Settings, Activity, Globe,
-  Compass, Zap, TrendingUp, Navigation, AlertTriangle, Info, RefreshCw, BarChart3,
-  Satellite, Radio, Wifi, Sun, CloudSun, Moon, CloudMoon, CloudFog, CloudDrizzle,
-  Tornado, Snowflake, Sunrise, Sunset, LocateFixed, GitCommitHorizontal
+  Search,
+  MapPin,
+  Cloud,
+  CloudRain,
+  Wind,
+  Thermometer,
+  Droplets,
+  Eye,
+  Gauge,
+  Loader2,
+  Filter,
+  Layers,
+  Activity,
+  Globe,
+  Compass,
+  Zap,
+  TrendingUp,
+  AlertTriangle,
+  Wifi,
+  Sun,
+  CloudSun,
+  Moon,
+  CloudMoon,
+  CloudFog,
+  CloudDrizzle,
+  Snowflake,
+  Sunrise,
+  Sunset,
+  LocateFixed,
+  RefreshCw,
 } from "lucide-react";
 
 // Hapus 'icon' dari leaflet default agar bisa di-override
@@ -24,76 +43,257 @@ delete L.Icon.Default.prototype._getIconUrl;
 
 // Atur path ikon marker leaflet secara manual
 L.Icon.Default.mergeOptions({
-  iconRetinaUrl: "https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon-2x.png",
+  iconRetinaUrl:
+    "https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon-2x.png",
   iconUrl: "https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png",
   shadowUrl: "https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png",
 });
 
-// Mock UI Components (sudah baik, tidak perlu diubah)
-const Card = ({ children, className = "" }) => <div className={`bg-slate-800/60 backdrop-blur-xl border border-slate-700/50 rounded-2xl shadow-2xl ${className}`}>{children}</div>;
-const CardContent = ({ children, className = "" }) => <div className={`p-6 ${className}`}>{children}</div>;
-const CardHeader = ({ children, className = "" }) => <div className={`p-6 pb-2 ${className}`}>{children}</div>;
-const CardTitle = ({ children, className = "" }) => <h3 className={`text-lg font-semibold ${className}`}>{children}</h3>;
-const Button = ({ children, onClick, variant = "default", size = "default", className = "", disabled = false }) => {
-  const baseClasses = "inline-flex items-center justify-center rounded-xl font-medium transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500/50";
-  const variants = { default: "bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white shadow-lg shadow-blue-500/25", ghost: "bg-transparent hover:bg-slate-700/30 text-slate-300 hover:text-white", outline: "border border-slate-600 bg-transparent hover:bg-slate-700/30 text-slate-300 hover:text-white", };
-  const sizes = { default: "px-4 py-2 text-sm", sm: "px-3 py-1.5 text-xs", lg: "px-6 py-3 text-base", icon: "p-2 w-10 h-10", };
-  return <button onClick={onClick} disabled={disabled} className={`${baseClasses} ${variants[variant]} ${sizes[size]} ${disabled ? 'opacity-50 cursor-not-allowed' : ''} ${className}`}>{children}</button>;
+// --- UI Components (Tidak ada perubahan) ---
+const Card = ({ children, className = "" }) => (
+  <div
+    className={`bg-slate-800/60 backdrop-blur-xl border border-slate-700/50 rounded-2xl shadow-2xl ${className}`}
+  >
+    {children}
+  </div>
+);
+const CardContent = ({ children, className = "" }) => (
+  <div className={`p-6 ${className}`}>{children}</div>
+);
+const CardHeader = ({ children, className = "" }) => (
+  <div className={`p-6 pb-2 ${className}`}>{children}</div>
+);
+const CardTitle = ({ children, className = "" }) => (
+  <h3 className={`text-lg font-semibold ${className}`}>{children}</h3>
+);
+const Button = ({
+  children,
+  onClick,
+  variant = "default",
+  size = "default",
+  className = "",
+  disabled = false,
+}) => {
+  const baseClasses =
+    "inline-flex items-center justify-center rounded-xl font-medium transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500/50";
+  const variants = {
+    default:
+      "bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white shadow-lg shadow-blue-500/25",
+    ghost:
+      "bg-transparent hover:bg-slate-700/30 text-slate-300 hover:text-white",
+    outline:
+      "border border-slate-600 bg-transparent hover:bg-slate-700/30 text-slate-300 hover:text-white",
+  };
+  const sizes = {
+    default: "px-4 py-2 text-sm",
+    sm: "px-3 py-1.5 text-xs",
+    lg: "px-6 py-3 text-base",
+    icon: "p-2 w-10 h-10",
+  };
+  return (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      className={`${baseClasses} ${variants[variant]} ${sizes[size]} ${
+        disabled ? "opacity-50 cursor-not-allowed" : ""
+      } ${className}`}
+    >
+      {children}
+    </button>
+  );
 };
-const Input = ({ type = "text", placeholder, value, onChange, onKeyPress, disabled = false, className = "" }) => <input type={type} placeholder={placeholder} value={value} onChange={onChange} onKeyPress={onKeyPress} disabled={disabled} className={`w-full px-4 py-3 bg-slate-800/50 border border-slate-600/50 rounded-xl text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all duration-300 ${className}`} />;
+const Input = ({
+  type = "text",
+  placeholder,
+  value,
+  onChange,
+  onKeyPress,
+  disabled = false,
+  className = "",
+}) => (
+  <input
+    type={type}
+    placeholder={placeholder}
+    value={value}
+    onChange={onChange}
+    onKeyPress={onKeyPress}
+    disabled={disabled}
+    className={`w-full px-4 py-3 bg-slate-800/50 border border-slate-600/50 rounded-xl text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all duration-300 ${className}`}
+  />
+);
 const Badge = ({ children, variant = "default", className = "" }) => {
-  const variants = { default: "bg-blue-600/20 text-blue-400 border-blue-500/30", outline: "border border-slate-600 bg-transparent text-slate-300", success: "bg-green-600/20 text-green-400 border-green-500/30", warning: "bg-yellow-600/20 text-yellow-400 border-yellow-500/30", danger: "bg-red-600/20 text-red-400 border-red-500/30", };
-  return <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border ${variants[variant]} ${className}`}>{children}</span>;
+  const variants = {
+    default: "bg-blue-600/20 text-blue-400 border-blue-500/30",
+    outline: "border border-slate-600 bg-transparent text-slate-300",
+    success: "bg-green-600/20 text-green-400 border-green-500/30",
+    warning: "bg-yellow-600/20 text-yellow-400 border-yellow-500/30",
+    danger: "bg-red-600/20 text-red-400 border-red-500/30",
+  };
+  return (
+    <span
+      className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border ${variants[variant]} ${className}`}
+    >
+      {children}
+    </span>
+  );
 };
 const Alert = ({ children, variant = "default", className = "" }) => {
-  const variants = { default: "bg-slate-800/50 border-slate-600/50 text-slate-200", destructive: "bg-red-900/20 border-red-500/50 text-red-400", warning: "bg-yellow-900/20 border-yellow-500/50 text-yellow-400", success: "bg-green-900/20 border-green-500/50 text-green-400", };
-  return <div className={`p-4 rounded-xl border ${variants[variant]} ${className}`}>{children}</div>;
+  const variants = {
+    default: "bg-slate-800/50 border-slate-600/50 text-slate-200",
+    destructive: "bg-red-900/20 border-red-500/50 text-red-400",
+    warning: "bg-yellow-900/20 border-yellow-500/50 text-yellow-400",
+    success: "bg-green-900/20 border-green-500/50 text-green-400",
+  };
+  return (
+    <div className={`p-4 rounded-xl border ${variants[variant]} ${className}`}>
+      {children}
+    </div>
+  );
 };
-const AlertDescription = ({ children, className = "" }) => <p className={`text-sm ${className}`}>{children}</p>;
-const Switch = ({ checked, onCheckedChange, className = "" }) => <button onClick={() => onCheckedChange(!checked)} className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2 ${checked ? 'bg-blue-600' : 'bg-slate-600'} ${className}`}><span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${checked ? 'translate-x-6' : 'translate-x-1'}`} /></button>;
+const AlertDescription = ({ children, className = "" }) => (
+  <p className={`text-sm ${className}`}>{children}</p>
+);
+const Switch = ({ checked, onCheckedChange, className = "" }) => (
+  <button
+    onClick={() => onCheckedChange(!checked)}
+    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2 ${
+      checked ? "bg-blue-600" : "bg-slate-600"
+    } ${className}`}
+  >
+    <span
+      className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+        checked ? "translate-x-6" : "translate-x-1"
+      }`}
+    />
+  </button>
+);
 
-// Helper function untuk mendapatkan ikon cuaca yang sesuai
-const getWeatherIcon = (iconCode, size = 8) => {
+// --- Helper Functions (Tidak ada perubahan) ---
+const getWeatherIcon = (iconCode: string, size = 8) => {
   const props = { className: `w-${size} h-${size} text-white` };
   switch (iconCode) {
-    case "01d": return <Sun {...props} />;
-    case "01n": return <Moon {...props} />;
-    case "02d": return <CloudSun {...props} />;
-    case "02n": return <CloudMoon {...props} />;
+    case "01d":
+      return <Sun {...props} />;
+    case "01n":
+      return <Moon {...props} />;
+    case "02d":
+      return <CloudSun {...props} />;
+    case "02n":
+      return <CloudMoon {...props} />;
     case "03d":
-    case "03n": return <Cloud {...props} />;
+    case "03n":
+      return <Cloud {...props} />;
     case "04d":
-    case "04n": return <Cloud {...props} />;
+    case "04n":
+      return <Cloud {...props} />;
     case "09d":
-    case "09n": return <CloudDrizzle {...props} />;
+    case "09n":
+      return <CloudDrizzle {...props} />;
     case "10d":
-    case "10n": return <CloudRain {...props} />;
+    case "10n":
+      return <CloudRain {...props} />;
     case "11d":
-    case "11n": return <Zap {...props} />;
+    case "11n":
+      return <Zap {...props} />;
     case "13d":
-    case "13n": return <Snowflake {...props} />;
+    case "13n":
+      return <Snowflake {...props} />;
     case "50d":
-    case "50n": return <CloudFog {...props} />;
-    default: return <Cloud {...props} />;
+    case "50n":
+      return <CloudFog {...props} />;
+    default:
+      return <Cloud {...props} />;
   }
 };
+const formatDay = (timestamp: number) => {
+  return new Date(timestamp * 1000).toLocaleDateString("id-ID", {
+    weekday: "short",
+  });
+};
 
-// Helper function untuk format tanggal
-const formatDay = (timestamp) => {
-  const date = new Date(timestamp * 1000);
-  return date.toLocaleDateString("id-ID", { weekday: 'short' });
-}
-
-// Data Wilayah (Bisa diganti dengan data dari API jika ada)
+// --- Data & Komponen Statis (Tidak ada perubahan) ---
 const regionData = [
-  { name: "Jakarta Pusat", lat: -6.1751, lon: 106.8650 },
+  { name: "Jakarta Pusat", lat: -6.1751, lon: 106.865 },
   { name: "Bandung", lat: -6.9175, lon: 107.6191 },
   { name: "Surabaya", lat: -7.2575, lon: 112.7521 },
   { name: "Yogyakarta", lat: -7.7956, lon: 110.3695 },
   { name: "Medan", lat: 3.5952, lon: 98.6722 },
 ];
+const RegionDropdown = ({ onSelectRegion, selectedLocation }: any) => {
+  return (
+    <div className="space-y-2">
+      {regionData.map((region) => (
+        <button
+          key={region.name}
+          onClick={() => onSelectRegion(region)}
+          className={`w-full text-left p-3 rounded-xl border transition-all duration-300 flex items-center space-x-3 ${
+            selectedLocation?.name === region.name
+              ? "bg-blue-600/20 border-blue-500/50 text-blue-400"
+              : "bg-slate-700/30 border-slate-600/30 text-slate-300 hover:bg-slate-600/40"
+          }`}
+        >
+          <MapPin className="w-4 h-4" />
+          <span className="font-medium">{region.name}</span>
+        </button>
+      ))}
+    </div>
+  );
+};
+const MapUpdater = ({ center, zoom }: any) => {
+  const map = useMap();
+  useEffect(() => {
+    if (center) {
+      map.setView(center, zoom);
+    }
+  }, [center, zoom, map]);
+  return null;
+};
+const WeatherMap = ({
+  center,
+  zoom,
+  weatherLayers,
+  selectedLocation,
+  apiKey,
+}: any) => {
+  const layerUrls: { [key: string]: string } = {
+    clouds: `https://tile.openweathermap.org/map/clouds_new/{z}/{x}/{y}.png?appid=${apiKey}`,
+    precipitation: `https://tile.openweathermap.org/map/precipitation_new/{z}/{x}/{y}.png?appid=${apiKey}`,
+    pressure: `https://tile.openweathermap.org/map/pressure_new/{z}/{x}/{y}.png?appid=${apiKey}`,
+    wind: `https://tile.openweathermap.org/map/wind_new/{z}/{x}/{y}.png?appid=${apiKey}`,
+    temperature: `https://tile.openweathermap.org/map/temp_new/{z}/{x}/{y}.png?appid=${apiKey}`,
+  };
+  return (
+    <MapContainer
+      center={center}
+      zoom={zoom}
+      style={{
+        height: "100%",
+        width: "100%",
+        backgroundColor: "#1e293b",
+        borderRadius: "1rem",
+      }}
+      zoomControl={false}
+    >
+      <TileLayer
+        url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+      />
+      {selectedLocation && (
+        <Marker position={[selectedLocation.lat, selectedLocation.lon]}>
+          <Popup>{selectedLocation.name}</Popup>
+        </Marker>
+      )}
+      {Object.entries(weatherLayers).map(
+        ([key, value]) =>
+          value && <TileLayer key={key} url={layerUrls[key]} opacity={0.7} />
+      )}
+      <MapUpdater center={center} zoom={zoom} />
+    </MapContainer>
+  );
+};
 
-const WeatherDisplay = ({ data, loading, error }) => {
+// --- Komponen Display (Ada Perubahan) ---
+const WeatherDisplay = ({ data, loading, error }: any) => {
   if (loading) {
     return (
       <Card className="h-full flex items-center justify-center">
@@ -120,13 +320,16 @@ const WeatherDisplay = ({ data, loading, error }) => {
     );
   }
 
+  // ✅ PERBAIKAN: Cek data.current yang sekarang berasal dari endpoint 2.5/weather
   if (!data || !data.current) {
     return (
       <Card className="border-slate-600/30">
         <CardContent>
           <div className="text-center py-8">
             <Cloud className="w-16 h-16 text-slate-600 mx-auto mb-4" />
-            <p className="text-slate-400">Pilih atau cari lokasi untuk melihat cuaca</p>
+            <p className="text-slate-400">
+              Pilih atau cari lokasi untuk melihat cuaca
+            </p>
           </div>
         </CardContent>
       </Card>
@@ -151,12 +354,16 @@ const WeatherDisplay = ({ data, loading, error }) => {
               {getWeatherIcon(current.weather[0].icon, 10)}
             </div>
             <div>
-              <div className="text-5xl font-bold text-white mb-1">{Math.round(current.temp)}°C</div>
-              <div className="text-slate-300 capitalize">{current.weather[0].description}</div>
+              <div className="text-5xl font-bold text-white mb-1">
+                {Math.round(current.main.temp)}°C
+              </div>
+              <div className="text-slate-300 capitalize">
+                {current.weather[0].description}
+              </div>
             </div>
           </div>
           <div className="text-sm text-slate-400">
-            Terasa seperti {Math.round(current.feels_like)}°C
+            Terasa seperti {Math.round(current.main.feels_like)}°C
           </div>
         </div>
 
@@ -165,192 +372,182 @@ const WeatherDisplay = ({ data, loading, error }) => {
             <Droplets className="w-5 h-5 text-blue-400" />
             <div>
               <span className="text-xs text-slate-400">Kelembaban</span>
-              <div className="font-semibold text-white">{current.humidity}%</div>
+              <div className="font-semibold text-white">
+                {current.main.humidity}%
+              </div>
             </div>
           </div>
           <div className="bg-slate-700/30 rounded-xl p-4 border border-slate-600/20 flex items-center space-x-3">
             <Wind className="w-5 h-5 text-green-400" />
             <div>
               <span className="text-xs text-slate-400">Angin</span>
-              <div className="font-semibold text-white">{current.wind_speed.toFixed(1)} m/s</div>
+              <div className="font-semibold text-white">
+                {current.wind.speed.toFixed(1)} m/s
+              </div>
             </div>
           </div>
           <div className="bg-slate-700/30 rounded-xl p-4 border border-slate-600/20 flex items-center space-x-3">
             <Gauge className="w-5 h-5 text-purple-400" />
             <div>
               <span className="text-xs text-slate-400">Tekanan</span>
-              <div className="font-semibold text-white">{current.pressure} hPa</div>
+              <div className="font-semibold text-white">
+                {current.main.pressure} hPa
+              </div>
             </div>
           </div>
           <div className="bg-slate-700/30 rounded-xl p-4 border border-slate-600/20 flex items-center space-x-3">
             <Eye className="w-5 h-5 text-orange-400" />
             <div>
               <span className="text-xs text-slate-400">Visibilitas</span>
-              <div className="font-semibold text-white">{(current.visibility / 1000).toFixed(1)} km</div>
+              <div className="font-semibold text-white">
+                {(current.visibility / 1000).toFixed(1)} km
+              </div>
             </div>
           </div>
         </div>
 
         <div className="flex justify-around text-center text-sm">
-            <div className="flex items-center space-x-2">
-                <Sunrise className="w-6 h-6 text-yellow-400" />
-                <div>
-                    <div className="text-xs text-slate-400">Terbit</div>
-                    <div className="font-semibold text-white">{new Date(current.sunrise * 1000).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}</div>
-                </div>
+          <div className="flex items-center space-x-2">
+            <Sunrise className="w-6 h-6 text-yellow-400" />
+            <div>
+              <div className="text-xs text-slate-400">Terbit</div>
+              <div className="font-semibold text-white">
+                {new Date(current.sys.sunrise * 1000).toLocaleTimeString(
+                  "id-ID",
+                  { hour: "2-digit", minute: "2-digit" }
+                )}
+              </div>
             </div>
-            <div className="flex items-center space-x-2">
-                <Sunset className="w-6 h-6 text-orange-500" />
-                <div>
-                    <div className="text-xs text-slate-400">Terbenam</div>
-                    <div className="font-semibold text-white">{new Date(current.sunset * 1000).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}</div>
-                </div>
+          </div>
+          <div className="flex items-center space-x-2">
+            <Sunset className="w-6 h-6 text-orange-500" />
+            <div>
+              <div className="text-xs text-slate-400">Terbenam</div>
+              <div className="font-semibold text-white">
+                {new Date(current.sys.sunset * 1000).toLocaleTimeString(
+                  "id-ID",
+                  { hour: "2-digit", minute: "2-digit" }
+                )}
+              </div>
             </div>
+          </div>
         </div>
       </CardContent>
     </Card>
   );
 };
 
-const DailyForecast = ({ data, loading }) => {
-    if (loading || !data || !data.daily) return null;
-
-    return (
-        <Card>
-            <CardHeader>
-                <CardTitle className="text-white flex items-center space-x-2">
-                    <TrendingUp className="w-5 h-5 text-green-400" />
-                    <span>Prakiraan 7 Hari</span>
-                </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2">
-                {data.daily.slice(1, 8).map((day, index) => (
-                    <div key={index} className="flex items-center justify-between p-2 rounded-lg hover:bg-slate-700/30 transition-colors">
-                        <span className="font-medium text-slate-300 w-1/4">{formatDay(day.dt)}</span>
-                        <div className="w-1/4 flex justify-center">
-                            {getWeatherIcon(day.weather[0].icon, 6)}
-                        </div>
-                        <span className="text-xs text-slate-400 w-1/4 text-center capitalize">{day.weather[0].description}</span>
-                        <span className="font-mono text-sm text-white w-1/4 text-right">
-                            {Math.round(day.temp.max)}° / {Math.round(day.temp.min)}°
-                        </span>
-                    </div>
-                ))}
-            </CardContent>
-        </Card>
-    )
-}
-
-const RegionDropdown = ({ onSelectRegion, selectedLocation }) => {
-  return (
-    <div className="space-y-2">
-      {regionData.map((region) => (
-        <button
-          key={region.name}
-          onClick={() => onSelectRegion(region)}
-          className={`w-full text-left p-3 rounded-xl border transition-all duration-300 flex items-center space-x-3 ${
-            selectedLocation?.name === region.name
-              ? 'bg-blue-600/20 border-blue-500/50 text-blue-400'
-              : 'bg-slate-700/30 border-slate-600/30 text-slate-300 hover:bg-slate-600/40'
-          }`}
-        >
-          <MapPin className="w-4 h-4" />
-          <span className="font-medium">{region.name}</span>
-        </button>
-      ))}
-    </div>
-  );
-};
-
-const MapUpdater = ({ center, zoom }) => {
-    const map = useMap();
-    useEffect(() => {
-        if(center) {
-            map.setView(center, zoom);
-        }
-    }, [center, zoom, map]);
-    return null;
-}
-
-const WeatherMap = ({ center, zoom, weatherLayers, selectedLocation, apiKey }) => {
-  const layerUrls = {
-    clouds: `https://tile.openweathermap.org/map/clouds_new/{z}/{x}/{y}.png?appid=${apiKey}`,
-    precipitation: `https://tile.openweathermap.org/map/precipitation_new/{z}/{x}/{y}.png?appid=${apiKey}`,
-    pressure: `https://tile.openweathermap.org/map/pressure_new/{z}/{x}/{y}.png?appid=${apiKey}`,
-    wind: `https://tile.openweathermap.org/map/wind_new/{z}/{x}/{y}.png?appid=${apiKey}`,
-    temperature: `https://tile.openweathermap.org/map/temp_new/{z}/{x}/{y}.png?appid=${apiKey}`,
-  };
+const DailyForecast = ({ data, loading }: any) => {
+  // ✅ PERBAIKAN: Cek data.daily yang sekarang berasal dari endpoint 2.5/forecast
+  if (loading || !data || !data.daily) return null;
 
   return (
-    <MapContainer
-      center={center}
-      zoom={zoom}
-      style={{ height: "100%", width: "100%", backgroundColor: '#1e293b', borderRadius: '1rem' }}
-      zoomControl={false}
-    >
-      <TileLayer
-        url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
-      />
-      {selectedLocation && (
-        <Marker position={[selectedLocation.lat, selectedLocation.lon]}>
-          <Popup>{selectedLocation.name}</Popup>
-        </Marker>
-      )}
-
-      {Object.entries(weatherLayers).map(([key, value]) => 
-        value && <TileLayer key={key} url={layerUrls[key]} opacity={0.7} />
-      )}
-      
-      <MapUpdater center={center} zoom={zoom} />
-    </MapContainer>
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-white flex items-center space-x-2">
+          <TrendingUp className="w-5 h-5 text-green-400" />
+          {/* ✅ PERBAIKAN: Judul menjadi 5 hari */}
+          <span>Prakiraan 5 Hari</span>
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-2">
+        {/* ✅ PERBAIKAN: Iterasi data dari struktur baru */}
+        {data.daily.map((day: any, index: number) => (
+          <div
+            key={index}
+            className="flex items-center justify-between p-2 rounded-lg hover:bg-slate-700/30 transition-colors"
+          >
+            <span className="font-medium text-slate-300 w-1/4">
+              {formatDay(day.dt)}
+            </span>
+            <div className="w-1/4 flex justify-center">
+              {getWeatherIcon(day.weather[0].icon, 6)}
+            </div>
+            <span className="text-xs text-slate-400 w-1/4 text-center capitalize">
+              {day.weather[0].description}
+            </span>
+            <span className="font-mono text-sm text-white w-1/4 text-right">
+              {Math.round(day.main.temp_max)}° / {Math.round(day.main.temp_min)}
+              °
+            </span>
+          </div>
+        ))}
+      </CardContent>
+    </Card>
   );
 };
-
 
 export default function PrakiraanCuacaPage() {
   const API_KEY = process.env.NEXT_PUBLIC_OPENWEATHER_API_KEY;
 
-  const [selectedLocation, setSelectedLocation] = useState(null);
-  const [currentMapCenter, setCurrentMapCenter] = useState([-6.1751, 106.8650]);
+  const [selectedLocation, setSelectedLocation] = useState<any>(null);
+  const [currentMapCenter, setCurrentMapCenter] = useState([-6.1751, 106.865]);
   const [currentMapZoom, setCurrentMapZoom] = useState(10);
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearchingLocation, setIsSearchingLocation] = useState(false);
-  const [searchLocationError, setSearchLocationError] = useState(null);
-  
-  const [currentWeatherData, setCurrentWeatherData] = useState(null);
+  const [searchLocationError, setSearchLocationError] = useState<string | null>(
+    null
+  );
+
+  const [currentWeatherData, setCurrentWeatherData] = useState<any>(null);
   const [loadingWeather, setLoadingWeather] = useState(false);
-  const [weatherError, setWeatherError] = useState(null);
-  
+  const [weatherError, setWeatherError] = useState<string | null>(null);
+
   const [showFilters, setShowFilters] = useState(true);
   const [weatherLayers, setWeatherLayers] = useState({
-    clouds: true, precipitation: false, temperature: false, wind: false, pressure: false,
+    clouds: true,
+    precipitation: false,
+    temperature: false,
+    wind: false,
+    pressure: false,
   });
 
-  // Effect untuk mengambil data cuaca ketika lokasi berubah
+  // ✅ PERBAIKAN TOTAL: Menggunakan 2 endpoint gratis dan menggabungkan datanya
   useEffect(() => {
     if (selectedLocation) {
       const fetchWeatherData = async () => {
         setLoadingWeather(true);
         setWeatherError(null);
         setCurrentWeatherData(null);
+
+        const weatherUrl = "https://api.openweathermap.org/data/2.5/weather";
+        const forecastUrl = "https://api.openweathermap.org/data/2.5/forecast";
+
+        const commonParams = {
+          lat: selectedLocation.lat,
+          lon: selectedLocation.lon,
+          appid: API_KEY,
+          units: "metric",
+          lang: "id",
+        };
+
         try {
-          const response = await axios.get('https://api.openweathermap.org/data/3.0/onecall', {
-            params: {
-              lat: selectedLocation.lat,
-              lon: selectedLocation.lon,
-              exclude: 'minutely,alerts',
-              appid: API_KEY,
-              units: 'metric',
-              lang: 'id'
-            }
-          });
-          setCurrentWeatherData(response.data);
+          // Lakukan 2 panggilan API secara bersamaan
+          const [weatherResponse, forecastResponse] = await Promise.all([
+            axios.get(weatherUrl, { params: commonParams }),
+            axios.get(forecastUrl, { params: commonParams }),
+          ]);
+
+          // Proses data prakiraan untuk mendapatkan 1 data per hari
+          const dailyForecasts = forecastResponse.data.list.filter(
+            (forecast: any) => forecast.dt_txt.includes("12:00:00")
+          );
+
+          // Gabungkan hasil dari 2 API menjadi satu objek state
+          const formattedData = {
+            current: weatherResponse.data,
+            daily: dailyForecasts,
+          };
+
+          setCurrentWeatherData(formattedData);
           setCurrentMapCenter([selectedLocation.lat, selectedLocation.lon]);
           setCurrentMapZoom(12);
-        } catch (error) {
+        } catch (error: any) {
           console.error("Error fetching weather data:", error);
-          setWeatherError("Gagal mengambil data cuaca. Coba lagi nanti.");
+          const errorMessage =
+            error.response?.data?.message ||
+            "Gagal mengambil data cuaca. Coba lagi nanti.";
+          setWeatherError(errorMessage);
         } finally {
           setLoadingWeather(false);
         }
@@ -360,24 +557,26 @@ export default function PrakiraanCuacaPage() {
     }
   }, [selectedLocation, API_KEY]);
 
-
-  const handleRegionSelect = (region) => {
+  const handleRegionSelect = (region: any) => {
     setSelectedLocation({
-        name: region.name,
-        lat: region.lat,
-        lon: region.lon,
+      name: region.name,
+      lat: region.lat,
+      lon: region.lon,
     });
   };
 
   const handleSearchLocation = async () => {
-    if (!searchQuery.trim()) return;
+    if (!searchQuery.trim() || !API_KEY) return;
 
     setIsSearchingLocation(true);
     setSearchLocationError(null);
     try {
-      const response = await axios.get('https://api.openweathermap.org/geo/1.0/direct', {
-          params: { q: searchQuery, limit: 1, appid: API_KEY }
-      });
+      const response = await axios.get(
+        "https://api.openweathermap.org/geo/1.0/direct",
+        {
+          params: { q: searchQuery, limit: 1, appid: API_KEY },
+        }
+      );
       if (response.data && response.data.length > 0) {
         const { name, lat, lon, country, state } = response.data[0];
         setSelectedLocation({ name: `${name}, ${state || country}`, lat, lon });
@@ -395,71 +594,142 @@ export default function PrakiraanCuacaPage() {
 
   const handleGetCurrentLocation = () => {
     if (navigator.geolocation) {
-        setIsSearchingLocation(true);
-        navigator.geolocation.getCurrentPosition(
-            async (position) => {
-                const { latitude, longitude } = position.coords;
-                try {
-                    const response = await axios.get('https://api.openweathermap.org/geo/1.0/reverse', {
-                        params: { lat: latitude, lon: longitude, limit: 1, appid: API_KEY }
-                    });
-                     if (response.data && response.data.length > 0) {
-                        const { name, country, state } = response.data[0];
-                        setSelectedLocation({ name: `${name}, ${state || country}`, lat: latitude, lon: longitude });
-                    } else {
-                        setSelectedLocation({ name: "Lokasi Saat Ini", lat: latitude, lon: longitude });
-                    }
-                } catch (error) {
-                    setSearchLocationError("Gagal mendapatkan nama lokasi.");
-                    setSelectedLocation({ name: "Lokasi Saat Ini", lat: latitude, lon: longitude });
-                } finally {
-                    setIsSearchingLocation(false);
-                }
-            },
-            (error) => {
-                setSearchLocationError("Gagal mengakses lokasi. Izinkan akses di browser Anda.");
-                setIsSearchingLocation(false);
+      setIsSearchingLocation(true);
+      navigator.geolocation.getCurrentPosition(
+        async (position) => {
+          const { latitude, longitude } = position.coords;
+          try {
+            const response = await axios.get(
+              "https://api.openweathermap.org/geo/1.0/reverse",
+              {
+                params: {
+                  lat: latitude,
+                  lon: longitude,
+                  limit: 1,
+                  appid: API_KEY,
+                },
+              }
+            );
+            if (response.data && response.data.length > 0) {
+              const { name, country, state } = response.data[0];
+              setSelectedLocation({
+                name: `${name}, ${state || country}`,
+                lat: latitude,
+                lon: longitude,
+              });
+            } else {
+              setSelectedLocation({
+                name: "Lokasi Saat Ini",
+                lat: latitude,
+                lon: longitude,
+              });
             }
-        );
+          } catch (error) {
+            setSearchLocationError("Gagal mendapatkan nama lokasi.");
+            setSelectedLocation({
+              name: "Lokasi Saat Ini",
+              lat: latitude,
+              lon: longitude,
+            });
+          } finally {
+            setIsSearchingLocation(false);
+          }
+        },
+        (error) => {
+          setSearchLocationError(
+            "Gagal mengakses lokasi. Izinkan akses di browser Anda."
+          );
+          setIsSearchingLocation(false);
+        }
+      );
     } else {
-        setSearchLocationError("Geolocation tidak didukung oleh browser ini.");
+      setSearchLocationError("Geolocation tidak didukung oleh browser ini.");
     }
-  }
-
-  const toggleWeatherLayer = (layerName) => {
-    setWeatherLayers(prev => ({ ...prev, [layerName]: !prev[layerName] }));
   };
-  
+
+  const toggleWeatherLayer = (layerName: string) => {
+    setWeatherLayers((prev) => ({ ...prev, [layerName]: !prev[layerName] }));
+  };
+
   const weatherLayerConfigs = [
-    { key: "clouds", label: "Awan", icon: Cloud, color: "text-gray-400", description: "Tutupan awan" },
-    { key: "precipitation", label: "Curah Hujan", icon: CloudRain, color: "text-blue-400", description: "Intensitas hujan" },
-    { key: "temperature", label: "Suhu", icon: Thermometer, color: "text-red-400", description: "Distribusi suhu" },
-    { key: "wind", label: "Angin", icon: Wind, color: "text-green-400", description: "Kecepatan angin" },
-    { key: "pressure", label: "Tekanan", icon: Gauge, color: "text-purple-400", description: "Tekanan atmosfer" },
+    {
+      key: "clouds",
+      label: "Awan",
+      icon: Cloud,
+      color: "text-gray-400",
+      description: "Tutupan awan",
+    },
+    {
+      key: "precipitation",
+      label: "Curah Hujan",
+      icon: CloudRain,
+      color: "text-blue-400",
+      description: "Intensitas hujan",
+    },
+    {
+      key: "temperature",
+      label: "Suhu",
+      icon: Thermometer,
+      color: "text-red-400",
+      description: "Distribusi suhu",
+    },
+    {
+      key: "wind",
+      label: "Angin",
+      icon: Wind,
+      color: "text-green-400",
+      description: "Kecepatan angin",
+    },
+    {
+      key: "pressure",
+      label: "Tekanan",
+      icon: Gauge,
+      color: "text-purple-400",
+      description: "Tekanan atmosfer",
+    },
   ];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-white">
-      {/* Header */}
       <header className="sticky top-0 z-50 border-b border-slate-800/50 bg-slate-900/50 backdrop-blur-xl">
         <div className="max-w-screen-2xl mx-auto px-6 py-3">
-          <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="flex items-center justify-between">
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex items-center justify-between"
+          >
             <div className="flex items-center space-x-4">
-               <div className="w-10 h-10 flex items-center justify-center bg-gradient-to-br from-blue-600 to-cyan-500 rounded-lg">
-                  <CloudSun className="w-6 h-6 text-white" />
-               </div>
+              <div className="w-10 h-10 flex items-center justify-center bg-gradient-to-br from-blue-600 to-cyan-500 rounded-lg">
+                <CloudSun className="w-6 h-6 text-white" />
+              </div>
               <div>
-                <h1 className="text-xl font-bold bg-gradient-to-r from-white via-blue-100 to-cyan-100 bg-clip-text text-transparent">Prakiraan Cuaca</h1>
-                <p className="text-slate-400 text-xs hidden md:block">Monitoring cuaca real-time dengan visualisasi interaktif</p>
+                <h1 className="text-xl font-bold bg-gradient-to-r from-white via-blue-100 to-cyan-100 bg-clip-text text-transparent">
+                  Prakiraan Cuaca
+                </h1>
+                <p className="text-slate-400 text-xs hidden md:block">
+                  Monitoring cuaca real-time dengan visualisasi interaktif
+                </p>
               </div>
             </div>
             <div className="flex items-center space-x-2">
               <Badge variant={API_KEY ? "success" : "danger"}>
-                {API_KEY ? <Wifi className="w-3 h-3 mr-1.5" /> : <AlertTriangle className="w-3 h-3 mr-1.5" />}
+                {API_KEY ? (
+                  <Wifi className="w-3 h-3 mr-1.5" />
+                ) : (
+                  <AlertTriangle className="w-3 h-3 mr-1.5" />
+                )}
                 {API_KEY ? "Online" : "API Key Error"}
               </Badge>
-              <Button variant="ghost" size="icon" onClick={() => selectedLocation && handleRegionSelect(selectedLocation)}>
-                <RefreshCw className={`w-4 h-4 ${loadingWeather ? 'animate-spin' : ''}`} />
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() =>
+                  selectedLocation && handleRegionSelect(selectedLocation)
+                }
+              >
+                <RefreshCw
+                  className={`w-4 h-4 ${loadingWeather ? "animate-spin" : ""}`}
+                />
               </Button>
             </div>
           </motion.div>
@@ -468,8 +738,12 @@ export default function PrakiraanCuacaPage() {
 
       <main className="max-w-screen-2xl mx-auto px-6 py-6">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          {/* Left Sidebar */}
-          <motion.aside initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.1 }} className="lg:col-span-3 space-y-6">
+          <motion.aside
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.1 }}
+            className="lg:col-span-3 space-y-6"
+          >
             <Card>
               <CardHeader>
                 <CardTitle className="text-white flex items-center space-x-2">
@@ -479,18 +753,42 @@ export default function PrakiraanCuacaPage() {
               </CardHeader>
               <CardContent className="space-y-3">
                 <div className="relative">
-                  <Input placeholder="Cari kota atau wilayah..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} onKeyPress={(e) => e.key === "Enter" && handleSearchLocation()} disabled={isSearchingLocation} className="pl-4" />
-                   {isSearchingLocation && <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-blue-400 animate-spin" />}
+                  <Input
+                    placeholder="Cari kota atau wilayah..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onKeyPress={(e) =>
+                      e.key === "Enter" && handleSearchLocation()
+                    }
+                    disabled={isSearchingLocation}
+                    className="pl-4"
+                  />
+                  {isSearchingLocation && (
+                    <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-blue-400 animate-spin" />
+                  )}
                 </div>
                 <div className="flex space-x-2">
-                    <Button onClick={handleSearchLocation} disabled={isSearchingLocation || !searchQuery.trim()} className="w-full">
-                        <Search className="w-4 h-4 mr-2" /> Cari
-                    </Button>
-                    <Button onClick={handleGetCurrentLocation} variant="outline" size="icon" disabled={isSearchingLocation}>
-                        <LocateFixed className="w-4 h-4" />
-                    </Button>
+                  <Button
+                    onClick={handleSearchLocation}
+                    disabled={isSearchingLocation || !searchQuery.trim()}
+                    className="w-full"
+                  >
+                    <Search className="w-4 h-4 mr-2" /> Cari
+                  </Button>
+                  <Button
+                    onClick={handleGetCurrentLocation}
+                    variant="outline"
+                    size="icon"
+                    disabled={isSearchingLocation}
+                  >
+                    <LocateFixed className="w-4 h-4" />
+                  </Button>
                 </div>
-                {searchLocationError && <Alert variant="destructive"><AlertDescription>{searchLocationError}</AlertDescription></Alert>}
+                {searchLocationError && (
+                  <Alert variant="destructive">
+                    <AlertDescription>{searchLocationError}</AlertDescription>
+                  </Alert>
+                )}
               </CardContent>
             </Card>
 
@@ -502,7 +800,10 @@ export default function PrakiraanCuacaPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <RegionDropdown onSelectRegion={handleRegionSelect} selectedLocation={selectedLocation} />
+                <RegionDropdown
+                  onSelectRegion={handleRegionSelect}
+                  selectedLocation={selectedLocation}
+                />
               </CardContent>
             </Card>
 
@@ -513,25 +814,45 @@ export default function PrakiraanCuacaPage() {
                     <Layers className="w-5 h-5 text-purple-400" />
                     <span>Layer Peta</span>
                   </CardTitle>
-                  <Button variant="ghost" size="icon" onClick={() => setShowFilters(!showFilters)}>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setShowFilters(!showFilters)}
+                  >
                     <Filter className="w-4 h-4" />
                   </Button>
                 </div>
               </CardHeader>
               <AnimatePresence>
                 {showFilters && (
-                  <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }}>
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                  >
                     <CardContent className="space-y-3">
                       {weatherLayerConfigs.map((layer) => (
-                        <div key={layer.key} className="flex items-center justify-between p-3 rounded-xl bg-slate-700/20 border border-slate-600/20">
+                        <div
+                          key={layer.key}
+                          className="flex items-center justify-between p-3 rounded-xl bg-slate-700/20 border border-slate-600/20"
+                        >
                           <div className="flex items-center space-x-3">
                             <layer.icon className={`w-4 h-4 ${layer.color}`} />
                             <div>
-                              <span className="text-sm font-medium text-slate-200">{layer.label}</span>
-                              <p className="text-xs text-slate-400">{layer.description}</p>
+                              <span className="text-sm font-medium text-slate-200">
+                                {layer.label}
+                              </span>
+                              <p className="text-xs text-slate-400">
+                                {layer.description}
+                              </p>
                             </div>
                           </div>
-                          <Switch checked={weatherLayers[layer.key]} onCheckedChange={() => toggleWeatherLayer(layer.key)} />
+                          <Switch
+                            checked={weatherLayers[layer.key]}
+                            onCheckedChange={() =>
+                              toggleWeatherLayer(layer.key)
+                            }
+                          />
                         </div>
                       ))}
                     </CardContent>
@@ -541,37 +862,60 @@ export default function PrakiraanCuacaPage() {
             </Card>
           </motion.aside>
 
-          {/* Center - Weather Map */}
-          <motion.section initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="lg:col-span-5">
-             <Card className="h-full">
-               <CardHeader className="bg-gradient-to-r from-slate-800/50 to-slate-700/50 border-b border-slate-700/50">
-                 <div className="flex items-center justify-between">
-                    <CardTitle className="text-white flex items-center space-x-2 truncate">
-                      <Globe className="w-5 h-5 text-blue-400 flex-shrink-0" />
-                      <span className="truncate">{selectedLocation?.name || "Peta Cuaca Interaktif"}</span>
-                    </CardTitle>
-                 </div>
-               </CardHeader>
-               <CardContent className="p-0">
-                 <div className="h-[500px] lg:h-[calc(100vh-140px)]">
+          <motion.section
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="lg:col-span-5"
+          >
+            <Card className="h-full">
+              <CardHeader className="bg-gradient-to-r from-slate-800/50 to-slate-700/50 border-b border-slate-700/50">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-white flex items-center space-x-2 truncate">
+                    <Globe className="w-5 h-5 text-blue-400 flex-shrink-0" />
+                    <span className="truncate">
+                      {selectedLocation?.name || "Peta Cuaca Interaktif"}
+                    </span>
+                  </CardTitle>
+                </div>
+              </CardHeader>
+              <CardContent className="p-0">
+                <div className="h-[500px] lg:h-[calc(100vh-140px)]">
                   {API_KEY ? (
-                    <WeatherMap center={currentMapCenter} zoom={currentMapZoom} weatherLayers={weatherLayers} selectedLocation={selectedLocation} apiKey={API_KEY} />
+                    <WeatherMap
+                      center={currentMapCenter}
+                      zoom={currentMapZoom}
+                      weatherLayers={weatherLayers}
+                      selectedLocation={selectedLocation}
+                      apiKey={API_KEY}
+                    />
                   ) : (
                     <div className="h-full flex items-center justify-center text-center p-4">
                       <Alert variant="destructive">
                         <AlertTriangle className="w-4 h-4" />
-                        <AlertDescription>API Key OpenWeatherMap tidak valid. Silakan periksa file .env.local Anda.</AlertDescription>
+                        <AlertDescription>
+                          API Key OpenWeatherMap tidak valid. Silakan periksa
+                          file .env.local Anda.
+                        </AlertDescription>
                       </Alert>
                     </div>
                   )}
-                 </div>
-               </CardContent>
-             </Card>
+                </div>
+              </CardContent>
+            </Card>
           </motion.section>
 
-          {/* Right Sidebar - Weather Data */}
-          <motion.aside initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.3 }} className="lg:col-span-4 space-y-6">
-            <WeatherDisplay data={currentWeatherData} loading={loadingWeather} error={weatherError} />
+          <motion.aside
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.3 }}
+            className="lg:col-span-4 space-y-6"
+          >
+            <WeatherDisplay
+              data={currentWeatherData}
+              loading={loadingWeather}
+              error={weatherError}
+            />
             <DailyForecast data={currentWeatherData} loading={loadingWeather} />
             {selectedLocation && (
               <Card>
@@ -584,17 +928,20 @@ export default function PrakiraanCuacaPage() {
                 <CardContent className="space-y-2 text-sm">
                   <div className="flex justify-between py-2 border-b border-slate-700/30">
                     <span className="text-slate-400">Latitude</span>
-                    <span className="text-white font-medium font-mono">{selectedLocation.lat.toFixed(4)}°</span>
+                    <span className="text-white font-medium font-mono">
+                      {selectedLocation.lat.toFixed(4)}°
+                    </span>
                   </div>
                   <div className="flex justify-between py-2">
                     <span className="text-slate-400">Longitude</span>
-                    <span className="text-white font-medium font-mono">{selectedLocation.lon.toFixed(4)}°</span>
+                    <span className="text-white font-medium font-mono">
+                      {selectedLocation.lon.toFixed(4)}°
+                    </span>
                   </div>
                 </CardContent>
               </Card>
             )}
           </motion.aside>
-
         </div>
       </main>
     </div>

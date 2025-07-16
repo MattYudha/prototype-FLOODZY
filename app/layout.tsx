@@ -12,6 +12,9 @@ import { useMediaQuery } from "@/hooks/useMediaQuery"; // <-- Import useMediaQue
 import { Header } from "@/components/layout/Header";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { AlertCountProvider } from "@/components/contexts/AlertCountContext";
+import "leaflet/dist/leaflet.css";
+
+// ... sisa kode layout Anda
 
 const inter = Inter({ subsets: ["latin"] });
 

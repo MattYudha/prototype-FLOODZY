@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   Layers,
   Eye,
@@ -12,12 +12,12 @@ import {
   Maximize2,
   Minimize2,
   Settings,
-  AlertTriangle // Import AlertTriangle untuk ikon peringatan
-} from 'lucide-react';
-import { Button } from '@/components/ui/Button';
-import { Card } from '@/components/ui/Card';
-import { Badge } from '@/components/ui/Badge';
-import { cn } from '@/lib/utils';
+  AlertTriangle, // Import AlertTriangle untuk ikon peringatan
+} from "lucide-react";
+import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
+import { Badge } from "@/components/ui/Badge";
+import { cn } from "@/lib/utils";
 
 interface MapControlsProps {
   onFullscreenToggle: () => void;
@@ -33,9 +33,9 @@ interface MapControlsProps {
 }
 
 const mapLayers = [
-  { id: 'street', name: 'Jalan', icon: MapPin },
-  { id: 'satellite', name: 'Satelit', icon: Navigation },
-  { id: 'terrain', name: 'Terrain', icon: Layers },
+  { id: "street", name: "Jalan", icon: MapPin },
+  { id: "satellite", name: "Satelit", icon: Navigation },
+  { id: "terrain", name: "Terrain", icon: Layers },
 ];
 
 export function MapControls({
@@ -100,7 +100,9 @@ export function MapControls({
                   {mapLayers.map((layer) => (
                     <Button
                       key={layer.id}
-                      variant={selectedLayer === layer.id ? 'secondary' : 'ghost'}
+                      variant={
+                        selectedLayer === layer.id ? "secondary" : "ghost"
+                      }
                       size="sm"
                       onClick={() => onLayerChange(layer.id)}
                       className="w-full justify-start h-8"
@@ -180,15 +182,21 @@ export function MapControls({
                 <div className="space-y-1">
                   <div className="flex items-center justify-between text-sm">
                     <span>Zona Aktif</span>
-                    <Badge variant="warning" size="sm">12</Badge>
+                    <Badge variant="warning" size="sm">
+                      12
+                    </Badge>
                   </div>
                   <div className="flex items-center justify-between text-sm">
                     <span>Peringatan</span>
-                    <Badge variant="danger" size="sm">3</Badge>
+                    <Badge variant="danger" size="sm">
+                      3
+                    </Badge>
                   </div>
                   <div className="flex items-center justify-between text-sm">
                     <span>Stasiun Online</span>
-                    <Badge variant="success" size="sm">89</Badge>
+                    <Badge variant="success" size="sm">
+                      89
+                    </Badge>
                   </div>
                 </div>
               </div>
