@@ -31,8 +31,8 @@ import {
   XCircle, // Icon untuk level danger/critical
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
-import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/Card";
+import { Badge } from "@/components/ui/Badge";
 import { MapControls } from "./MapControls";
 import { MapLegend } from "./MapLegend";
 import {

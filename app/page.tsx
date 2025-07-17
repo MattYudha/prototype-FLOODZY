@@ -8,7 +8,7 @@ import { WeatherDisplay } from "@/components/weather/WeatherDisplay";
 import { FloodAlert } from "@/components/flood/FloodAlert";
 import { DashboardStats } from "@/components/dashboard/DashboardStats";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Loader2 } from "lucide-react";
@@ -30,8 +30,8 @@ import {
   Info,
   Clock,
   Zap,
-  MessageSquare, // New import for chatbot icon
-  X, // New import for close icon
+  MessageSquare,
+  X,
 } from "lucide-react";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 import {
@@ -58,8 +58,8 @@ import {
 } from "@/lib/api";
 
 const OPEN_WEATHER_API_KEY = "b48e2782f52bd9c6783ef14a35856abc";
-const ROTATION_INTERVAL_MS = 10000; // Ganti berita setiap 10 detik (10000 ms)
-const DATA_FETCH_INTERVAL_MS = 10 * 60 * 1000; // Fetch data setiap 10 menit (600000 ms)
+const ROTATION_INTERVAL_MS = 10000;
+const DATA_FETCH_INTERVAL_MS = 10 * 60 * 1000;
 
 interface SelectedLocationDetails {
   districtCode: string;
@@ -83,7 +83,7 @@ interface FloodAlertItem {
   actions?: string[];
 }
 
-// === KOMPONEN CyclingAlertCard ===
+// === KOMPONEN CyclingAlertCard (DIPERBAIKI) ===
 const CyclingAlertCard = ({
   alerts,
   initialOffset = 0,
@@ -91,47 +91,53 @@ const CyclingAlertCard = ({
   alerts: FloodAlertItem[];
   initialOffset?: number;
 }) => {
-  const [currentIndex, setCurrentIndex] = useState(initialOffset);
+  const [currentIndex, setCurrentIndex] = useState(0);
 
   useEffect(() => {
+    // Hanya jalankan jika ada alert
     if (alerts.length > 0) {
-      setCurrentIndex((initialOffset) => initialOffset % alerts.length); // Pastikan index awal valid
+      // Pastikan index awal valid dan berada dalam rentang array
+      const validInitialIndex = initialOffset % alerts.length;
+      setCurrentIndex(validInitialIndex);
 
       const interval = setInterval(() => {
         setCurrentIndex((prevIndex) => (prevIndex + 1) % alerts.length);
       }, ROTATION_INTERVAL_MS);
 
       return () => clearInterval(interval);
-    } else {
-      setCurrentIndex(0);
     }
-  }, [alerts.length, initialOffset]);
+  }, [alerts, initialOffset]); // Tambahkan alerts sebagai dependency
 
+  // Pengecekan jika tidak ada alert sama sekali
   if (alerts.length === 0) {
     return (
-      <Alert variant="info" className="w-full">
+      <Alert
+        variant="info"
+        className="w-full h-full flex flex-col justify-center"
+      >
         <Bell className="h-4 w-4" />
-        <AlertTitle>Tidak ada peringatan aktif</AlertTitle>
+        <AlertTitle>Tidak Ada Peringatan</AlertTitle>
         <AlertDescription>
-          Mohon maaf, tidak ada berita atau peringatan yang tersedia saat ini.
+          Tidak ada berita atau peringatan yang tersedia saat ini.
         </AlertDescription>
       </Alert>
     );
   }
 
+  // Ambil data alert saat ini
   const currentAlert = alerts[currentIndex];
 
-  if (!currentAlert || !currentAlert.id) {
-    console.warn(
-      "CyclingAlertCard: currentAlert atau currentAlert.id tidak terdefinisi.",
-      currentAlert
-    );
+  // Pengecekan tambahan untuk memastikan currentAlert valid sebelum dirender
+  if (!currentAlert) {
     return (
-      <Alert variant="warning" className="w-full">
+      <Alert
+        variant="warning"
+        className="w-full h-full flex flex-col justify-center"
+      >
         <AlertTriangle className="h-4 w-4" />
-        <AlertTitle>Peringatan tidak valid</AlertTitle>
+        <AlertTitle>Peringatan Tidak Valid</AlertTitle>
         <AlertDescription>
-          Terjadi masalah saat memuat peringatan. Mencoba lagi...
+          Terjadi masalah saat memuat data peringatan.
         </AlertDescription>
       </Alert>
     );
@@ -140,13 +146,14 @@ const CyclingAlertCard = ({
   return (
     <AnimatePresence mode="wait">
       <motion.div
-        key={currentAlert.id + "-" + currentIndex}
+        key={currentAlert.id} // Cukup gunakan id sebagai key
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: -20 }}
         transition={{ duration: 0.5 }}
+        className="h-full"
       >
-        <FloodAlert alert={currentAlert} />
+        <FloodAlert alert={currentAlert} className="h-full" />
       </motion.div>
     </AnimatePresence>
   );
@@ -192,7 +199,6 @@ export default function Home() {
     east: number;
   } | null>(null);
 
-  // === State untuk Chatbot (UPDATED) ===
   const [chatInput, setChatInput] = useState<string>("");
   const [chatHistory, setChatHistory] = useState<
     {
@@ -204,14 +210,11 @@ export default function Home() {
   >([]);
   const [isChatLoading, setIsChatLoading] = useState(false);
   const [chatError, setChatError] = useState<string | null>(null);
-  const [isTyping, setIsTyping] = useState(false); // New state for typing indicator
-  const [isChatbotOpen, setIsChatbotOpen] = useState(false); // State to control chatbot visibility
+  const [isTyping, setIsTyping] = useState(false);
+  const [isChatbotOpen, setIsChatbotOpen] = useState(false);
 
-  // Ref to scroll to the bottom of the chat history
   const chatScrollRef = useRef<HTMLDivElement>(null);
-  // ==========================
 
-  // Quick action buttons for chatbot
   const quickActions = [
     {
       icon: Droplets,
@@ -235,7 +238,6 @@ export default function Home() {
     },
   ];
 
-  // Helper to format time for chat messages
   const formatTime = (timestamp: Date) => {
     return timestamp.toLocaleTimeString("id-ID", {
       hour: "2-digit",
@@ -243,7 +245,6 @@ export default function Home() {
     });
   };
 
-  // Simulate typing effect for bot responses
   const simulateTyping = (
     message: string,
     isError: boolean = false,
@@ -256,8 +257,8 @@ export default function Home() {
         ...prev,
         { sender: "bot", message, timestamp: new Date(), isError },
       ]);
-      callback(); // Call the callback after typing simulation
-    }, 1000 + Math.random() * 2000);
+      callback();
+    }, 1000 + Math.random() * 1000); // Reduced typing delay slightly
   };
 
   useEffect(() => {
@@ -269,10 +270,6 @@ export default function Home() {
       fetchDisasterProneData(south, west, north, east)
         .then((data) => {
           setDisasterProneAreas(data.elements);
-          console.log(
-            "Disaster Prone Data (from map move) from Overpass:",
-            data.elements
-          );
         })
         .catch((err) => {
           console.error(
@@ -295,7 +292,6 @@ export default function Home() {
       try {
         const data = await fetchBmkgLatestQuake();
         setLatestBmkgQuake(data);
-        console.log("BMKG Latest Earthquake Data:", data);
       } catch (err: any) {
         console.error("Error fetching BMKG latest earthquake:", err);
         setBmkgQuakeError(err.message);
@@ -309,12 +305,11 @@ export default function Home() {
     return () => clearInterval(interval);
   }, []);
 
-  // Effect to scroll to the bottom of the chat history when it updates (UPDATED)
   useEffect(() => {
     if (chatScrollRef.current) {
       chatScrollRef.current.scrollTop = chatScrollRef.current.scrollHeight;
     }
-  }, [chatHistory, isTyping]); // Added isTyping to dependencies for auto-scroll
+  }, [chatHistory, isTyping]);
 
   const handleMapBoundsChange = (
     south: number,
@@ -344,10 +339,6 @@ export default function Home() {
       geometry,
     };
     setSelectedLocation(newLocation);
-    console.log(
-      "DEBUG page.tsx: Lokasi Terpilih (newLocation dari dropdown):",
-      newLocation
-    );
 
     if (latitude != null && longitude != null) {
       setLoadingWeather(true);
@@ -355,7 +346,6 @@ export default function Home() {
       fetchWeatherData(latitude, longitude, OPEN_WEATHER_API_KEY)
         .then((data) => {
           setCurrentWeatherData(data);
-          console.log("Weather Data from OpenWeatherMap:", data);
         })
         .catch((err) => {
           console.error("Error fetching weather data:", err);
@@ -371,7 +361,6 @@ export default function Home() {
       fetchWaterLevelData()
         .then((data) => {
           setWaterLevelPosts(data);
-          console.log("Water Level Posts from PUPR API (all):", data);
         })
         .catch((err) => {
           console.error("Error fetching water level data:", err);
@@ -387,7 +376,6 @@ export default function Home() {
       fetchPumpStatusData()
         .then((data) => {
           setPumpStatusData(data);
-          console.log("Pump Status Data (all):", data);
         })
         .catch((err) => {
           console.error("Error fetching pump status data:", err);
@@ -462,11 +450,9 @@ export default function Home() {
               actions.push("Segera evakuasi", "Ikuti arahan petugas");
               break;
             case "normal":
-              level = "info";
-              message += ` Status: Normal.`;
-              break;
             default:
               level = "info";
+              message += ` Status: Normal.`;
               break;
           }
         } else if (post.water_level !== undefined && post.water_level > 100) {
@@ -554,15 +540,15 @@ export default function Home() {
     {
       title: "Peringatan Aktif",
       description: "Peringatan banjir saat ini",
-      count: DASHBOARD_STATS_MOCK.activeAlerts,
+      count: realTimeAlerts.filter((a) => a.level !== "info").length, // Count real alerts
       icon: Bell,
       color: "text-warning",
       bgColor: "bg-warning/20",
     },
     {
-      title: "Zona Banjir",
-      description: "Area yang rawan banjir",
-      count: DASHBOARD_STATS_MOCK.floodZones,
+      title: "Zona Rawan",
+      description: "Area yang teridentifikasi",
+      count: disasterProneAreas.length, // Count real zones
       icon: Shield,
       color: "text-danger",
       bgColor: "bg-danger/20",
@@ -577,28 +563,25 @@ export default function Home() {
     },
   ];
 
-  // === Fungsi untuk Mengirim Pertanyaan Chatbot (UPDATED) ===
   const sendChatMessage = async (customMessage: string | null = null) => {
     const messageToSend = customMessage || chatInput.trim();
     if (!messageToSend || isChatLoading) return;
 
     const userMessage = {
-      sender: "user" as const, // Explicitly cast to "user" literal type
+      sender: "user" as const,
       message: messageToSend,
       timestamp: new Date(),
     };
 
     setChatHistory((prev) => [...prev, userMessage]);
     setChatInput("");
-    setIsChatLoading(true); // Set loading to true initially
+    setIsChatLoading(true);
     setChatError(null);
 
     try {
       const response = await fetch("/api/chatbot", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ question: messageToSend }),
       });
 
@@ -610,28 +593,14 @@ export default function Home() {
       }
 
       const data = await response.json();
-      // Pass a callback to simulateTyping to set isChatLoading to false after typing
       simulateTyping(data.answer, false, () => setIsChatLoading(false));
     } catch (err: any) {
       console.error("Error sending message to chatbot:", err);
-      setChatError(
-        err.message || "Terjadi kesalahan saat memproses pertanyaan."
-      );
-      // Pass a callback to simulateTyping to set isChatLoading to false after typing
-      simulateTyping(
-        `Maaf, saya tidak dapat memproses permintaan Anda saat ini. (${err.message})`,
-        true,
-        () => setIsChatLoading(false)
-      );
-    } finally {
-      // Ensure loading state is always reset, even if simulateTyping doesn't run or has issues
-      if (isChatLoading) {
-        // Only reset if it's still true
-        setIsChatLoading(false);
-      }
+      const errorMessage = `Maaf, saya tidak dapat memproses permintaan Anda saat ini. (${err.message})`;
+      setChatError(errorMessage);
+      simulateTyping(errorMessage, true, () => setIsChatLoading(false));
     }
   };
-  // ===============================================
 
   const handleQuickAction = (query: string) => {
     sendChatMessage(query);
@@ -691,7 +660,7 @@ export default function Home() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.5, delay: index * 0.1 }}
                 >
-                  <Card className="glass text-white border-white/20 hover:bg-white/10 transition-colors">
+                  <Card className="glass text-white border-white/20 hover:bg-white/10 transition-colors h-full">
                     <CardContent className="p-6">
                       <div className="flex items-center justify-between mb-4">
                         <div className={cn("p-2 rounded-lg", card.bgColor)}>
@@ -713,49 +682,12 @@ export default function Home() {
               ))}
             </div>
           </div>
-
-          {/* Animated Background Elements */}
-          <div className="absolute inset-0 overflow-hidden pointer-events-none">
-            <motion.div
-              className="absolute top-20 left-10 w-20 h-20 bg-white/5 rounded-full"
-              animate={{ y: [0, -20, 0] }}
-              transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-            />
-            <motion.div
-              className="absolute bottom-20 right-10 w-16 h-16 bg-secondary/20 rounded-full"
-              animate={{ y: [0, -15, 0] }}
-              transition={{
-                duration: 3,
-                repeat: Infinity,
-                ease: "easeInOut",
-                delay: 1,
-              }}
-            />
-            <motion.div
-              className="absolute top-1/2 left-1/2 w-12 h-12 bg-white/10 rounded-full"
-              animate={{
-                y: [0, -10, 0],
-                x: [0, 10, 0],
-              }}
-              transition={{
-                duration: 5,
-                repeat: Infinity,
-                ease: "easeInOut",
-                delay: 2,
-              }}
-            />
-          </div>
         </section>
 
         {/* Region Selector Section */}
         <section className="container mx-auto px-4 py-8 space-y-4">
           <Card className="bg-gray-900/60 border-gray-800/50 backdrop-blur-lg rounded-xl shadow-xl overflow-hidden">
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2 text-aqua-400">
-                {/* Title content for RegionDropdown if needed */}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
+            <CardContent className="p-4">
               <RegionDropdown
                 onSelectDistrict={handleRegionSelect}
                 selectedLocationCoords={
@@ -778,7 +710,6 @@ export default function Home() {
 
         {/* Main Dashboard */}
         <section className="container mx-auto px-4 py-8 space-y-8">
-          {/* Dashboard Stats */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -795,9 +726,7 @@ export default function Home() {
             />
           </motion.div>
 
-          {/* Main Content Grid: Map, Weather/Actions, and Chatbot */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Flood Map - Mengambil 2 kolom di layar besar */}
             <motion.div
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
@@ -839,33 +768,12 @@ export default function Home() {
                       floodDataError={disasterDataError}
                       onMapBoundsChange={handleMapBoundsChange}
                     />
-                    {selectedLocation && (
-                      <div className="absolute bottom-4 left-4 right-4 bg-gray-800/90 backdrop-blur-sm rounded-lg p-3 border border-gray-700/50">
-                        <div className="text-xs text-gray-300">
-                          <div className="font-medium text-white mb-1">
-                            📍 {selectedLocation.districtName}
-                          </div>
-                          <div className="grid grid-cols-2 gap-2 text-xs">
-                            <div>
-                              <span className="text-gray-400">Lat:</span>{" "}
-                              {selectedLocation.latitude?.toFixed(6) || "N/A"}
-                            </div>
-                            <div>
-                              <span className="text-gray-400">Lng:</span>{" "}
-                              {selectedLocation.longitude?.toFixed(6) || "N/A"}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    )}
                   </div>
                 </CardContent>
               </Card>
             </motion.div>
 
-            {/* Kolom untuk Weather & Quick Actions */}
             <div className="lg:col-span-1 flex flex-col gap-8">
-              {/* Weather Display */}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -879,7 +787,6 @@ export default function Home() {
                 />
               </motion.div>
 
-              {/* Quick Actions */}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -930,11 +837,10 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Flood Alerts Section - Combined real-time alerts */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.8 }} // Menyesuaikan delay
+            transition={{ duration: 0.5, delay: 0.8 }}
           >
             <Card>
               <CardHeader>
@@ -950,63 +856,50 @@ export default function Home() {
                 </div>
               </CardHeader>
               <CardContent>
-                {/* Menampilkan loading state jika data masih dimuat */}
                 {loadingBmkgQuake || loadingWaterLevel || loadingWeather ? (
                   <div className="p-4 text-center text-muted-foreground flex items-center justify-center space-x-2">
                     <Loader2 className="h-5 w-5 animate-spin" />
                     <span>Memuat peringatan...</span>
                   </div>
                 ) : (
-                  // Jika tidak loading, tampilkan CyclingAlertCard untuk setiap slot
+                  // ======================= PERBAIKAN DI SINI =======================
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {/* Slot 1 */}
-                    <CyclingAlertCard
-                      alerts={realTimeAlerts}
-                      initialOffset={0}
-                    />
-                    {/* Slot 2 */}
-                    <CyclingAlertCard
-                      alerts={realTimeAlerts}
-                      initialOffset={1}
-                    />
-                    {/* Slot 3 */}
-                    <CyclingAlertCard
-                      alerts={realTimeAlerts}
-                      initialOffset={2}
-                    />
+                    {/* Slot 1: Hanya render jika ada data di index 0 */}
+                    {realTimeAlerts.length > 0 && (
+                      <CyclingAlertCard
+                        alerts={realTimeAlerts}
+                        initialOffset={0}
+                      />
+                    )}
+                    {/* Slot 2: Hanya render jika ada data di index 1 */}
+                    {realTimeAlerts.length > 1 && (
+                      <CyclingAlertCard
+                        alerts={realTimeAlerts}
+                        initialOffset={1}
+                      />
+                    )}
+                    {/* Slot 3: Hanya render jika ada data di index 2 */}
+                    {realTimeAlerts.length > 2 && (
+                      <CyclingAlertCard
+                        alerts={realTimeAlerts}
+                        initialOffset={2}
+                      />
+                    )}
+                    {/* Tambahkan pesan jika tidak ada alert sama sekali */}
+                    {realTimeAlerts.length === 0 && (
+                      <div className="col-span-full text-center text-muted-foreground p-4">
+                        Tidak ada peringatan bencana real-time aktif saat ini.
+                      </div>
+                    )}
                   </div>
+                  // ===============================================================
                 )}
-
-                {/* Display Error State if any API failed */}
-                {(bmkgQuakeError || waterLevelError || weatherError) && (
-                  <Alert variant="destructive" className="mt-4">
-                    <AlertTriangle className="h-4 w-4" />
-                    <AlertTitle>Error Memuat Peringatan!</AlertTitle>
-                    <AlertDescription>
-                      {bmkgQuakeError ||
-                        waterLevelError ||
-                        weatherError ||
-                        "Terjadi kesalahan saat mengambil data peringatan."}
-                    </AlertDescription>
-                  </Alert>
-                )}
-                {/* Display "No active alerts" message if no data loaded and no errors */}
-                {!loadingBmkgQuake &&
-                  !loadingWaterLevel &&
-                  !loadingWeather &&
-                  realTimeAlerts.length === 0 &&
-                  !(bmkgQuakeError || waterLevelError || weatherError) && (
-                    <p className="text-center text-muted-foreground mt-4">
-                      Tidak ada peringatan bencana real-time aktif saat ini.
-                    </p>
-                  )}
               </CardContent>
             </Card>
           </motion.div>
         </section>
       </main>
 
-      {/* Floating Chatbot Button */}
       <motion.button
         className="fixed bottom-6 right-6 bg-cyan-600 hover:bg-cyan-700 text-white p-4 rounded-full shadow-lg z-50 transition-all duration-300 ease-in-out transform hover:scale-110 active:scale-90 focus:outline-none focus:ring-4 focus:ring-cyan-500 focus:ring-opacity-75"
         onClick={toggleChatbot}
@@ -1017,105 +910,67 @@ export default function Home() {
         <MessageSquare className="w-6 h-6" />
       </motion.button>
 
-      {/* Chatbot Pop-up */}
       <AnimatePresence>
         {isChatbotOpen && (
           <motion.div
-            // Adjusted height and padding for a more compact UI
             className="fixed bottom-24 right-6 w-[320px] h-[400px] bg-gray-900 border border-gray-800 rounded-xl shadow-2xl overflow-hidden z-50 flex flex-col"
             initial={{ opacity: 0, y: 50, scale: 0.8 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 50, scale: 0.8 }}
             transition={{ duration: 0.3 }}
           >
-            {/* Header */}
             <div className="bg-gradient-to-r from-cyan-600 to-blue-600 p-3 flex items-center justify-between flex-shrink-0">
-              {" "}
-              {/* Reduced padding and added flex-shrink-0 */}
               <div className="flex items-center space-x-3">
                 <div className="w-9 h-9 bg-white/20 rounded-full flex items-center justify-center">
-                  {" "}
-                  {/* Slightly smaller icon container */}
-                  <Bot className="w-5 h-5 text-white" />{" "}
-                  {/* Slightly smaller icon */}
+                  <Bot className="w-5 h-5 text-white" />
                 </div>
                 <div>
                   <h3 className="text-white font-semibold text-base">
-                    {" "}
-                    {/* Reduced font size */}
                     Floodzie Assistant
                   </h3>
                   <p className="text-cyan-100 text-xs">
-                    {" "}
-                    {/* Reduced font size */}
                     Sistem Informasi Banjir Real-time
                   </p>
-                </div>
-                <div className="ml-auto flex items-center space-x-1">
-                  <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                  <span className="text-cyan-100 text-xs">Online</span>
                 </div>
               </div>
               <button
                 onClick={toggleChatbot}
-                className="text-white hover:text-gray-200 p-1" // Added padding to button
+                className="text-white hover:text-gray-200 p-1"
               >
-                <X className="w-5 h-5" /> {/* Slightly smaller icon */}
+                <X className="w-5 h-5" />
               </button>
             </div>
-
-            {/* Chat Area */}
             <div className="flex-1 flex flex-col overflow-hidden">
-              {" "}
-              {/* Added overflow-hidden to handle content */}
               <div
                 ref={chatScrollRef}
-                className="flex-1 overflow-y-auto p-3 space-y-3 bg-gray-900" // Reduced padding and spacing
+                className="flex-1 overflow-y-auto p-3 space-y-3 bg-gray-900"
               >
-                {/* Welcome message and Quick Actions (CONDITIONAL) */}
                 {chatHistory.length === 0 && (
                   <>
                     <div className="text-center py-4">
-                      {" "}
-                      {/* Reduced vertical padding */}
-                      <Bot className="w-10 h-10 text-cyan-400 mx-auto mb-2" />{" "}
-                      {/* Slightly smaller icon */}
+                      <Bot className="w-10 h-10 text-cyan-400 mx-auto mb-2" />
                       <p className="text-gray-400 mb-1 text-sm">
-                        {" "}
-                        {/* Reduced font size */}
                         Selamat datang di Floodzie Assistant!
                       </p>
                       <p className="text-gray-500 text-xs">
-                        {" "}
-                        {/* Reduced font size */}
                         Tanyakan tentang status banjir, cuaca, atau kondisi
                         wilayah
                       </p>
                     </div>
-                    {/* Quick Actions moved inside this conditional block */}
                     <div className="px-0 pb-2">
-                      {" "}
-                      {/* Adjusted padding */}
                       <p className="text-gray-400 text-xs mb-1">
-                        {" "}
-                        {/* Reduced font size and margin */}
                         Pertanyaan Cepat:
                       </p>
                       <div className="grid grid-cols-2 gap-1.5">
-                        {" "}
-                        {/* Reduced gap */}
                         {quickActions.map((action, index) => (
                           <button
                             key={index}
                             onClick={() => handleQuickAction(action.query)}
-                            className="flex items-center space-x-1 p-2 bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded-lg transition-colors duration-200 group text-sm" // Reduced padding, spacing, and font size
+                            className="flex items-center space-x-1 p-2 bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded-lg transition-colors duration-200 group text-sm"
                             disabled={isChatLoading}
                           >
-                            <action.icon className="w-3.5 h-3.5 text-cyan-400 group-hover:text-cyan-300" />{" "}
-                            {/* Smaller icon */}
+                            <action.icon className="w-3.5 h-3.5 text-cyan-400 group-hover:text-cyan-300" />
                             <span className="text-gray-300 text-xs">
-                              {" "}
-                              {/* Smaller font size */}
                               {action.text}
                             </span>
                           </button>
@@ -1124,8 +979,6 @@ export default function Home() {
                     </div>
                   </>
                 )}
-
-                {/* Chat History Messages */}
                 {chatHistory.length > 0 &&
                   chatHistory.map((msg, index) => (
                     <div
@@ -1141,7 +994,6 @@ export default function Home() {
                             : ""
                         }`}
                       >
-                        {/* Avatar */}
                         <div
                           className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 ${
                             msg.sender === "user"
@@ -1151,17 +1003,12 @@ export default function Home() {
                               : "bg-cyan-600"
                           }`}
                         >
-                          {" "}
-                          {/* Smaller avatar */}
                           {msg.sender === "user" ? (
                             <User className="w-3.5 h-3.5 text-white" />
                           ) : (
                             <Bot className="w-3.5 h-3.5 text-white" />
-                          )}{" "}
-                          {/* Smaller icon */}
+                          )}
                         </div>
-
-                        {/* Message Bubble */}
                         <div
                           className={`rounded-xl px-3 py-2 ${
                             msg.sender === "user"
@@ -1171,16 +1018,10 @@ export default function Home() {
                               : "bg-gray-800 text-gray-100 border border-gray-700"
                           }`}
                         >
-                          {" "}
-                          {/* Adjusted padding and border radius */}
                           <p className="text-xs leading-relaxed">
-                            {" "}
-                            {/* Smaller font size */}
                             {msg.message}
                           </p>
                           <div className="flex items-center justify-between mt-1">
-                            {" "}
-                            {/* Reduced margin-top */}
                             <span
                               className={`text-xxs ${
                                 msg.sender === "user"
@@ -1190,40 +1031,23 @@ export default function Home() {
                                   : "text-gray-400"
                               }`}
                             >
-                              {" "}
-                              {/* Smaller font size */}
                               {formatTime(msg.timestamp)}
                             </span>
-                            {msg.sender === "user" && (
-                              <div className="flex space-x-0.5">
-                                {" "}
-                                {/* Reduced spacing */}
-                                <div className="w-1 h-1 bg-blue-300 rounded-full"></div>
-                                <div className="w-1 h-1 bg-blue-300 rounded-full"></div>
-                              </div>
-                            )}
                           </div>
                         </div>
                       </div>
                     </div>
                   ))}
 
-                {/* Typing Indicator */}
                 {isTyping && (
                   <div className="flex justify-start animate-fade-in">
                     <div className="flex items-start space-x-2">
                       <div className="w-7 h-7 bg-cyan-600 rounded-full flex items-center justify-center">
-                        {" "}
-                        {/* Smaller avatar */}
-                        <Bot className="w-3.5 h-3.5 text-white" />{" "}
-                        {/* Smaller icon */}
+                        <Bot className="w-3.5 h-3.5 text-white" />
                       </div>
                       <div className="bg-gray-800 border border-gray-700 rounded-xl px-3 py-2">
-                        {" "}
-                        {/* Adjusted padding and border radius */}
                         <div className="flex space-x-1">
-                          <div className="w-1.5 h-1.5 bg-cyan-400 rounded-full animate-bounce"></div>{" "}
-                          {/* Smaller dots */}
+                          <div className="w-1.5 h-1.5 bg-cyan-400 rounded-full animate-bounce"></div>
                           <div
                             className="w-1.5 h-1.5 bg-cyan-400 rounded-full animate-bounce"
                             style={{ animationDelay: "0.1s" }}
@@ -1238,13 +1062,8 @@ export default function Home() {
                   </div>
                 )}
               </div>
-              {/* Input Area */}
               <div className="border-t border-gray-800 p-3 bg-gray-900 flex-shrink-0">
-                {" "}
-                {/* Reduced padding */}
                 <div className="flex items-center space-x-2">
-                  {" "}
-                  {/* Reduced spacing */}
                   <div className="flex-1 relative">
                     <input
                       type="text"
@@ -1255,33 +1074,27 @@ export default function Home() {
                           sendChatMessage();
                         }
                       }}
-                      placeholder="Tanyakan tentang status banjir, cuaca, atau kondisi wilayah..."
-                      className="w-full bg-gray-800 border border-gray-700 rounded-full px-3 py-2.5 pr-10 text-sm text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition-all duration-200" // Adjusted padding, font size, and pr
+                      placeholder="Tanyakan sesuatu..."
+                      className="w-full bg-gray-800 border border-gray-700 rounded-full px-3 py-2.5 pr-10 text-sm text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition-all duration-200"
                       disabled={isChatLoading}
                     />
                     {isChatLoading && (
                       <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                        {" "}
-                        {/* Adjusted right position */}
-                        <Zap className="w-3.5 h-3.5 text-cyan-400 animate-spin" />{" "}
-                        {/* Smaller icon */}
+                        <Zap className="w-3.5 h-3.5 text-cyan-400 animate-spin" />
                       </div>
                     )}
                   </div>
                   <button
                     onClick={() => sendChatMessage()}
                     disabled={isChatLoading || !chatInput.trim()}
-                    className="bg-cyan-600 hover:bg-cyan-700 disabled:bg-gray-700 disabled:cursor-not-allowed text-white p-2.5 rounded-full transition-all duration-200 transform hover:scale-105 active:scale-95" // Adjusted padding
+                    className="bg-cyan-600 hover:bg-cyan-700 disabled:bg-gray-700 disabled:cursor-not-allowed text-white p-2.5 rounded-full transition-all duration-200 transform hover:scale-105 active:scale-95"
                   >
-                    <Send className="w-3.5 h-3.5" /> {/* Smaller icon */}
+                    <Send className="w-3.5 h-3.5" />
                   </button>
                 </div>
                 {chatError && (
                   <div className="mt-1.5 p-1.5 bg-red-900/50 border border-red-600 rounded-lg">
-                    {" "}
-                    {/* Reduced margin and padding */}
-                    <p className="text-red-300 text-xs">{chatError}</p>{" "}
-                    {/* Reduced font size */}
+                    <p className="text-red-300 text-xs">{chatError}</p>
                   </div>
                 )}
               </div>

@@ -22,8 +22,7 @@ import {
   MessageSquare, // Icon for Gemini
 } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card"; // Import Card components
+import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge"; // Import Badge
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"; // Import Alert components
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"; // Import Tabs components
@@ -71,15 +70,18 @@ const fetchNewsAndReports = async (): Promise<NewsReport[]> => {
     {
       id: "news-1",
       title: "Banjir Jakarta: Ketinggian Air Terus Meningkat di Beberapa Titik",
-      content: "Jakarta, [tanggal]. Curah hujan tinggi semalam menyebabkan peningkatan drastis ketinggian air di beberapa wilayah Jakarta, termasuk Kemang, Cipinang Melayu, dan Bidara Cina. BPBD DKI Jakarta mengimbau warga untuk tetap waspada dan mempersiapkan diri untuk evakuasi.",
+      content:
+        "Jakarta, [tanggal]. Curah hujan tinggi semalam menyebabkan peningkatan drastis ketinggian air di beberapa wilayah Jakarta, termasuk Kemang, Cipinang Melayu, dan Bidara Cina. BPBD DKI Jakarta mengimbau warga untuk tetap waspada dan mempersiapkan diri untuk evakuasi.",
       source: "Detik News",
       url: "https://www.detik.com/banjirjakarta",
       timestamp: new Date(now.getTime() - 2 * 60 * 60 * 1000).toISOString(), // 2 hours ago
     },
     {
       id: "news-2",
-      title: "Gempa Bumi Magnitudo 5.2 Guncang Malang, Tidak Berpotensi Tsunami",
-      content: "Malang, [tanggal]. Gempa bumi berkekuatan Magnitudo 5.2 mengguncang wilayah Malang, Jawa Timur pada pagi hari. Menurut BMKG, pusat gempa berada di laut dengan kedalaman 10 km dan tidak berpotensi tsunami. Getaran dirasakan hingga beberapa kota di sekitarnya.",
+      title:
+        "Gempa Bumi Magnitudo 5.2 Guncang Malang, Tidak Berpotensi Tsunami",
+      content:
+        "Malang, [tanggal]. Gempa bumi berkekuatan Magnitudo 5.2 mengguncang wilayah Malang, Jawa Timur pada pagi hari. Menurut BMKG, pusat gempa berada di laut dengan kedalaman 10 km dan tidak berpotensi tsunami. Getaran dirasakan hingga beberapa kota di sekitarnya.",
       source: "Kompas.com",
       url: "https://www.kompas.com/gempa-malang",
       timestamp: new Date(now.getTime() - 5 * 60 * 60 * 1000).toISOString(), // 5 hours ago
@@ -87,22 +89,24 @@ const fetchNewsAndReports = async (): Promise<NewsReport[]> => {
     {
       id: "news-3",
       title: "Peringatan Dini Cuaca Ekstrem di Sumatera Barat Minggu Ini",
-      content: "Padang, [tanggal]. Badan Meteorologi, Klimatologi, dan Geofisika (BMKG) mengeluarkan peringatan dini cuaca ekstrem untuk wilayah Sumatera Barat. Hujan lebat disertai angin kencang berpotensi terjadi di sejumlah daerah, meningkatkan risiko banjir dan longsor.",
+      content:
+        "Padang, [tanggal]. Badan Meteorologi, Klimatologi, dan Geofisika (BMKG) mengeluarkan peringatan dini cuaca ekstrem untuk wilayah Sumatera Barat. Hujan lebat disertai angin kencang berpotensi terjadi di sejumlah daerah, meningkatkan risiko banjir dan longsor.",
       source: "Antara News",
       url: "https://www.antaranews.com/cuaca-sumbar",
       timestamp: new Date(now.getTime() - 10 * 60 * 60 * 1000).toISOString(), // 10 hours ago
     },
     {
       id: "news-4",
-      title: "Debit Air Sungai Ciliwung Mencapai Siaga 3, Warga Diminta Waspada",
-      content: "Bogor, [tanggal]. Debit air Sungai Ciliwung terpantau terus meningkat dan kini mencapai status Siaga 3. Pintu air Katulampa mencatat kenaikan signifikan setelah hujan deras di kawasan Puncak. Warga yang tinggal di bantaran sungai diimbau untuk meningkatkan kewaspadaan.",
+      title:
+        "Debit Air Sungai Ciliwung Mencapai Siaga 3, Warga Diminta Waspada",
+      content:
+        "Bogor, [tanggal]. Debit air Sungai Ciliwung terpantau terus meningkat dan kini mencapai status Siaga 3. Pintu air Katulampa mencatat kenaikan signifikan setelah hujan deras di kawasan Puncak. Warga yang tinggal di bantaran sungai diimbau untuk meningkatkan kewaspadaan.",
       source: "Tempo",
       url: "https://www.tempo.co/ciliwung",
       timestamp: new Date(now.getTime() - 1 * 60 * 60 * 1000).toISOString(), // 1 hour ago
     },
   ];
 };
-
 
 export default function PeringatanPage() {
   const router = useRouter();
@@ -113,7 +117,9 @@ export default function PeringatanPage() {
   const [geminiExplanation, setGeminiExplanation] = useState<string | null>(
     null
   );
-  const [geminiNewsSummary, setGeminiNewsSummary] = useState<{ [key: string]: string }>({}); // Store summaries by report ID
+  const [geminiNewsSummary, setGeminiNewsSummary] = useState<{
+    [key: string]: string;
+  }>({}); // Store summaries by report ID
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isNewsLoading, setIsNewsLoading] = useState<boolean>(false); // New loading state for news summary
   const [error, setError] = useState<string | null>(null);
@@ -167,14 +173,20 @@ export default function PeringatanPage() {
           if (!summaryResponse.ok) {
             const errorData = await summaryResponse.json();
             throw new Error(
-              errorData.error || `Failed to summarize news from Gemini: ${report.id}`
+              errorData.error ||
+                `Failed to summarize news from Gemini: ${report.id}`
             );
           }
           const summaryData = await summaryResponse.json();
           newSummaries[report.id] = summaryData.explanation;
         } catch (summaryErr: any) {
-          console.error(`Error summarizing news report ${report.id}:`, summaryErr);
-          newSummaries[report.id] = `Gagal merangkum berita ini: ${summaryErr.message}`;
+          console.error(
+            `Error summarizing news report ${report.id}:`,
+            summaryErr
+          );
+          newSummaries[
+            report.id
+          ] = `Gagal merangkum berita ini: ${summaryErr.message}`;
         }
       }
       setGeminiNewsSummary(newSummaries);
@@ -376,10 +388,16 @@ export default function PeringatanPage() {
         {/* Tabs for Alerts and News */}
         <Tabs defaultValue="alerts" className="w-full">
           <TabsList className="grid w-full grid-cols-2 mb-6 bg-gray-800 border border-gray-700">
-            <TabsTrigger value="alerts" className="data-[state=active]:bg-gray-700 data-[state=active]:text-white data-[state=inactive]:text-gray-400">
+            <TabsTrigger
+              value="alerts"
+              className="data-[state=active]:bg-gray-700 data-[state=active]:text-white data-[state=inactive]:text-gray-400"
+            >
               <Bell className="w-4 h-4 mr-2" /> Peringatan
             </TabsTrigger>
-            <TabsTrigger value="news" className="data-[state=active]:bg-gray-700 data-[state=active]:text-white data-[state=inactive]:text-gray-400">
+            <TabsTrigger
+              value="news"
+              className="data-[state=active]:bg-gray-700 data-[state=active]:text-white data-[state=inactive]:text-gray-400"
+            >
               <Newspaper className="w-4 h-4 mr-2" /> Berita Regional
             </TabsTrigger>
           </TabsList>
@@ -420,7 +438,9 @@ export default function PeringatanPage() {
                           )}`}
                         >
                           {getLevelIcon(alert.level)}
-                          <span className="text-sm font-medium">{alert.level}</span>
+                          <span className="text-sm font-medium">
+                            {alert.level}
+                          </span>
                         </div>
                         <div className="flex items-center space-x-1 text-gray-400 text-sm">
                           <Clock className="h-4 w-4" />
@@ -431,7 +451,9 @@ export default function PeringatanPage() {
                       {/* Location */}
                       <div className="flex items-center space-x-2 mb-3">
                         <MapPin className="h-5 w-5 text-cyan-400" />
-                        <h3 className="text-lg font-semibold">{alert.location}</h3>
+                        <h3 className="text-lg font-semibold">
+                          {alert.location}
+                        </h3>
                       </div>
 
                       {/* Description */}
@@ -455,7 +477,9 @@ export default function PeringatanPage() {
                         <div className="bg-gray-700/50 rounded-lg p-3">
                           <div className="flex items-center space-x-2 mb-1">
                             <Droplets className="h-4 w-4 text-cyan-400" />
-                            <span className="text-xs text-gray-400">Severity</span>
+                            <span className="text-xs text-gray-400">
+                              Severity
+                            </span>
                           </div>
                           <span className="text-sm font-medium">
                             {alert.severity}/10
@@ -575,20 +599,25 @@ export default function PeringatanPage() {
               <span>Berita & Laporan Regional</span>
             </h3>
             <p className="text-gray-400 mb-6">
-              Ringkasan berita terkait bencana dari berbagai sumber, ditenagai oleh Gemini.
+              Ringkasan berita terkait bencana dari berbagai sumber, ditenagai
+              oleh Gemini.
             </p>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {isNewsLoading ? (
                 <div className="col-span-full text-center text-gray-400 py-8">
                   <Loader2 className="h-10 w-10 animate-spin text-orange-400 mx-auto mb-4" />
-                  <p>Memuat dan merangkum berita mohon tungggu beberapa menit...</p>
+                  <p>
+                    Memuat dan merangkum berita mohon tungggu beberapa menit...
+                  </p>
                 </div>
               ) : newsError ? (
                 <div className="col-span-full bg-red-500/10 border border-red-500/20 rounded-lg p-4">
                   <div className="flex items-center space-x-2 mb-2">
                     <AlertTriangle className="h-5 w-5 text-red-400" />
-                    <span className="text-red-400 font-medium">Error Memuat Berita</span>
+                    <span className="text-red-400 font-medium">
+                      Error Memuat Berita
+                    </span>
                   </div>
                   <p className="text-red-300">{newsError}</p>
                 </div>
@@ -616,11 +645,13 @@ export default function PeringatanPage() {
                     </div>
                     <p className="text-gray-400 text-sm mb-3">
                       <Clock className="inline-block h-3 w-3 mr-1" />{" "}
-                      {new Date(report.timestamp).toLocaleString('id-ID')}
+                      {new Date(report.timestamp).toLocaleString("id-ID")}
                     </p>
                     <div className="flex items-center space-x-2 text-cyan-400 mb-3">
                       <MessageSquare className="h-5 w-5" />
-                      <span className="text-base font-medium">Ringkasan Gemini:</span>
+                      <span className="text-base font-medium">
+                        Ringkasan Gemini:
+                      </span>
                     </div>
                     <div className="bg-gray-700/50 rounded-lg p-4 mb-4">
                       {geminiNewsSummary[report.id] ? (
@@ -641,7 +672,8 @@ export default function PeringatanPage() {
                         rel="noopener noreferrer"
                         className="text-cyan-400 hover:text-cyan-300 flex items-center text-sm"
                       >
-                        Baca Selengkapnya <ChevronRight className="h-4 w-4 ml-1" />
+                        Baca Selengkapnya{" "}
+                        <ChevronRight className="h-4 w-4 ml-1" />
                       </a>
                     )}
                   </motion.div>

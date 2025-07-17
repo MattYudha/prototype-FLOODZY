@@ -1,23 +1,23 @@
-'use client';
+"use client";
 
-import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  AlertTriangle, 
-  AlertCircle, 
-  Info, 
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  AlertTriangle,
+  AlertCircle,
+  Info,
   ShieldAlert,
   Clock,
   MapPin,
   Users,
-  X
-} from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
-import { Badge } from '@/components/ui/Badge';
-import { Button } from '@/components/ui/Button';
-import { FloodAlert as FloodAlertType } from '@/types';
-import { ALERT_LEVELS } from '@/lib/constants';
-import { getTimeAgo } from '@/lib/utils';
-import { cn } from '@/lib/utils';
+  X,
+} from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
+import { Badge } from "@/components/ui/Badge";
+import { Button } from "@/components/ui/Button";
+import { FloodAlert as FloodAlertType } from "@/types";
+import { ALERT_LEVELS } from "@/lib/constants";
+import { getTimeAgo } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 
 interface FloodAlertProps {
   alert: FloodAlertType;
@@ -41,44 +41,50 @@ export function FloodAlert({ alert, onDismiss, className }: FloodAlertProps) {
       initial={{ opacity: 0, x: -20, scale: 0.95 }}
       animate={{ opacity: 1, x: 0, scale: 1 }}
       exit={{ opacity: 0, x: 20, scale: 0.95 }}
-      transition={{ type: 'spring', damping: 20, stiffness: 300 }}
-      className={cn('relative', className)}
+      transition={{ type: "spring", damping: 20, stiffness: 300 }}
+      className={cn("relative", className)}
     >
-      <Card className={cn(
-        'border-l-4 shadow-lg hover:shadow-xl transition-shadow',
-        alertConfig.bgColor,
-        alertConfig.borderColor
-      )}>
+      <Card
+        className={cn(
+          "border-l-4 shadow-lg hover:shadow-xl transition-shadow",
+          alertConfig.bgColor,
+          alertConfig.borderColor
+        )}
+      >
         <CardHeader className="pb-3">
           <div className="flex items-start justify-between">
             <div className="flex items-center space-x-3">
               <motion.div
-                animate={{ 
-                  scale: alert.level === 'critical' ? [1, 1.1, 1] : 1,
-                  rotate: alert.level === 'critical' ? [0, 5, -5, 0] : 0
+                animate={{
+                  scale: alert.level === "critical" ? [1, 1.1, 1] : 1,
+                  rotate: alert.level === "critical" ? [0, 5, -5, 0] : 0,
                 }}
-                transition={{ 
-                  duration: 0.5, 
-                  repeat: alert.level === 'critical' ? Infinity : 0,
-                  repeatType: 'reverse'
+                transition={{
+                  duration: 0.5,
+                  repeat: alert.level === "critical" ? Infinity : 0,
+                  repeatType: "reverse",
                 }}
               >
-                <AlertIcon 
-                  className={cn('h-6 w-6', alertConfig.textColor)} 
+                <AlertIcon
+                  className={cn("h-6 w-6", alertConfig.textColor)}
                   style={{ color: alertConfig.color }}
                 />
               </motion.div>
-              
+
               <div className="flex-1">
-                <CardTitle className={cn('text-lg', alertConfig.textColor)}>
+                <CardTitle className={cn("text-lg", alertConfig.textColor)}>
                   {alert.title}
                 </CardTitle>
                 <div className="flex items-center space-x-4 mt-1">
-                  <Badge 
+                  <Badge
                     variant={
-                      alert.level === 'critical' ? 'danger' :
-                      alert.level === 'danger' ? 'danger' :
-                      alert.level === 'warning' ? 'warning' : 'info'
+                      alert.level === "critical"
+                        ? "danger"
+                        : alert.level === "danger"
+                        ? "danger"
+                        : alert.level === "warning"
+                        ? "warning"
+                        : "info"
                     }
                     className="uppercase"
                   >
@@ -91,7 +97,7 @@ export function FloodAlert({ alert, onDismiss, className }: FloodAlertProps) {
                 </div>
               </div>
             </div>
-            
+
             {onDismiss && (
               <Button
                 variant="ghost"
@@ -107,7 +113,7 @@ export function FloodAlert({ alert, onDismiss, className }: FloodAlertProps) {
 
         <CardContent className="pt-0">
           <div className="space-y-4">
-            <p className={cn('text-sm', alertConfig.textColor)}>
+            <p className={cn("text-sm", alertConfig.textColor)}>
               {alert.message}
             </p>
 
@@ -116,7 +122,9 @@ export function FloodAlert({ alert, onDismiss, className }: FloodAlertProps) {
               <div className="space-y-2">
                 <div className="flex items-center space-x-2">
                   <MapPin className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm font-medium">Wilayah Terdampak:</span>
+                  <span className="text-sm font-medium">
+                    Wilayah Terdampak:
+                  </span>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {alert.affectedAreas.map((area, index) => (
@@ -133,11 +141,16 @@ export function FloodAlert({ alert, onDismiss, className }: FloodAlertProps) {
               <div className="space-y-2">
                 <div className="flex items-center space-x-2">
                   <Users className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm font-medium">Tindakan yang Disarankan:</span>
+                  <span className="text-sm font-medium">
+                    Tindakan yang Disarankan:
+                  </span>
                 </div>
                 <ul className="space-y-1">
                   {alert.actions.map((action, index) => (
-                    <li key={index} className="text-sm flex items-center space-x-2">
+                    <li
+                      key={index}
+                      className="text-sm flex items-center space-x-2"
+                    >
                       <span className="w-1.5 h-1.5 bg-current rounded-full" />
                       <span>{action}</span>
                     </li>
@@ -168,15 +181,19 @@ interface FloodAlertListProps {
   className?: string;
 }
 
-export function FloodAlertList({ alerts, onDismiss, className }: FloodAlertListProps) {
-  const activeAlerts = alerts.filter(alert => alert.isActive);
+export function FloodAlertList({
+  alerts,
+  onDismiss,
+  className,
+}: FloodAlertListProps) {
+  const activeAlerts = alerts.filter((alert) => alert.isActive);
   const sortedAlerts = activeAlerts.sort((a, b) => {
     const levelOrder = { critical: 4, danger: 3, warning: 2, info: 1 };
     return levelOrder[b.level] - levelOrder[a.level];
   });
 
   return (
-    <div className={cn('space-y-4', className)}>
+    <div className={cn("space-y-4", className)}>
       {sortedAlerts.length === 0 ? (
         <Card className="text-center py-8">
           <CardContent>
@@ -189,11 +206,7 @@ export function FloodAlertList({ alerts, onDismiss, className }: FloodAlertListP
       ) : (
         <AnimatePresence>
           {sortedAlerts.map((alert) => (
-            <FloodAlert
-              key={alert.id}
-              alert={alert}
-              onDismiss={onDismiss}
-            />
+            <FloodAlert key={alert.id} alert={alert} onDismiss={onDismiss} />
           ))}
         </AnimatePresence>
       )}
