@@ -1,17 +1,25 @@
 "use client";
 
-import { useState, useEffect, useMemo, useRef } from "react";
+import React, {
+  useState,
+  useEffect,
+  useMemo,
+  useRef,
+  useCallback,
+} from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import "leaflet/dist/leaflet.css";
+import Image from "next/image";
 
+// UI Components
 import { WeatherDisplay } from "@/components/weather/WeatherDisplay";
-import { FloodAlert } from "@/components/flood/FloodAlert";
 import { DashboardStats } from "@/components/dashboard/DashboardStats";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Loader2 } from "lucide-react";
+
+// Icons
 import {
   MapPin,
   Bell,
@@ -32,7 +40,11 @@ import {
   Zap,
   MessageSquare,
   X,
+  Loader2,
+  Eye,
 } from "lucide-react";
+
+// Hooks & Utils
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 import {
   FLOOD_MOCK_ALERTS,
@@ -41,9 +53,13 @@ import {
   DEFAULT_MAP_ZOOM,
 } from "@/lib/constants";
 import { cn, formatNumber, getTimeAgo } from "@/lib/utils";
+
+// App Components
 import { RegionDropdown } from "@/components/region-selector/RegionDropdown";
 import { FloodMap } from "@/components/map/FloodMap";
+import { PeringatanBencanaCard } from "@/components/flood/PeringatanBencanaCard"; // <-- IMPORT BARU
 
+// API & Types
 import {
   fetchDisasterProneData,
   OverpassElement,
@@ -56,63 +72,37 @@ import {
   fetchBmkgLatestQuake,
   BmkgGempaData,
 } from "@/lib/api";
+import type { FloodAlert as FloodAlertType } from "@/types";
 
 const OPEN_WEATHER_API_KEY = "b48e2782f52bd9c6783ef14a35856abc";
 const ROTATION_INTERVAL_MS = 10000;
 const DATA_FETCH_INTERVAL_MS = 10 * 60 * 1000;
 
-interface SelectedLocationDetails {
-  districtCode: string;
-  districtName: string;
-  regencyCode: string;
-  provinceCode: string;
-  latitude?: number;
-  longitude?: number;
-  geometry?: string;
-}
-
-interface FloodAlertItem {
-  id: string;
-  regionId: string;
-  level: "info" | "warning" | "danger";
-  title: string;
-  message: string;
-  timestamp: string;
-  isActive: boolean;
-  affectedAreas: string[];
-  actions?: string[];
-}
-
-// === KOMPONEN CyclingAlertCard (DIPERBAIKI) ===
+// --- Komponen CyclingAlertCard yang Diperbarui ---
 const CyclingAlertCard = ({
   alerts,
   initialOffset = 0,
 }: {
-  alerts: FloodAlertItem[];
+  alerts: FloodAlertType[];
   initialOffset?: number;
 }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
 
   useEffect(() => {
-    // Hanya jalankan jika ada alert
     if (alerts.length > 0) {
-      // Pastikan index awal valid dan berada dalam rentang array
       const validInitialIndex = initialOffset % alerts.length;
       setCurrentIndex(validInitialIndex);
-
       const interval = setInterval(() => {
         setCurrentIndex((prevIndex) => (prevIndex + 1) % alerts.length);
       }, ROTATION_INTERVAL_MS);
-
       return () => clearInterval(interval);
     }
-  }, [alerts, initialOffset]); // Tambahkan alerts sebagai dependency
+  }, [alerts, initialOffset]);
 
-  // Pengecekan jika tidak ada alert sama sekali
   if (alerts.length === 0) {
     return (
       <Alert
-        variant="info"
+        variant="default"
         className="w-full h-full flex flex-col justify-center"
       >
         <Bell className="h-4 w-4" />
@@ -124,46 +114,46 @@ const CyclingAlertCard = ({
     );
   }
 
-  // Ambil data alert saat ini
   const currentAlert = alerts[currentIndex];
 
-  // Pengecekan tambahan untuk memastikan currentAlert valid sebelum dirender
   if (!currentAlert) {
-    return (
-      <Alert
-        variant="warning"
-        className="w-full h-full flex flex-col justify-center"
-      >
-        <AlertTriangle className="h-4 w-4" />
-        <AlertTitle>Peringatan Tidak Valid</AlertTitle>
-        <AlertDescription>
-          Terjadi masalah saat memuat data peringatan.
-        </AlertDescription>
-      </Alert>
-    );
+    return null; // Return null jika alert tidak valid
   }
 
   return (
     <AnimatePresence mode="wait">
       <motion.div
-        key={currentAlert.id} // Cukup gunakan id sebagai key
+        key={currentAlert.id}
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: -20 }}
         transition={{ duration: 0.5 }}
         className="h-full"
       >
-        <FloodAlert alert={currentAlert} className="h-full" />
+        <PeringatanBencanaCard
+          alert={currentAlert}
+          className={`level-${currentAlert.level}`} // Menambahkan kelas dinamis untuk tema warna
+        />
       </motion.div>
     </AnimatePresence>
   );
 };
 
-// --- INI ADALAH KOMPONEN UTAMA UNTUK HALAMAN ROOT ---
+interface SelectedLocationDetails {
+  districtCode: string;
+  districtName: string;
+  regencyCode: string;
+  provinceCode: string;
+  latitude?: number;
+  longitude?: number;
+  geometry?: string;
+}
+
 export default function Home() {
   const [selectedLocation, setSelectedLocation] =
     useState<SelectedLocationDetails | null>(null);
   const isMobile = useMediaQuery("(max-width: 768px)");
+  const isLargeScreen = useMediaQuery("(min-width: 1024px)");
 
   const [disasterProneAreas, setDisasterProneAreas] = useState<
     OverpassElement[]
@@ -258,7 +248,7 @@ export default function Home() {
         { sender: "bot", message, timestamp: new Date(), isError },
       ]);
       callback();
-    }, 1000 + Math.random() * 1000); // Reduced typing delay slightly
+    }, 1000 + Math.random() * 1000);
   };
 
   useEffect(() => {
@@ -344,47 +334,35 @@ export default function Home() {
       setLoadingWeather(true);
       setWeatherError(null);
       fetchWeatherData(latitude, longitude, OPEN_WEATHER_API_KEY)
-        .then((data) => {
-          setCurrentWeatherData(data);
-        })
+        .then((data) => setCurrentWeatherData(data))
         .catch((err) => {
           console.error("Error fetching weather data:", err);
           setWeatherError(err.message);
           setCurrentWeatherData(null);
         })
-        .finally(() => {
-          setLoadingWeather(false);
-        });
+        .finally(() => setLoadingWeather(false));
 
       setLoadingWaterLevel(true);
       setWaterLevelError(null);
       fetchWaterLevelData()
-        .then((data) => {
-          setWaterLevelPosts(data);
-        })
+        .then((data) => setWaterLevelPosts(data))
         .catch((err) => {
           console.error("Error fetching water level data:", err);
           setWaterLevelError(err.message);
           setWaterLevelPosts([]);
         })
-        .finally(() => {
-          setLoadingWaterLevel(false);
-        });
+        .finally(() => setLoadingWaterLevel(false));
 
       setLoadingPumpStatus(true);
       setPumpStatusError(null);
       fetchPumpStatusData()
-        .then((data) => {
-          setPumpStatusData(data);
-        })
+        .then((data) => setPumpStatusData(data))
         .catch((err) => {
           console.error("Error fetching pump status data:", err);
           setPumpStatusError(err.message);
           setPumpStatusData([]);
         })
-        .finally(() => {
-          setLoadingPumpStatus(false);
-        });
+        .finally(() => setLoadingPumpStatus(false));
 
       const buffer = 0.05;
       const south = latitude - buffer;
@@ -406,127 +384,32 @@ export default function Home() {
   };
 
   const realTimeAlerts = useMemo(() => {
-    const alerts: FloodAlertItem[] = [];
+    const alerts: FloodAlertType[] = [];
 
     if (latestBmkgQuake) {
       const quakeTimestampISO =
         latestBmkgQuake.DateTime.replace(" ", "T") + "+07:00";
-
       alerts.push({
         id: `bmkg-quake-${latestBmkgQuake.DateTime}`,
         regionId: latestBmkgQuake.Wilayah,
-        level: parseFloat(latestBmkgQuake.Magnitude) >= 5 ? "danger" : "info",
-        title: `Gempa Bumi M${latestBmkgQuake.Magnitude} di ${latestBmkgQuake.Wilayah}`,
-        message: `Terjadi gempa bumi berkekuatan ${latestBmkgQuake.Magnitude} SR pada ${latestBmkgQuake.Tanggal}, Pukul ${latestBmkgQuake.Jam} WIB dengan kedalaman ${latestBmkgQuake.Kedalaman}. ${latestBmkgQuake.Potensi}. Dirasakan: ${latestBmkgQuake.Dirasakan}`,
+        level:
+          parseFloat(latestBmkgQuake.Magnitude) >= 5 ? "danger" : "warning",
+        title: `Gempa M${latestBmkgQuake.Magnitude} di ${latestBmkgQuake.Wilayah}`,
+        message: `Pusat gempa di ${latestBmkgQuake.Kedalaman}. Dirasakan: ${latestBmkgQuake.Dirasakan}`,
         timestamp: quakeTimestampISO,
         isActive: true,
         affectedAreas: latestBmkgQuake.Wilayah.split(",").map((s) => s.trim()),
-        actions: [
-          "Tetap tenang",
-          "Periksa bangunan",
-          "Ikuti informasi resmi BMKG",
-        ],
       });
     }
 
-    if (waterLevelPosts.length > 0) {
-      waterLevelPosts.forEach((post) => {
-        let level: FloodAlertItem["level"] = "info";
-        let message = `Tinggi muka air di pos ${post.name}: ${
-          post.water_level || "N/A"
-        } ${post.unit || ""}.`;
-        let actions: string[] = [];
+    // Menggabungkan dengan data mock
+    const combinedAlerts = [...alerts, ...FLOOD_MOCK_ALERTS];
 
-        if (post.status) {
-          switch (post.status.toLowerCase()) {
-            case "siaga":
-              level = "warning";
-              message += ` Status: SIAGA!`;
-              actions.push("Waspada banjir", "Siapkan rencana evakuasi");
-              break;
-            case "awas":
-              level = "danger";
-              message += ` Status: AWAS!`;
-              actions.push("Segera evakuasi", "Ikuti arahan petugas");
-              break;
-            case "normal":
-            default:
-              level = "info";
-              message += ` Status: Normal.`;
-              break;
-          }
-        } else if (post.water_level !== undefined && post.water_level > 100) {
-          level = "warning";
-          message += ` Ketinggian air signifikan!`;
-          actions.push("Waspada", "Monitor situasi");
-        }
-
-        alerts.push({
-          id: `tma-${post.id}`,
-          regionId: post.name,
-          level: level,
-          title: `Update Tinggi Muka Air - ${post.name}`,
-          message: message,
-          timestamp: post.timestamp || new Date().toISOString(),
-          isActive: true,
-          affectedAreas: [post.name],
-          actions: actions.length > 0 ? actions : ["Monitor situasi"],
-        });
-      });
-    }
-
-    if (currentWeatherData) {
-      let level: FloodAlertItem["level"] = "info";
-      let title = "Update Cuaca";
-      let message = `Cuaca saat ini: ${currentWeatherData.description}. Suhu ${currentWeatherData.temperature}°C.`;
-      let actions: string[] = [
-        "Pantau prakiraan cuaca",
-        "Siapkan payung/jas hujan",
-      ];
-
-      if (
-        currentWeatherData.rain1h !== undefined &&
-        currentWeatherData.rain1h > 5
-      ) {
-        level = "warning";
-        title = "Peringatan Hujan Lebat";
-        message = `Hujan lebat diperkirakan ${currentWeatherData.rain1h}mm/jam di area Anda. Waspada potensi banjir!`;
-        actions.push(
-          "Hindari daerah rawan banjir",
-          "Pastikan saluran air bersih"
-        );
-      } else if (
-        currentWeatherData.description.toLowerCase().includes("hujan") ||
-        currentWeatherData.description.toLowerCase().includes("badai")
-      ) {
-        level = "info";
-        title = `Update Cuaca - ${currentWeatherData.description}`;
-      }
-
-      alerts.push({
-        id: `weather-${currentWeatherData.description}-${Date.now()}`,
-        regionId: selectedLocation?.districtName || "Lokasi Anda",
-        level: level,
-        title: title,
-        message: message,
-        timestamp: currentWeatherData.dt
-          ? new Date(currentWeatherData.dt * 1000).toISOString()
-          : new Date().toISOString(),
-        isActive: true,
-        affectedAreas: selectedLocation?.districtName
-          ? [selectedLocation.districtName]
-          : [],
-        actions: actions,
-      });
-    }
-
-    FLOOD_MOCK_ALERTS.forEach((mockAlert) => alerts.push(mockAlert));
-
-    return alerts.sort(
+    return combinedAlerts.sort(
       (a, b) =>
         new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
     );
-  }, [latestBmkgQuake, waterLevelPosts, currentWeatherData, selectedLocation]);
+  }, [latestBmkgQuake]);
 
   const heroCards = [
     {
@@ -540,7 +423,7 @@ export default function Home() {
     {
       title: "Peringatan Aktif",
       description: "Peringatan banjir saat ini",
-      count: realTimeAlerts.filter((a) => a.level !== "info").length, // Count real alerts
+      count: realTimeAlerts.filter((a) => a.level !== "info").length,
       icon: Bell,
       color: "text-warning",
       bgColor: "bg-warning/20",
@@ -548,7 +431,7 @@ export default function Home() {
     {
       title: "Zona Rawan",
       description: "Area yang teridentifikasi",
-      count: disasterProneAreas.length, // Count real zones
+      count: disasterProneAreas.length,
       icon: Shield,
       color: "text-danger",
       bgColor: "bg-danger/20",
@@ -611,66 +494,81 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="bg-background">
       <main className="flex-1">
         {/* Hero Section */}
-        <section className="relative overflow-hidden bg-gradient-to-br from-primary via-primary-800 to-secondary text-white">
-          <div className="absolute inset-0 bg-black/20" />
-          <div className="relative container mx-auto px-4 py-16">
+        <section className="relative overflow-hidden text-white">
+          <div className="absolute inset-0">
+            <Image
+              src="/assets/banjir.png"
+              alt="Latar belakang banjir"
+              fill
+              priority
+              quality={80}
+              className="object-cover"
+            />
+            <div className="absolute inset-0 bg-black/60" />
+          </div>
+          <div className="relative z-10 container mx-auto px-4 sm:px-6 py-20 md:py-28">
             <motion.div
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8 }}
-              className="text-center space-y-6"
+              className="text-center"
             >
               <div className="flex items-center justify-center space-x-2 mb-4">
-                <Shield className="h-8 w-8" />
-                <h1 className="text-4xl md:text-6xl font-bold">
+                <Shield className="h-8 w-8 text-secondary" />
+                <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold">
                   Flood<span className="text-secondary">zie</span>
                 </h1>
               </div>
 
-              <p className="text-xl md:text-2xl text-white/90 max-w-3xl mx-auto">
+              <p className="text-lg sm:text-xl md:text-2xl text-white/90 max-w-3xl mx-auto mt-4">
                 Sistem Deteksi Banjir & Monitoring Cuaca Real-time untuk
                 Indonesia
               </p>
 
-              <div className="flex flex-wrap justify-center gap-4 mt-8">
-                <Button size="lg" variant="secondary" className="text-primary">
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mt-8 max-w-xs sm:max-w-md mx-auto">
+                <Button
+                  size="lg"
+                  variant="secondary"
+                  className="w-full sm:w-auto"
+                >
                   <MapPin className="mr-2 h-5 w-5" />
                   Lihat Peta Banjir
                 </Button>
                 <Button
                   size="lg"
                   variant="outline"
-                  className="text-white border-white hover:bg-white/10"
+                  className="text-white border-white/50 hover:bg-white/10 w-full sm:w-auto"
                 >
                   <Bell className="mr-2 h-5 w-5" />
                   Peringatan Terkini
                 </Button>
               </div>
             </motion.div>
-
-            {/* Hero Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-16">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mt-16 md:mt-20">
               {heroCards.map((card, index) => (
                 <motion.div
                   key={card.title}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: index * 0.1 }}
+                  transition={{ duration: 0.5, delay: 0.2 + index * 0.1 }}
                 >
-                  <Card className="glass text-white border-white/20 hover:bg-white/10 transition-colors h-full">
-                    <CardContent className="p-6">
+                  <Card className="bg-white/5 border-white/10 backdrop-blur-md text-white hover:bg-white/10 transition-colors h-full">
+                    <CardContent className="p-5">
                       <div className="flex items-center justify-between mb-4">
                         <div className={cn("p-2 rounded-lg", card.bgColor)}>
                           <card.icon className={cn("h-6 w-6", card.color)} />
                         </div>
-                        <Badge variant="glass" className="text-white">
+                        <Badge
+                          variant="outline"
+                          className="text-white border-white/20"
+                        >
                           {card.count}
                         </Badge>
                       </div>
-                      <h3 className="text-lg font-semibold mb-2">
+                      <h3 className="text-md font-semibold mb-1">
                         {card.title}
                       </h3>
                       <p className="text-sm text-white/80">
@@ -684,9 +582,8 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Region Selector Section */}
         <section className="container mx-auto px-4 py-8 space-y-4">
-          <Card className="bg-gray-900/60 border-gray-800/50 backdrop-blur-lg rounded-xl shadow-xl overflow-hidden">
+          <Card className="bg-slate-900/80 border-slate-800/50 backdrop-blur-lg rounded-xl shadow-xl overflow-hidden">
             <CardContent className="p-4">
               <RegionDropdown
                 onSelectDistrict={handleRegionSelect}
@@ -708,7 +605,6 @@ export default function Home() {
           </Card>
         </section>
 
-        {/* Main Dashboard */}
         <section className="container mx-auto px-4 py-8 space-y-8">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -749,7 +645,7 @@ export default function Home() {
                 <CardContent>
                   <div
                     style={{ height: "600px", width: "100%" }}
-                    className="w-full rounded-lg border border-gray-700/30 relative overflow-hidden"
+                    className="w-full rounded-lg border border-slate-800/50 relative overflow-hidden"
                   >
                     <FloodMap
                       center={
@@ -856,43 +752,38 @@ export default function Home() {
                 </div>
               </CardHeader>
               <CardContent>
-                {loadingBmkgQuake || loadingWaterLevel || loadingWeather ? (
+                {loadingBmkgQuake ? (
                   <div className="p-4 text-center text-muted-foreground flex items-center justify-center space-x-2">
                     <Loader2 className="h-5 w-5 animate-spin" />
                     <span>Memuat peringatan...</span>
                   </div>
                 ) : (
-                  // ======================= PERBAIKAN DI SINI =======================
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {/* Slot 1: Hanya render jika ada data di index 0 */}
-                    {realTimeAlerts.length > 0 && (
-                      <CyclingAlertCard
-                        alerts={realTimeAlerts}
-                        initialOffset={0}
-                      />
-                    )}
-                    {/* Slot 2: Hanya render jika ada data di index 1 */}
-                    {realTimeAlerts.length > 1 && (
-                      <CyclingAlertCard
-                        alerts={realTimeAlerts}
-                        initialOffset={1}
-                      />
-                    )}
-                    {/* Slot 3: Hanya render jika ada data di index 2 */}
-                    {realTimeAlerts.length > 2 && (
-                      <CyclingAlertCard
-                        alerts={realTimeAlerts}
-                        initialOffset={2}
-                      />
-                    )}
-                    {/* Tambahkan pesan jika tidak ada alert sama sekali */}
-                    {realTimeAlerts.length === 0 && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {realTimeAlerts.length > 0 ? (
+                      <>
+                        <CyclingAlertCard
+                          alerts={realTimeAlerts}
+                          initialOffset={0}
+                        />
+                        {isLargeScreen && realTimeAlerts.length > 1 && (
+                          <CyclingAlertCard
+                            alerts={realTimeAlerts}
+                            initialOffset={1}
+                          />
+                        )}
+                        {isLargeScreen && realTimeAlerts.length > 2 && (
+                          <CyclingAlertCard
+                            alerts={realTimeAlerts}
+                            initialOffset={2}
+                          />
+                        )}
+                      </>
+                    ) : (
                       <div className="col-span-full text-center text-muted-foreground p-4">
-                        Tidak ada peringatan bencana real-time aktif saat ini.
+                        Tidak ada peringatan bencana aktif saat ini.
                       </div>
                     )}
                   </div>
-                  // ===============================================================
                 )}
               </CardContent>
             </Card>
@@ -900,6 +791,7 @@ export default function Home() {
         </section>
       </main>
 
+      {/* Sisa kode (Chatbot, etc.) tetap sama */}
       <motion.button
         className="fixed bottom-6 right-6 bg-cyan-600 hover:bg-cyan-700 text-white p-4 rounded-full shadow-lg z-50 transition-all duration-300 ease-in-out transform hover:scale-110 active:scale-90 focus:outline-none focus:ring-4 focus:ring-cyan-500 focus:ring-opacity-75"
         onClick={toggleChatbot}
@@ -913,7 +805,7 @@ export default function Home() {
       <AnimatePresence>
         {isChatbotOpen && (
           <motion.div
-            className="fixed bottom-24 right-6 w-[320px] h-[400px] bg-gray-900 border border-gray-800 rounded-xl shadow-2xl overflow-hidden z-50 flex flex-col"
+            className="fixed bottom-24 right-6 w-[320px] h-[400px] bg-slate-900 border border-slate-800 rounded-xl shadow-2xl overflow-hidden z-50 flex flex-col"
             initial={{ opacity: 0, y: 50, scale: 0.8 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 50, scale: 0.8 }}
@@ -943,7 +835,7 @@ export default function Home() {
             <div className="flex-1 flex flex-col overflow-hidden">
               <div
                 ref={chatScrollRef}
-                className="flex-1 overflow-y-auto p-3 space-y-3 bg-gray-900"
+                className="flex-1 overflow-y-auto p-3 space-y-3 bg-slate-900"
               >
                 {chatHistory.length === 0 && (
                   <>
@@ -966,7 +858,7 @@ export default function Home() {
                           <button
                             key={index}
                             onClick={() => handleQuickAction(action.query)}
-                            className="flex items-center space-x-1 p-2 bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded-lg transition-colors duration-200 group text-sm"
+                            className="flex items-center space-x-1 p-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg transition-colors duration-200 group text-sm"
                             disabled={isChatLoading}
                           >
                             <action.icon className="w-3.5 h-3.5 text-cyan-400 group-hover:text-cyan-300" />
@@ -979,73 +871,69 @@ export default function Home() {
                     </div>
                   </>
                 )}
-                {chatHistory.length > 0 &&
-                  chatHistory.map((msg, index) => (
+                {chatHistory.map((msg, index) => (
+                  <div
+                    key={index}
+                    className={`flex ${
+                      msg.sender === "user" ? "justify-end" : "justify-start"
+                    } animate-fade-in`}
+                  >
                     <div
-                      key={index}
-                      className={`flex ${
-                        msg.sender === "user" ? "justify-end" : "justify-start"
-                      } animate-fade-in`}
+                      className={`flex items-start space-x-2 max-w-[80%] ${
+                        msg.sender === "user"
+                          ? "flex-row-reverse space-x-reverse"
+                          : ""
+                      }`}
                     >
                       <div
-                        className={`flex items-start space-x-2 max-w-[80%] ${
+                        className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 ${
                           msg.sender === "user"
-                            ? "flex-row-reverse space-x-reverse"
-                            : ""
+                            ? "bg-blue-600"
+                            : msg.isError
+                            ? "bg-red-600"
+                            : "bg-cyan-600"
                         }`}
                       >
-                        <div
-                          className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 ${
-                            msg.sender === "user"
-                              ? "bg-blue-600"
-                              : msg.isError
-                              ? "bg-red-600"
-                              : "bg-cyan-600"
-                          }`}
-                        >
-                          {msg.sender === "user" ? (
-                            <User className="w-3.5 h-3.5 text-white" />
-                          ) : (
-                            <Bot className="w-3.5 h-3.5 text-white" />
-                          )}
-                        </div>
-                        <div
-                          className={`rounded-xl px-3 py-2 ${
-                            msg.sender === "user"
-                              ? "bg-blue-600 text-white"
-                              : msg.isError
-                              ? "bg-red-900/50 text-red-300 border border-red-600"
-                              : "bg-gray-800 text-gray-100 border border-gray-700"
-                          }`}
-                        >
-                          <p className="text-xs leading-relaxed">
-                            {msg.message}
-                          </p>
-                          <div className="flex items-center justify-between mt-1">
-                            <span
-                              className={`text-xxs ${
-                                msg.sender === "user"
-                                  ? "text-blue-200"
-                                  : msg.isError
-                                  ? "text-red-400"
-                                  : "text-gray-400"
-                              }`}
-                            >
-                              {formatTime(msg.timestamp)}
-                            </span>
-                          </div>
+                        {msg.sender === "user" ? (
+                          <User className="w-3.5 h-3.5 text-white" />
+                        ) : (
+                          <Bot className="w-3.5 h-3.5 text-white" />
+                        )}
+                      </div>
+                      <div
+                        className={`rounded-xl px-3 py-2 ${
+                          msg.sender === "user"
+                            ? "bg-blue-600 text-white"
+                            : msg.isError
+                            ? "bg-red-900/50 text-red-300 border border-red-600"
+                            : "bg-slate-800 text-gray-100 border border-slate-700"
+                        }`}
+                      >
+                        <p className="text-xs leading-relaxed">{msg.message}</p>
+                        <div className="flex items-center justify-between mt-1">
+                          <span
+                            className={`text-xxs ${
+                              msg.sender === "user"
+                                ? "text-blue-200"
+                                : msg.isError
+                                ? "text-red-400"
+                                : "text-gray-400"
+                            }`}
+                          >
+                            {formatTime(msg.timestamp)}
+                          </span>
                         </div>
                       </div>
                     </div>
-                  ))}
-
+                  </div>
+                ))}
                 {isTyping && (
                   <div className="flex justify-start animate-fade-in">
                     <div className="flex items-start space-x-2">
                       <div className="w-7 h-7 bg-cyan-600 rounded-full flex items-center justify-center">
                         <Bot className="w-3.5 h-3.5 text-white" />
                       </div>
-                      <div className="bg-gray-800 border border-gray-700 rounded-xl px-3 py-2">
+                      <div className="bg-slate-800 border border-slate-700 rounded-xl px-3 py-2">
                         <div className="flex space-x-1">
                           <div className="w-1.5 h-1.5 bg-cyan-400 rounded-full animate-bounce"></div>
                           <div
@@ -1062,7 +950,7 @@ export default function Home() {
                   </div>
                 )}
               </div>
-              <div className="border-t border-gray-800 p-3 bg-gray-900 flex-shrink-0">
+              <div className="border-t border-slate-800 p-3 bg-slate-900/50 flex-shrink-0">
                 <div className="flex items-center space-x-2">
                   <div className="flex-1 relative">
                     <input
@@ -1075,7 +963,7 @@ export default function Home() {
                         }
                       }}
                       placeholder="Tanyakan sesuatu..."
-                      className="w-full bg-gray-800 border border-gray-700 rounded-full px-3 py-2.5 pr-10 text-sm text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition-all duration-200"
+                      className="w-full bg-slate-800 border border-slate-700 rounded-full px-3 py-2.5 pr-10 text-sm text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition-all duration-200"
                       disabled={isChatLoading}
                     />
                     {isChatLoading && (
