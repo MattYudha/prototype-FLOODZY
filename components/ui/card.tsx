@@ -1,38 +1,39 @@
-'use client';
+"use client";
 
-import { cva, type VariantProps } from 'class-variance-authority';
-import { motion } from 'framer-motion';
-import { HTMLAttributes, forwardRef } from 'react';
-import { cn } from '@/lib/utils';
+import { cva, type VariantProps } from "class-variance-authority";
+import { motion } from "framer-motion";
+import { HTMLAttributes, forwardRef } from "react";
+import { cn } from "@/lib/utils";
 
 const cardVariants = cva(
-  'rounded-lg border bg-card text-card-foreground shadow-sm transition-all duration-300 ease-in-out',
+  "rounded-lg border bg-card text-card-foreground shadow-sm transition-all duration-300 ease-in-out",
   {
     variants: {
       variant: {
-        default: 'border-border',
-        glass: 'glass border-white/20 shadow-glass',
-        elevated: 'shadow-lg hover:shadow-xl',
-        outline: 'border-2 border-border bg-transparent',
-        gradient: 'bg-gradient-to-br from-primary/5 to-secondary/5 border-primary/20',
+        default: "border-border",
+        glass: "glass border-white/20 shadow-glass",
+        elevated: "shadow-lg hover:shadow-xl",
+        outline: "border-2 border-border bg-transparent",
+        gradient:
+          "bg-gradient-to-br from-primary/5 to-secondary/5 border-primary/20",
       },
       size: {
-        default: 'p-6',
-        sm: 'p-4',
-        lg: 'p-8',
-        xl: 'p-10',
+        default: "p-6",
+        sm: "p-4",
+        lg: "p-8",
+        xl: "p-10",
       },
       hover: {
-        none: '',
-        lift: 'hover:-translate-y-1 hover:shadow-lg',
-        scale: 'hover:scale-[1.02]',
-        glow: 'hover:shadow-glow',
+        none: "",
+        lift: "hover:-translate-y-1 hover:shadow-lg",
+        scale: "hover:scale-[1.02]",
+        glow: "hover:shadow-glow",
       },
     },
     defaultVariants: {
-      variant: 'default',
-      size: 'default',
-      hover: 'lift',
+      variant: "default",
+      size: "default",
+      hover: "lift",
     },
   }
 );
@@ -60,57 +61,69 @@ const Card = forwardRef<HTMLDivElement, CardProps>(
   }
 );
 
-Card.displayName = 'Card';
+Card.displayName = "Card";
 
 const CardHeader = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElement>>(
   ({ className, ...props }, ref) => (
     <div
       ref={ref}
-      className={cn('flex flex-col space-y-1.5 p-6', className)}
+      className={cn("flex flex-col space-y-1.5 p-6", className)}
       {...props}
     />
   )
 );
-CardHeader.displayName = 'CardHeader';
+CardHeader.displayName = "CardHeader";
 
-const CardTitle = forwardRef<HTMLParagraphElement, HTMLAttributes<HTMLHeadingElement>>(
-  ({ className, ...props }, ref) => (
-    <h3
-      ref={ref}
-      className={cn('text-2xl font-semibold leading-none tracking-tight', className)}
-      {...props}
-    />
-  )
-);
-CardTitle.displayName = 'CardTitle';
+const CardTitle = forwardRef<
+  HTMLParagraphElement,
+  HTMLAttributes<HTMLHeadingElement>
+>(({ className, ...props }, ref) => (
+  <h3
+    ref={ref}
+    className={cn(
+      "text-2xl font-semibold leading-none tracking-tight",
+      className
+    )}
+    {...props}
+  />
+));
+CardTitle.displayName = "CardTitle";
 
-const CardDescription = forwardRef<HTMLParagraphElement, HTMLAttributes<HTMLParagraphElement>>(
-  ({ className, ...props }, ref) => (
-    <p
-      ref={ref}
-      className={cn('text-sm text-muted-foreground', className)}
-      {...props}
-    />
-  )
-);
-CardDescription.displayName = 'CardDescription';
+const CardDescription = forwardRef<
+  HTMLParagraphElement,
+  HTMLAttributes<HTMLParagraphElement>
+>(({ className, ...props }, ref) => (
+  <p
+    ref={ref}
+    className={cn("text-sm text-muted-foreground", className)}
+    {...props}
+  />
+));
+CardDescription.displayName = "CardDescription";
 
 const CardContent = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElement>>(
   ({ className, ...props }, ref) => (
-    <div ref={ref} className={cn('p-6 pt-0', className)} {...props} />
+    <div ref={ref} className={cn("p-6 pt-0", className)} {...props} />
   )
 );
-CardContent.displayName = 'CardContent';
+CardContent.displayName = "CardContent";
 
 const CardFooter = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElement>>(
   ({ className, ...props }, ref) => (
     <div
       ref={ref}
-      className={cn('flex items-center p-6 pt-0', className)}
+      className={cn("flex items-center p-6 pt-0", className)}
       {...props}
     />
   )
 );
-CardFooter.displayName = 'CardFooter';
+CardFooter.displayName = "CardFooter";
 
-export { Card, CardHeader, CardFooter, CardTitle, CardDescription, CardContent };
+export {
+  Card,
+  CardHeader,
+  CardFooter,
+  CardTitle,
+  CardDescription,
+  CardContent,
+};
