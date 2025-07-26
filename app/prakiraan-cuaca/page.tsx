@@ -479,6 +479,7 @@ const DailyForecast = ({ data, loading }: any) => {
 
 export default function PrakiraanCuacaPage() {
   const API_KEY = process.env.NEXT_PUBLIC_OPENWEATHER_API_KEY;
+  console.log("OpenWeatherMap API Key:", API_KEY);
 
   const [selectedLocation, setSelectedLocation] = useState<any>(null);
   const [currentMapCenter, setCurrentMapCenter] = useState([-6.1751, 106.865]);
@@ -504,6 +505,7 @@ export default function PrakiraanCuacaPage() {
 
   // ✅ PERBAIKAN TOTAL: Menggunakan 2 endpoint gratis dan menggabungkan datanya
   useEffect(() => {
+    console.log("useEffect for weather data triggered. selectedLocation:", selectedLocation);
     if (selectedLocation) {
       const fetchWeatherData = async () => {
         setLoadingWeather(true);
@@ -527,6 +529,9 @@ export default function PrakiraanCuacaPage() {
             axios.get(weatherUrl, { params: commonParams }),
             axios.get(forecastUrl, { params: commonParams }),
           ]);
+
+          console.log("Weather API Response:", weatherResponse.data);
+          console.log("Forecast API Response:", forecastResponse.data);
 
           // Proses data prakiraan untuk mendapatkan 1 data per hari
           const dailyForecasts = forecastResponse.data.list.filter(
@@ -558,11 +563,13 @@ export default function PrakiraanCuacaPage() {
   }, [selectedLocation, API_KEY]);
 
   const handleRegionSelect = (region: any) => {
-    setSelectedLocation({
+    const newLocation = {
       name: region.name,
       lat: region.lat,
       lon: region.lon,
-    });
+    };
+    setSelectedLocation(newLocation);
+    console.log("Selected location via RegionDropdown:", newLocation);
   };
 
   const handleSearchLocation = async () => {
@@ -579,7 +586,9 @@ export default function PrakiraanCuacaPage() {
       );
       if (response.data && response.data.length > 0) {
         const { name, lat, lon, country, state } = response.data[0];
-        setSelectedLocation({ name: `${name}, ${state || country}`, lat, lon });
+        const newLocation = { name: `${name}, ${state || country}`, lat, lon };
+        setSelectedLocation(newLocation);
+        console.log("Selected location via search:", newLocation);
         setSearchQuery("");
       } else {
         setSearchLocationError(`Lokasi "${searchQuery}" tidak ditemukan.`);

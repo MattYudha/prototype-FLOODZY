@@ -27,16 +27,10 @@ import {
 import { WeatherData } from "@/lib/api";
 import { WeatherMapIframe } from "@/components/weather/WeatherMapIframe";
 
+import { SelectedLocation } from "@/app/state";
+
 interface RegionDropdownProps {
-  onSelectDistrict?: (
-    districtCode: string,
-    districtName: string,
-    regencyCode: string,
-    provinceCode: string,
-    latitude?: number,
-    longitude?: number,
-    geometry?: string
-  ) => void;
+  onSelectDistrict?: (location: SelectedLocation) => void;
   selectedLocationCoords?: { lat: number; lng: number; name: string } | null;
   currentWeatherData?: WeatherData | null;
   loadingWeather?: boolean;
@@ -107,8 +101,6 @@ export function RegionDropdown({
     setDisplayRegencyName(null);
     setSelectedDistrictCode(null);
     setDisplayDistrictName(null);
-
-    onSelectDistrict?.("", "", "", "", undefined, undefined, undefined);
   };
 
   const handleRegencyChange = (value: string) => {
@@ -119,8 +111,6 @@ export function RegionDropdown({
 
     setSelectedDistrictCode(null);
     setDisplayDistrictName(null);
-
-    onSelectDistrict?.("", "", "", "", undefined, undefined, undefined);
   };
 
   const handleDistrictChange = (value: string) => {
@@ -128,7 +118,6 @@ export function RegionDropdown({
 
     if (!selectedProvinceCode || !selectedRegencyCode) {
       setDisplayDistrictName(null);
-      onSelectDistrict?.("", "", "", "", undefined, undefined, undefined);
       return;
     }
 
@@ -161,18 +150,9 @@ export function RegionDropdown({
         geometry: selectedDistrict.sub_district_geometry,
       };
 
-      onSelectDistrict(
-        locationData.districtCode,
-        locationData.districtName,
-        locationData.regencyCode,
-        locationData.provinceCode,
-        locationData.latitude,
-        locationData.longitude,
-        locationData.geometry
-      );
+      onSelectDistrict(locationData);
     } else {
       setDisplayDistrictName(null);
-      onSelectDistrict?.("", "", "", "", undefined, undefined, undefined);
     }
   };
 

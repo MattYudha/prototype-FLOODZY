@@ -8,6 +8,8 @@ export const runtime = 'nodejs';
 
 export async function GET(request: Request) {
   console.log('API Regions: Request received.');
+  console.log(`DEBUG: SUPABASE_URL available: ${!!process.env.NEXT_PUBLIC_SUPABASE_URL}`);
+  console.log(`DEBUG: SUPABASE_SERVICE_ROLE_KEY available: ${!!process.env.SUPABASE_SERVICE_ROLE_KEY}`);
   
   // Add CORS headers
   const headers = {

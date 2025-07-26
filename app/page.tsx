@@ -6,10 +6,14 @@ import React, {
   useMemo,
   useRef,
   useCallback,
+  useReducer,
 } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import "leaflet/dist/leaflet.css";
 import Image from "next/image";
+
+// State Management
+import { appReducer, initialState, SelectedLocation, MapBounds } from "./state";
 
 // UI Components
 import { WeatherDisplay } from "@/components/weather/WeatherDisplay";
@@ -46,6 +50,11 @@ import {
 
 // Hooks & Utils
 import { useMediaQuery } from "@/hooks/useMediaQuery";
+import { useWeatherData } from "@/hooks/useWeatherData";
+import { useDisasterData } from "@/hooks/useDisasterData";
+import { useWaterLevelData } from "@/hooks/useWaterLevelData";
+import { usePumpStatusData } from "@/hooks/usePumpStatusData";
+import { useBmkgQuakeData } from "@/hooks/useBmkgQuakeData";
 import {
   FLOOD_MOCK_ALERTS,
   DASHBOARD_STATS_MOCK,
@@ -57,35 +66,14 @@ import { cn, formatNumber, getTimeAgo } from "@/lib/utils";
 // App Components
 import { RegionDropdown } from "@/components/region-selector/RegionDropdown";
 import { FloodMap } from "@/components/map/FloodMap";
-import { PeringatanBencanaCard } from "@/components/flood/PeringatanBencanaCard"; // <-- IMPORT BARU
+import { PeringatanBencanaCard } from "@/components/flood/PeringatanBencanaCard";
 
-// API & Types
-import {
-  fetchDisasterProneData,
-  OverpassElement,
-  fetchWeatherData,
-  WeatherData,
-  fetchWaterLevelData,
-  WaterLevelPost,
-  fetchPumpStatusData,
-  PumpData,
-  fetchBmkgLatestQuake,
-  BmkgGempaData,
-} from "@/lib/api";
+// Types
 import type { FloodAlert as FloodAlertType } from "@/types";
 
-const OPEN_WEATHER_API_KEY = "b48e2782f52bd9c6783ef14a35856abc";
 const ROTATION_INTERVAL_MS = 10000;
-const DATA_FETCH_INTERVAL_MS = 10 * 60 * 1000;
 
-// --- Komponen CyclingAlertCard yang Diperbarui ---
-const CyclingAlertCard = ({
-  alerts,
-  initialOffset = 0,
-}: {
-  alerts: FloodAlertType[];
-  initialOffset?: number;
-}) => {
+const CyclingAlertCard = ({ alerts, initialOffset = 0 }: { alerts: FloodAlertType[]; initialOffset?: number }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
 
   useEffect(() => {
@@ -101,15 +89,10 @@ const CyclingAlertCard = ({
 
   if (alerts.length === 0) {
     return (
-      <Alert
-        variant="default"
-        className="w-full h-full flex flex-col justify-center"
-      >
+      <Alert variant="default" className="w-full h-full flex flex-col justify-center">
         <Bell className="h-4 w-4" />
         <AlertTitle>Tidak Ada Peringatan</AlertTitle>
-        <AlertDescription>
-          Tidak ada berita atau peringatan yang tersedia saat ini.
-        </AlertDescription>
+        <AlertDescription>Tidak ada berita atau peringatan yang tersedia saat ini.</AlertDescription>
       </Alert>
     );
   }
@@ -117,7 +100,7 @@ const CyclingAlertCard = ({
   const currentAlert = alerts[currentIndex];
 
   if (!currentAlert) {
-    return null; // Return null jika alert tidak valid
+    return null;
   }
 
   return (
@@ -130,81 +113,132 @@ const CyclingAlertCard = ({
         transition={{ duration: 0.5 }}
         className="h-full"
       >
-        <PeringatanBencanaCard
-          alert={currentAlert}
-          className={`level-${currentAlert.level}`} // Menambahkan kelas dinamis untuk tema warna
-        />
+        <PeringatanBencanaCard alert={currentAlert} className={`level-${currentAlert.level}`} />
       </motion.div>
     </AnimatePresence>
   );
 };
 
-interface SelectedLocationDetails {
-  districtCode: string;
-  districtName: string;
-  regencyCode: string;
-  provinceCode: string;
-  latitude?: number;
-  longitude?: number;
-  geometry?: string;
-}
-
 export default function Home() {
-  const [selectedLocation, setSelectedLocation] =
-    useState<SelectedLocationDetails | null>(null);
+  const [state, dispatch] = useReducer(appReducer, initialState);
+  const { selectedLocation, mapBounds } = state;
+
+  // UI State
   const isMobile = useMediaQuery("(max-width: 768px)");
   const isLargeScreen = useMediaQuery("(min-width: 1024px)");
 
-  const [disasterProneAreas, setDisasterProneAreas] = useState<
-    OverpassElement[]
-  >([]);
-  const [loadingDisasterData, setLoadingDisasterData] = useState(false);
-  const [disasterDataError, setLoadingDisasterDataError] = useState<
-    string | null
-  >(null);
+  // Data Fetching Hooks
+  const { weatherData, isLoading: isLoadingWeather, error: weatherError, fetchWeather } = useWeatherData();
+  const { disasterProneAreas, isLoading: isLoadingDisaster, error: disasterError, fetchDisasterAreas } = useDisasterData();
+  const { waterLevelPosts, isLoading: isLoadingWaterLevel, error: waterLevelError, fetchWaterLevels } = useWaterLevelData();
+  const { pumpStatusData, isLoading: isLoadingPumpStatus, error: pumpStatusError, fetchPumpStatus } = usePumpStatusData();
+  const { latestQuake, isLoading: isLoadingQuake, error: quakeError } = useBmkgQuakeData();
 
-  const [currentWeatherData, setCurrentWeatherData] =
-    useState<WeatherData | null>(null);
-  const [loadingWeather, setLoadingWeather] = useState(false);
-  const [weatherError, setWeatherError] = useState<string | null>(null);
-
-  const [waterLevelPosts, setWaterLevelPosts] = useState<WaterLevelPost[]>([]);
-  const [loadingWaterLevel, setLoadingWaterLevel] = useState(false);
-  const [waterLevelError, setWaterLevelError] = useState<string | null>(null);
-
-  const [pumpStatusData, setPumpStatusData] = useState<PumpData[]>([]);
-  const [loadingPumpStatus, setLoadingPumpStatus] = useState(false);
-  const [pumpStatusError, setPumpStatusError] = useState<string | null>(null);
-
-  const [latestBmkgQuake, setLatestBmkgQuake] = useState<BmkgGempaData | null>(
-    null
-  );
-  const [loadingBmkgQuake, setLoadingBmkgQuake] = useState(false);
-  const [bmkgQuakeError, setBmkgQuakeError] = useState<string | null>(null);
-
-  const [currentMapBounds, setCurrentMapBounds] = useState<{
-    south: number;
-    west: number;
-    north: number;
-    east: number;
-  } | null>(null);
-
+  // Chatbot State
   const [chatInput, setChatInput] = useState<string>("");
-  const [chatHistory, setChatHistory] = useState<
-    {
-      sender: "user" | "bot";
-      message: string;
-      timestamp: Date;
-      isError?: boolean;
-    }[]
-  >([]);
+  const [chatHistory, setChatHistory] = useState<{ sender: "user" | "bot"; message: string; timestamp: Date; isError?: boolean; }[]>([]);
   const [isChatLoading, setIsChatLoading] = useState(false);
   const [chatError, setChatError] = useState<string | null>(null);
   const [isTyping, setIsTyping] = useState(false);
   const [isChatbotOpen, setIsChatbotOpen] = useState(false);
-
   const chatScrollRef = useRef<HTMLDivElement>(null);
 
+  // --- Effects ---
+  useEffect(() => {
+    if (mapBounds) {
+      fetchDisasterAreas(mapBounds);
+    }
+  }, [mapBounds, fetchDisasterAreas]);
+
+  useEffect(() => {
+    if (chatScrollRef.current) {
+      chatScrollRef.current.scrollTop = chatScrollRef.current.scrollHeight;
+    }
+  }, [chatHistory, isTyping]);
+
+  // --- Handlers ---
+  const handleRegionSelect = useCallback((location: SelectedLocation) => {
+    dispatch({ type: 'SET_LOCATION', payload: location });
+
+    if (location && location.latitude != null && location.longitude != null) {
+      const { latitude, longitude } = location;
+      fetchWeather(latitude, longitude);
+      fetchWaterLevels();
+      fetchPumpStatus();
+
+      const buffer = 0.05;
+      const newBounds = {
+        south: latitude - buffer,
+        west: longitude - buffer,
+        north: latitude + buffer,
+        east: longitude + buffer,
+      };
+      dispatch({ type: 'SET_MAP_BOUNDS', payload: newBounds });
+    } else {
+      dispatch({ type: 'SET_MAP_BOUNDS', payload: null });
+    }
+  }, [fetchWeather, fetchWaterLevels, fetchPumpStatus]);
+
+  const handleMapBoundsChange = useCallback((bounds: MapBounds) => {
+    dispatch({ type: 'SET_MAP_BOUNDS', payload: bounds });
+  }, []);
+
+  // --- Memoized Data ---
+  const realTimeAlerts = useMemo(() => {
+    const alerts: FloodAlertType[] = [];
+    if (latestQuake) {
+      const quakeTimestampISO = latestQuake.DateTime.replace(" ", "T") + "+07:00";
+      alerts.push({
+        id: `bmkg-quake-${latestQuake.DateTime}`,
+        regionId: latestQuake.Wilayah,
+        level: parseFloat(latestQuake.Magnitude) >= 5 ? "danger" : "warning",
+        title: `Gempa M${latestQuake.Magnitude} di ${latestQuake.Wilayah}`,
+        message: `Pusat gempa di ${latestQuake.Kedalaman}. Dirasakan: ${latestQuake.Dirasakan}`,
+        timestamp: quakeTimestampISO,
+        isActive: true,
+        affectedAreas: latestQuake.Wilayah.split(",").map((s) => s.trim()),
+      });
+    }
+    const combinedAlerts = [...alerts, ...FLOOD_MOCK_ALERTS];
+    return combinedAlerts.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+  }, [latestQuake]);
+
+  const heroCards = useMemo(() => [
+    {
+      title: "Total Wilayah",
+      description: "Wilayah yang dipantau",
+      count: DASHBOARD_STATS_MOCK.totalRegions,
+      icon: MapPin,
+      color: "text-primary",
+      bgColor: "bg-primary/20",
+    },
+    {
+      title: "Peringatan Aktif",
+      description: "Peringatan banjir saat ini",
+      count: realTimeAlerts.filter((a) => a.level !== "info").length,
+      icon: Bell,
+      color: "text-warning",
+      bgColor: "bg-warning/20",
+    },
+    {
+      title: "Zona Rawan",
+      description: "Area yang teridentifikasi",
+      count: disasterProneAreas.length,
+      icon: Shield,
+      color: "text-danger",
+      bgColor: "bg-danger/20",
+    },
+    {
+      title: "Orang Berisiko",
+      description: "Estimasi populasi berisiko",
+      count: formatNumber(DASHBOARD_STATS_MOCK.peopleAtRisk),
+      icon: Users,
+      color: "text-purple-500",
+      bgColor: "bg-secondary/20",
+    },
+  ], [realTimeAlerts, disasterProneAreas.length]);
+
+  // Chatbot logic remains the same...
   const quickActions = [
     {
       icon: Droplets,
@@ -250,201 +284,6 @@ export default function Home() {
       callback();
     }, 1000 + Math.random() * 1000);
   };
-
-  useEffect(() => {
-    if (currentMapBounds) {
-      const { south, west, north, east } = currentMapBounds;
-
-      setLoadingDisasterData(true);
-      setLoadingDisasterDataError(null);
-      fetchDisasterProneData(south, west, north, east)
-        .then((data) => {
-          setDisasterProneAreas(data.elements);
-        })
-        .catch((err) => {
-          console.error(
-            "Error fetching disaster prone data (from map move):",
-            err
-          );
-          setLoadingDisasterDataError(err.message);
-          setDisasterProneAreas([]);
-        })
-        .finally(() => {
-          setLoadingDisasterData(false);
-        });
-    }
-  }, [currentMapBounds]);
-
-  useEffect(() => {
-    const getLatestQuake = async () => {
-      setLoadingBmkgQuake(true);
-      setBmkgQuakeError(null);
-      try {
-        const data = await fetchBmkgLatestQuake();
-        setLatestBmkgQuake(data);
-      } catch (err: any) {
-        console.error("Error fetching BMKG latest earthquake:", err);
-        setBmkgQuakeError(err.message);
-      } finally {
-        setLoadingBmkgQuake(false);
-      }
-    };
-
-    getLatestQuake();
-    const interval = setInterval(getLatestQuake, DATA_FETCH_INTERVAL_MS);
-    return () => clearInterval(interval);
-  }, []);
-
-  useEffect(() => {
-    if (chatScrollRef.current) {
-      chatScrollRef.current.scrollTop = chatScrollRef.current.scrollHeight;
-    }
-  }, [chatHistory, isTyping]);
-
-  const handleMapBoundsChange = (
-    south: number,
-    west: number,
-    north: number,
-    east: number
-  ) => {
-    setCurrentMapBounds({ south, west, north, east });
-  };
-
-  const handleRegionSelect = (
-    districtCode: string,
-    districtName: string,
-    regencyCode: string,
-    provinceCode: string,
-    latitude?: number,
-    longitude?: number,
-    geometry?: string
-  ) => {
-    const newLocation: SelectedLocationDetails = {
-      districtCode,
-      districtName,
-      regencyCode,
-      provinceCode,
-      latitude,
-      longitude,
-      geometry,
-    };
-    setSelectedLocation(newLocation);
-
-    if (latitude != null && longitude != null) {
-      setLoadingWeather(true);
-      setWeatherError(null);
-      fetchWeatherData(latitude, longitude, OPEN_WEATHER_API_KEY)
-        .then((data) => setCurrentWeatherData(data))
-        .catch((err) => {
-          console.error("Error fetching weather data:", err);
-          setWeatherError(err.message);
-          setCurrentWeatherData(null);
-        })
-        .finally(() => setLoadingWeather(false));
-
-      setLoadingWaterLevel(true);
-      setWaterLevelError(null);
-      fetchWaterLevelData()
-        .then((data) => setWaterLevelPosts(data))
-        .catch((err) => {
-          console.error("Error fetching water level data:", err);
-          setWaterLevelError(err.message);
-          setWaterLevelPosts([]);
-        })
-        .finally(() => setLoadingWaterLevel(false));
-
-      setLoadingPumpStatus(true);
-      setPumpStatusError(null);
-      fetchPumpStatusData()
-        .then((data) => setPumpStatusData(data))
-        .catch((err) => {
-          console.error("Error fetching pump status data:", err);
-          setPumpStatusError(err.message);
-          setPumpStatusData([]);
-        })
-        .finally(() => setLoadingPumpStatus(false));
-
-      const buffer = 0.05;
-      const south = latitude - buffer;
-      const west = longitude - buffer;
-      const north = latitude + buffer;
-      const east = longitude + buffer;
-      setCurrentMapBounds({ south, west, north, east });
-    } else {
-      setDisasterProneAreas([]);
-      setLoadingDisasterData(false);
-      setCurrentWeatherData(null);
-      setLoadingWeather(false);
-      setWaterLevelPosts([]);
-      setLoadingWaterLevel(false);
-      setPumpStatusData([]);
-      setLoadingPumpStatus(false);
-      setCurrentMapBounds(null);
-    }
-  };
-
-  const realTimeAlerts = useMemo(() => {
-    const alerts: FloodAlertType[] = [];
-
-    if (latestBmkgQuake) {
-      const quakeTimestampISO =
-        latestBmkgQuake.DateTime.replace(" ", "T") + "+07:00";
-      alerts.push({
-        id: `bmkg-quake-${latestBmkgQuake.DateTime}`,
-        regionId: latestBmkgQuake.Wilayah,
-        level:
-          parseFloat(latestBmkgQuake.Magnitude) >= 5 ? "danger" : "warning",
-        title: `Gempa M${latestBmkgQuake.Magnitude} di ${latestBmkgQuake.Wilayah}`,
-        message: `Pusat gempa di ${latestBmkgQuake.Kedalaman}. Dirasakan: ${latestBmkgQuake.Dirasakan}`,
-        timestamp: quakeTimestampISO,
-        isActive: true,
-        affectedAreas: latestBmkgQuake.Wilayah.split(",").map((s) => s.trim()),
-      });
-    }
-
-    // Menggabungkan dengan data mock
-    const combinedAlerts = [...alerts, ...FLOOD_MOCK_ALERTS];
-
-    return combinedAlerts.sort(
-      (a, b) =>
-        new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
-    );
-  }, [latestBmkgQuake]);
-
-  const heroCards = [
-    {
-      title: "Total Wilayah",
-      description: "Wilayah yang dipantau",
-      count: DASHBOARD_STATS_MOCK.totalRegions,
-      icon: MapPin,
-      color: "text-primary",
-      bgColor: "bg-primary/20",
-    },
-    {
-      title: "Peringatan Aktif",
-      description: "Peringatan banjir saat ini",
-      count: realTimeAlerts.filter((a) => a.level !== "info").length,
-      icon: Bell,
-      color: "text-warning",
-      bgColor: "bg-warning/20",
-    },
-    {
-      title: "Zona Rawan",
-      description: "Area yang teridentifikasi",
-      count: disasterProneAreas.length,
-      icon: Shield,
-      color: "text-danger",
-      bgColor: "bg-danger/20",
-    },
-    {
-      title: "Orang Berisiko",
-      description: "Estimasi populasi berisiko",
-      count: formatNumber(DASHBOARD_STATS_MOCK.peopleAtRisk),
-      icon: Users,
-      color: "text-purple-500",
-      bgColor: "bg-secondary/20",
-    },
-  ];
 
   const sendChatMessage = async (customMessage: string | null = null) => {
     const messageToSend = customMessage || chatInput.trim();
@@ -597,8 +436,8 @@ export default function Home() {
                       }
                     : null
                 }
-                currentWeatherData={currentWeatherData}
-                loadingWeather={loadingWeather}
+                currentWeatherData={weatherData}
+                loadingWeather={isLoadingWeather}
                 error={weatherError}
               />
             </CardContent>
@@ -614,10 +453,10 @@ export default function Home() {
             <DashboardStats
               stats={DASHBOARD_STATS_MOCK}
               waterLevelPosts={waterLevelPosts}
-              loadingWaterLevel={loadingWaterLevel}
+              loadingWaterLevel={isLoadingWaterLevel}
               waterLevelError={waterLevelError}
               pumpStatusData={pumpStatusData}
-              loadingPumpStatus={loadingPumpStatus}
+              loadingPumpStatus={isLoadingPumpStatus}
               pumpStatusError={pumpStatusError}
             />
           </motion.div>
@@ -660,8 +499,8 @@ export default function Home() {
                       zoom={selectedLocation ? 12 : DEFAULT_MAP_ZOOM}
                       className="h-full w-full"
                       floodProneData={disasterProneAreas}
-                      loadingFloodData={loadingDisasterData}
-                      floodDataError={disasterDataError}
+                      loadingFloodData={isLoadingDisaster}
+                      floodDataError={disasterError}
                       onMapBoundsChange={handleMapBoundsChange}
                     />
                   </div>
@@ -677,8 +516,8 @@ export default function Home() {
                 className="flex-1"
               >
                 <WeatherDisplay
-                  data={currentWeatherData}
-                  loading={loadingWeather}
+                  data={weatherData}
+                  loading={isLoadingWeather}
                   error={weatherError}
                 />
               </motion.div>
@@ -752,7 +591,7 @@ export default function Home() {
                 </div>
               </CardHeader>
               <CardContent>
-                {loadingBmkgQuake ? (
+                {isLoadingQuake ? (
                   <div className="p-4 text-center text-muted-foreground flex items-center justify-center space-x-2">
                     <Loader2 className="h-5 w-5 animate-spin" />
                     <span>Memuat peringatan...</span>
