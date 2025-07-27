@@ -1,12 +1,12 @@
 'use client';
 
 import React from 'react';
-import { WeatherData } from '@/lib/api';
 import { DEFAULT_MAP_CENTER } from '@/lib/constants';
+import { CombinedWeatherData, OpenWeatherMapCurrentResponse } from '@/lib/api';
 
 interface WeatherMapIframeProps {
   selectedLocationCoords?: { lat: number; lng: number; name: string } | null;
-  currentWeatherData?: WeatherData | null;
+  currentWeatherData?: CombinedWeatherData | null; // Use CombinedWeatherData
   loadingWeather?: boolean;
   weatherError?: string | null;
   height?: string;
@@ -44,8 +44,11 @@ export function WeatherMapIframe({
       weatherContentHtml = `<div class="status-overlay loading"><div class="animate-spin"></div><span>Memuat cuaca...</span></div>`;
     } else if (weatherError) {
       weatherContentHtml = `<div class="status-overlay error"><span>Error: ${weatherError}</span></div>`;
-    } else if (currentWeatherData) {
-      const { icon, temperature, description } = currentWeatherData;
+    } else if (currentWeatherData?.current) { // Check for currentWeatherData.current
+      const { icon, weather, main } = currentWeatherData.current;
+      const description = weather[0].description;
+      const temperature = main.temp;
+
       // Perbaikan: Mendefinisikan displayTemperature dari variabel temperature
       const displayTemperature = `${Math.round(temperature)}°C`; // Contoh format, bisa disesuaikan
 

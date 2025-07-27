@@ -40,6 +40,36 @@ export interface OverpassResponse {
   elements: OverpassElement[];
 }
 
+export interface OpenWeatherMapCurrentResponse {
+  main: {
+    temp: number;
+    feels_like: number;
+    humidity: number;
+    pressure: number;
+  };
+  wind: {
+    speed: number; // m/s
+  };
+  weather: Array<{
+    description: string;
+    icon: string;
+  }>;
+  rain?: {
+    '1h'?: number; // Rain volume for the last 1 hour, mm
+  };
+  dt: number;
+  visibility: number;
+  sys: {
+    sunrise: number;
+    sunset: number;
+  };
+}
+
+export interface CombinedWeatherData {
+  current: OpenWeatherMapCurrentResponse;
+  daily: any[]; // Assuming daily is an array of forecast data, adjust if a specific interface exists
+}
+
 export interface WeatherData {
   temperature: number;
   feelsLike: number;
@@ -255,8 +285,10 @@ export async function fetchWeatherData(
   return weather;
 }
 
-export async function fetchWaterLevelData(): Promise<WaterLevelPost[]> {
-  const apiUrl = `/api/water-level-proxy`;
+export async function fetchWaterLevelData(
+  districtName?: string
+): Promise<WaterLevelPost[]> {
+  const apiUrl = `/api/water-level-proxy${districtName ? `?districtName=${encodeURIComponent(districtName)}` : ''}`;
   const response = await fetch(apiUrl);
 
   if (!response.ok) {
@@ -271,8 +303,10 @@ export async function fetchWaterLevelData(): Promise<WaterLevelPost[]> {
   return data;
 }
 
-export async function fetchPumpStatusData(): Promise<PumpData[]> {
-  const apiUrl = `/api/pump-status-proxy`;
+export async function fetchPumpStatusData(
+  districtName?: string
+): Promise<PumpData[]> {
+  const apiUrl = `/api/pump-status-proxy${districtName ? `?districtName=${encodeURIComponent(districtName)}` : ''}`;
   const response = await fetch(apiUrl);
 
   if (!response.ok) {

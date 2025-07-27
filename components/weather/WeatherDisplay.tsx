@@ -20,14 +20,13 @@ import {
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
-import { WeatherData } from '@/lib/api';
-import { WEATHER_CONDITIONS } from '@/lib/constants'; // Pastikan ini relevan atau bisa dihapus jika tidak dipakai
-
 import { cn } from '@/lib/utils';
 import { Skeleton } from '../ui/skeleton';
+import { Sunrise, Sunset } from 'lucide-react'; // Add Sunrise and Sunset icons
+import { CombinedWeatherData, OpenWeatherMapCurrentResponse } from '@/lib/api';
 
 interface WeatherDisplayProps {
-  data: WeatherData | null;
+  data: CombinedWeatherData | null;
   loading: boolean;
   error: string | null;
   className?: string;
@@ -59,10 +58,9 @@ const getOpenWeatherIcon = (iconCode: string) => {
 
 const weatherMetrics = [
   { key: 'humidity', label: 'Kelembaban', icon: Droplets, unit: '%' },
-  { key: 'windSpeed', label: 'Kecepatan Angin', icon: Wind, unit: 'km/h' },
+  { key: 'windSpeed', label: 'Kecepatan Angin', icon: Wind, unit: 'm/s' }, // Changed unit to m/s as per page.tsx
   { key: 'pressure', label: 'Tekanan', icon: Gauge, unit: 'hPa' },
-  // Tambahkan visibility jika data API Anda menyediakannya dan Anda ingin menampilkannya
-  // { key: "visibility", label: "Jarak Pandang", icon: Eye, unit: "km" },
+  { key: 'visibility', label: 'Visibilitas', icon: Eye, unit: 'km' },
 ];
 
 export function WeatherDisplay({
@@ -106,7 +104,8 @@ export function WeatherDisplay({
     );
   }
 
-  if (!data) {
+  // Ensure data and data.current exist before proceeding
+  if (!data || !data.current) {
     return (
       <Card
         className={cn(
@@ -124,14 +123,16 @@ export function WeatherDisplay({
     );
   }
 
-  const WeatherIcon = getOpenWeatherIcon(data.icon);
+  const { current } = data;
+  const WeatherIcon = getOpenWeatherIcon(current.weather[0].icon);
 
   // Helper function to safely get and round a numeric value
   const getRoundedValue = (
     value: number | undefined | null,
+    isVisibility: boolean = false,
   ): string | number => {
     if (typeof value === 'number' && !isNaN(value)) {
-      return Math.round(value);
+      return isVisibility ? (value / 1000).toFixed(1) : Math.round(value);
     }
     return 'N/A'; // Return a string if the value is not a valid number
   };
@@ -155,7 +156,7 @@ export function WeatherDisplay({
           <div className="flex items-center justify-between">
             <CardTitle className="text-white">Cuaca Saat Ini</CardTitle>
             <Badge variant="glass" className="text-white">
-              {new Date().toLocaleTimeString('id-ID', {
+              {new Date(current.dt * 1000).toLocaleTimeString('id-ID', {
                 hour: '2-digit',
                 minute: '2-digit',
               })}
@@ -176,27 +177,41 @@ export function WeatherDisplay({
               <div>
                 <div className="flex items-baseline space-x-1">
                   <span className="text-4xl font-bold">
-                    {/* Perbaikan: Menggunakan helper function */}
-                    {getRoundedValue(data.temperature)}
+                    {getRoundedValue(current.main.temp)}
                   </span>
                   <span className="text-xl">°C</span>
                 </div>
-                <p className="text-white/90 capitalize">{data.description}</p>
+                <p className="text-white/90 capitalize">
+                  {current.weather[0].description}
+                </p>
               </div>
             </div>
 
             <div className="text-right">
-              {/* Perbaikan: Menggunakan helper function untuk uvIndex juga */}
-              {data.uvIndex != null && (
-                <div className="flex items-center space-x-1 text-sm mt-1">
-                  <ArrowUp className="h-4 w-4" />
-                  <span>UV Index: {getRoundedValue(data.uvIndex)}</span>
-                </div>
-              )}
-              {/* Menambahkan Feels Like */}
+              {/* UV Index removed as it's not available from this endpoint */}
               <div className="flex items-center space-x-1 text-sm mt-1">
                 <Thermometer className="h-4 w-4" />
-                <span>Terasa: {getRoundedValue(data.feelsLike)}°C</span>
+                <span>Terasa: {getRoundedValue(current.main.feels_like)}°C</span>
+              </div>
+              <div className="flex items-center space-x-1 text-sm mt-1">
+                <Sunrise className="h-4 w-4" />
+                <span>
+                  Terbit:{" "}
+                  {new Date(current.sys.sunrise * 1000).toLocaleTimeString(
+                    "id-ID",
+                    { hour: "2-digit", minute: "2-digit" }
+                  )}
+                </span>
+              </div>
+              <div className="flex items-center space-x-1 text-sm mt-1">
+                <Sunset className="h-4 w-4" />
+                <span>
+                  Terbenam:{" "}
+                  {new Date(current.sys.sunset * 1000).toLocaleTimeString(
+                    "id-ID",
+                    { hour: "2-digit", minute: "2-digit" }
+                  )}
+                </span>
               </div>
             </div>
           </div>
@@ -242,9 +257,17 @@ export function WeatherDisplay({
                   </div>
                   <div className="flex items-baseline space-x-1">
                     <span className="text-2xl font-bold">
-                      {/* Perbaikan: Menggunakan helper function */}
                       {getRoundedValue(
-                        data[metric.key as keyof WeatherData] as number,
+                        metric.key === 'humidity'
+                          ? current.main.humidity
+                          : metric.key === 'windSpeed'
+                          ? current.wind.speed
+                          : metric.key === 'pressure'
+                          ? current.main.pressure
+                          : metric.key === 'visibility'
+                          ? current.visibility
+                          : undefined,
+                        metric.key === 'visibility',
                       )}
                     </span>
                     <span className="text-sm text-muted-foreground">
@@ -256,10 +279,9 @@ export function WeatherDisplay({
             </Card>
           </motion.div>
         ))}
-        {/* Perbaikan: Pastikan data.rain1h adalah angka valid sebelum menampilkan */}
-        {typeof data?.rain1h === 'number' &&
-          !isNaN(data.rain1h) &&
-          data.rain1h > 0 && (
+        {typeof current.rain?.['1h'] === 'number' &&
+          !isNaN(current.rain['1h']) &&
+          current.rain['1h'] > 0 && (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -276,7 +298,7 @@ export function WeatherDisplay({
                     </div>
                     <div className="flex items-baseline space-x-1">
                       <span className="text-2xl font-bold">
-                        {getRoundedValue(data.rain1h)}
+                        {getRoundedValue(current.rain['1h'])}
                       </span>
                       <span className="text-sm text-muted-foreground">mm</span>
                     </div>

@@ -312,28 +312,7 @@ export function DashboardStats({
                   </p>
                 ) : null}
 
-                {/* Aktivitas hardcoded yang sudah ada (bisa diganti atau ditambah) */}
-                <div className="flex items-center space-x-3">
-                  <div className="w-2 h-2 bg-warning rounded-full" />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium">Peringatan banjir</p>
-                    <p className="text-xs text-muted-foreground"></p>
-                  </div>
-                </div>
-                <div className="flex items-center space-x-3">
-                  <div className="w-2 h-2 bg-success rounded-full" />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium">Sensor online</p>
-                    <p className="text-xs text-muted-foreground"></p>
-                  </div>
-                </div>
-                <div className="flex items-center space-x-3">
-                  <div className="w-2 h-2 bg-success rounded-full" />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium">Update data cuaca</p>
-                    <p className="text-xs text-muted-foreground"></p>
-                  </div>
-                </div>
+                
               </div>
             </CardContent>
           </Card>

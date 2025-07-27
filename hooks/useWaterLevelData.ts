@@ -7,11 +7,11 @@ export const useWaterLevelData = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchWaterLevels = useCallback(async () => {
+  const fetchWaterLevels = useCallback(async (districtName?: string) => {
     setIsLoading(true);
     setError(null);
     try {
-      const data = await fetchWaterLevelData();
+      const data = await fetchWaterLevelData(districtName);
       setWaterLevelPosts(data);
     } catch (err: any) {
       setError(err.message);

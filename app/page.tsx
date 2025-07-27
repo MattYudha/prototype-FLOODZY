@@ -163,8 +163,8 @@ export default function Home() {
     if (location && location.latitude != null && location.longitude != null) {
       const { latitude, longitude } = location;
       fetchWeather(latitude, longitude);
-      fetchWaterLevels();
-      fetchPumpStatus();
+      fetchPumpStatus(location.districtName);
+      fetchWaterLevels(location.districtName);
 
       const buffer = 0.05;
       const newBounds = {
@@ -186,22 +186,34 @@ export default function Home() {
   // --- Memoized Data ---
   const realTimeAlerts = useMemo(() => {
     const alerts: FloodAlertType[] = [];
+    const selectedDistrictName = selectedLocation?.districtName?.toLowerCase();
+
     if (latestQuake) {
-      const quakeTimestampISO = latestQuake.DateTime.replace(" ", "T") + "+07:00";
-      alerts.push({
-        id: `bmkg-quake-${latestQuake.DateTime}`,
-        regionId: latestQuake.Wilayah,
-        level: parseFloat(latestQuake.Magnitude) >= 5 ? "danger" : "warning",
-        title: `Gempa M${latestQuake.Magnitude} di ${latestQuake.Wilayah}`,
-        message: `Pusat gempa di ${latestQuake.Kedalaman}. Dirasakan: ${latestQuake.Dirasakan}`,
-        timestamp: quakeTimestampISO,
-        isActive: true,
-        affectedAreas: latestQuake.Wilayah.split(",").map((s) => s.trim()),
-      });
+      const quakeWilayah = latestQuake.Wilayah.toLowerCase();
+      // Filter gempa jika ada lokasi yang dipilih dan wilayah gempa cocok
+      if (!selectedDistrictName || quakeWilayah.includes(selectedDistrictName)) {
+        const quakeTimestampISO = latestQuake.DateTime.replace(" ", "T") + "+07:00";
+        alerts.push({
+          id: `bmkg-quake-${latestQuake.DateTime}`,
+          regionId: latestQuake.Wilayah,
+          level: parseFloat(latestQuake.Magnitude) >= 5 ? "danger" : "warning",
+          title: `Gempa M${latestQuake.Magnitude} di ${latestQuake.Wilayah}`,
+          message: `Pusat gempa di ${latestQuake.Kedalaman}. Dirasakan: ${latestQuake.Dirasakan}`,
+          timestamp: quakeTimestampISO,
+          isActive: true,
+          affectedAreas: latestQuake.Wilayah.split(",").map((s) => s.trim()),
+        });
+      }
     }
-    const combinedAlerts = [...alerts, ...FLOOD_MOCK_ALERTS];
+
+    const filteredMockAlerts = FLOOD_MOCK_ALERTS.filter(alert => {
+      if (!selectedDistrictName) return true; // Jika tidak ada lokasi dipilih, tampilkan semua
+      return alert.affectedAreas.some(area => area.toLowerCase().includes(selectedDistrictName));
+    });
+
+    const combinedAlerts = [...alerts, ...filteredMockAlerts];
     return combinedAlerts.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-  }, [latestQuake]);
+  }, [latestQuake, selectedLocation]);
 
   const heroCards = useMemo(() => [
     {

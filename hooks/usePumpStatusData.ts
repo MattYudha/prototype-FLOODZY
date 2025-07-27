@@ -7,11 +7,11 @@ export const usePumpStatusData = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchPumpStatus = useCallback(async () => {
+  const fetchPumpStatus = useCallback(async (districtName?: string) => {
     setIsLoading(true);
     setError(null);
     try {
-      const data = await fetchPumpStatusData();
+      const data = await fetchPumpStatusData(districtName);
       setPumpStatusData(data);
     } catch (err: any) {
       setError(err.message);

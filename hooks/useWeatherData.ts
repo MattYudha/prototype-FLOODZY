@@ -1,6 +1,6 @@
 
 import { useState, useCallback } from 'react';
-import type { WeatherData } from '@/lib/api';
+import type { CombinedWeatherData, OpenWeatherMapCurrentResponse } from '@/lib/api';
 
 export const useWeatherData = () => {
   const [weatherData, setWeatherData] = useState<WeatherData | null>(null);
@@ -16,8 +16,8 @@ export const useWeatherData = () => {
         const errorData = await response.json();
         throw new Error(errorData.message || 'Gagal mengambil data cuaca.');
       }
-      const data: WeatherData = await response.json();
-      setWeatherData(data);
+      const data: OpenWeatherMapCurrentResponse = await response.json();
+      setWeatherData({ current: data, daily: [] });
     } catch (err: any) {
       setError(err.message);
       setWeatherData(null);

@@ -1,7 +1,7 @@
 // app/api/chatbot/route.ts (MODIFIED: Improved Weather Location Handling & Debugging)
 
 import { NextResponse } from "next/server";
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { GoogleGenerativeAI, Tool, FunctionDeclaration, SchemaType } from "@google/generative-ai";
 import {
   fetchWaterLevelData,
   fetchPumpStatusData,
@@ -29,34 +29,34 @@ const OPEN_WEATHER_API_KEY =
 // DEFINISI FUNGSI/TOOLS YANG BISA DIAKSES GEMINI
 // ===============================================
 
-const tools = [
+const tools: Tool[] = [
   {
-    function_declarations: [
+    functionDeclarations: [
       {
         name: "fetchWaterLevelData",
         description: "Mendapatkan data tinggi muka air dari pos-pos hidrologi.",
         parameters: {
-          type: "object",
+          type: SchemaType.OBJECT,
           properties: {},
-          required: [],
+          required: [] as string[],
         },
       },
       {
         name: "fetchPumpStatusData",
         description: "Mendapatkan status operasional pompa-pompa banjir.",
         parameters: {
-          type: "object",
+          type: SchemaType.OBJECT,
           properties: {},
-          required: [],
+          required: [] as string[],
         },
       },
       {
         name: "fetchBmkgLatestQuake",
         description: "Mendapatkan informasi gempa bumi terkini dari BMKG.",
         parameters: {
-          type: "object",
+          type: SchemaType.OBJECT,
           properties: {},
-          required: [],
+          required: [] as string[],
         },
       },
       {
@@ -64,10 +64,10 @@ const tools = [
         description:
           "Mendapatkan laporan bencana (banjir, gempa, dll.) dari PetaBencana.id.",
         parameters: {
-          type: "object",
+          type: SchemaType.OBJECT,
           properties: {
             hazardType: {
-              type: "string",
+              type: SchemaType.STRING,
               description:
                 "Jenis bencana (misal: 'flood', 'earthquake', 'haze', 'volcano'). Default 'flood'.",
               enum: [
@@ -79,15 +79,23 @@ const tools = [
                 "fire",
                 "landslide",
               ],
+              format: "string",
             },
             timeframe: {
-              type: "string",
+              type: SchemaType.STRING,
               description:
                 "Rentang waktu laporan (misal: '1h', '6h', '24h', '3d', '7d'). Default '24h'.",
-              enum: ["1h", "6h", "24h", "3d", "7d"],
+              enum: [
+                "1h",
+                "6h",
+                "24h",
+                "3d",
+                "7d"
+              ],
+              format: "string",
             },
-          },
-          required: [],
+          }, // This closes the properties object
+          required: [] as string[], // This is now at the correct level
         },
       },
       {
@@ -96,10 +104,10 @@ const tools = [
         description:
           "Mengubah nama lokasi (kota, kabupaten, kecamatan) menjadi koordinat Latitude dan Longitude. Gunakan ini jika Anda perlu koordinat spesifik untuk fungsi lain.",
         parameters: {
-          type: "object",
+          type: SchemaType.OBJECT,
           properties: {
             query: {
-              type: "string",
+              type: SchemaType.STRING,
               description:
                 "Nama lokasi yang ingin dicari koordinatnya (contoh: 'Tangerang', 'Surabaya').",
             },
@@ -113,24 +121,24 @@ const tools = [
         description:
           "Mendapatkan kondisi cuaca saat ini untuk lokasi tertentu. Jika 'locationName' diberikan (misal: 'Bandung', 'Surabaya', 'Jakarta'), sistem akan otomatis mencari koordinatnya. Jika 'lat' dan 'lon' diberikan, gunakan itu. Jika tidak ada lokasi spesifik, akan menggunakan lokasi default (Jakarta). Contoh penggunaan: 'fetchWeatherData(locationName: \"Tangerang\")' atau 'fetchWeatherData(lat: -6.2, lon: 106.8)'",
         parameters: {
-          type: "object",
+          type: SchemaType.OBJECT,
           properties: {
             lat: {
-              type: "number",
+              type: SchemaType.NUMBER,
               description: "Latitude lokasi.",
             },
             lon: {
-              type: "number",
+              type: SchemaType.NUMBER,
               description: "Longitude lokasi.",
             },
             locationName: {
               // Gemini can now provide a location name directly to this tool
-              type: "string",
+              type: SchemaType.STRING,
               description:
                 "Nama lokasi yang disebutkan pengguna (misal: 'Bandung', 'Surabaya', 'Jakarta').",
             },
           },
-          required: [], // Make all parameters optional for Gemini's initial call
+          required: [] as string[], // Make all parameters optional for Gemini's initial call
         },
       },
     ],
@@ -140,6 +148,7 @@ const tools = [
 // ===============================================
 // FUNGSI UTAMA UNTUK MENANGANI PERTANYAAN CHATBOT
 // ===============================================
+
 
 export async function POST(request: Request) {
   if (!genAI) {

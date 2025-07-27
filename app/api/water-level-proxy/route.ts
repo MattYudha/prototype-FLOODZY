@@ -1,28 +1,28 @@
 // src/app/api/water-level-proxy/route.ts
 
-import { NextResponse } from "next/server";
-import { supabaseServiceRole } from "@/lib/supabase"; // Pastikan ini diimpor dan terkonfigurasi dengan benar
+import { NextResponse } from 'next/server';
+import { supabaseServiceRole } from '@/lib/supabase'; // Pastikan ini diimpor dan terkonfigurasi dengan benar
 
-export const dynamic = "force-dynamic";
+export const dynamic = 'force-dynamic';
 
 export async function GET(request: Request) {
-  console.log("API water-level-proxy: Request received.");
+  console.log('API water-level-proxy: Request received.');
   try {
     // === PERBAIKAN DI SINI: Ubah nama tabel menjadi 'posdugaair' ===
     const { data, error } = await supabaseServiceRole
-      .from("posdugaair") // <<< NAMA TABEL SUDAH SESUAI DENGAN KOREKSI ANDA
-      .select("*"); // Ambil semua kolom
+      .from('posdugaair') // <<< NAMA TABEL SUDAH SESUAI DENGAN KOREKSI ANDA
+      .select('*'); // Ambil semua kolom
 
     if (error) {
       console.error(
-        "API water-level-proxy: Error fetching from Supabase:",
-        error.message
+        'API water-level-proxy: Error fetching from Supabase:',
+        error.message,
       );
       return NextResponse.json(
         {
           error: `Failed to fetch water level data from Supabase: ${error.message}`,
         },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -54,25 +54,25 @@ export async function GET(request: Request) {
           // Anda perlu memastikan kolom ini ada di Supabase dan terisi,
           // atau memberikan nilai default/placeholder jika tidak relevan.
           water_level: item.water_level || undefined, // Asumsi nama kolom water_level di tabel Supabase
-          unit: item.unit || "m", // Asumsi nama kolom unit di tabel Supabase
+          unit: item.unit || 'm', // Asumsi nama kolom unit di tabel Supabase
           timestamp: item.updated_at
             ? new Date(Number(item.updated_at)).toISOString()
             : new Date().toISOString(), // updated_at dari CSV adalah Unix timestamp
-          status: item.status || "Normal", // Asumsi nama kolom status di tabel Supabase
+          status: item.status || 'Normal', // Asumsi nama kolom status di tabel Supabase
         };
       })
       .filter((post: any) => post !== null); // Filter null entries
 
     console.log(
-      `Proxy: Successfully fetched and parsed ${waterLevelPosts.length} water level posts from Supabase.`
+      `Proxy: Successfully fetched and parsed ${waterLevelPosts.length} water level posts from Supabase.`,
     );
 
     return NextResponse.json(waterLevelPosts);
   } catch (error: any) {
-    console.error("Proxy: Unexpected error:", error.message);
+    console.error('Proxy: Unexpected error:', error.message);
     return NextResponse.json(
       { error: `Internal Server Error in water level proxy: ${error.message}` },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

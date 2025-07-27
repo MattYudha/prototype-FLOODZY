@@ -24,7 +24,35 @@ import { WeatherData } from "@/lib/api";
 import { DEFAULT_MAP_CENTER, DEFAULT_MAP_ZOOM } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 
-const OPEN_WEATHER_API_KEY = "b48e2782f52bd9c6783ef14a35856abc";
+interface OpenWeatherMapCurrentResponse {
+  main: {
+    temp: number;
+    feels_like: number;
+    humidity: number;
+    pressure: number;
+  };
+  wind: {
+    speed: number; // m/s
+  };
+  weather: Array<{
+    description: string;
+    icon: string;
+  }>;
+  rain?: {
+    '1h'?: number; // Rain volume for the last 1 hour, mm
+  };
+  dt: number;
+  visibility: number;
+  sys: {
+    sunrise: number;
+    sunset: number;
+  };
+}
+
+interface CombinedWeatherData {
+  current: OpenWeatherMapCurrentResponse;
+  daily: any[]; // Assuming daily is an array of forecast data, adjust if a specific interface exists
+}
 
 interface WeatherLayers {
   clouds: boolean;
@@ -35,13 +63,16 @@ interface WeatherLayers {
 }
 
 interface SelectedLocationDetails {
-  districtCode: string;
-  districtName: string;
-  regencyCode: string;
-  provinceCode: string;
+  districtCode?: string; // Make optional as it's not always present in page.tsx's selectedLocation
+  districtName?: string; // Make optional
+  regencyCode?: string;
+  provinceCode?: string;
   latitude?: number;
   longitude?: number;
   geometry?: string;
+  name: string; // Add name property from page.tsx
+  lat: number; // Add lat property from page.tsx
+  lon: number; // Add lon property from page.tsx
 }
 
 interface WeatherMapProps {
@@ -49,8 +80,9 @@ interface WeatherMapProps {
   zoom: number;
   weatherLayers: WeatherLayers;
   selectedLocation: SelectedLocationDetails | null;
-  currentWeatherData: WeatherData | null;
+  currentWeatherData: CombinedWeatherData | null; // Use CombinedWeatherData
   className?: string;
+  apiKey: string; // Add apiKey prop
 }
 
 // Custom weather marker icon
@@ -144,7 +176,7 @@ function MapReset({
 }
 
 // Weather layer tile component
-function WeatherLayers({ layers }: { layers: WeatherLayers }) {
+function WeatherLayers({ layers, apiKey }: { layers: WeatherLayers; apiKey: string }) {
   const map = useMap();
 
   useEffect(() => {
@@ -163,23 +195,23 @@ function WeatherLayers({ layers }: { layers: WeatherLayers }) {
 
         switch (layerType) {
           case "clouds":
-            layerUrl = `https://tile.openweathermap.org/map/clouds_new/{z}/{x}/{y}.png?appid=${OPEN_WEATHER_API_KEY}`;
+            layerUrl = `https://tile.openweathermap.org/map/clouds_new/{z}/{x}/{y}.png?appid=${apiKey}`;
             opacity = 0.6;
             break;
           case "precipitation":
-            layerUrl = `https://tile.openweathermap.org/map/precipitation_new/{z}/{x}/{y}.png?appid=${OPEN_WEATHER_API_KEY}`;
+            layerUrl = `https://tile.openweathermap.org/map/precipitation_new/{z}/{x}/{y}.png?appid=${apiKey}`;
             opacity = 0.7;
             break;
           case "temperature":
-            layerUrl = `https://tile.openweathermap.org/map/temp_new/{z}/{x}/{y}.png?appid=${OPEN_WEATHER_API_KEY}`;
+            layerUrl = `https://tile.openweathermap.org/map/temp_new/{z}/{x}/{y}.png?appid=${apiKey}`;
             opacity = 0.6;
             break;
           case "wind":
-            layerUrl = `https://tile.openweathermap.org/map/wind_new/{z}/{x}/{y}.png?appid=${OPEN_WEATHER_API_KEY}`;
+            layerUrl = `https://tile.openweathermap.org/map/wind_new/{z}/{x}/{y}.png?appid=${apiKey}`;
             opacity = 0.6;
             break;
           case "pressure":
-            layerUrl = `https://tile.openweathermap.org/map/pressure_new/{z}/{x}/{y}.png?appid=${OPEN_WEATHER_API_KEY}`;
+            layerUrl = `https://tile.openweathermap.org/map/pressure_new/{z}/{x}/{y}.png?appid=${apiKey}`;
             opacity = 0.6;
             break;
         }
@@ -196,7 +228,7 @@ function WeatherLayers({ layers }: { layers: WeatherLayers }) {
         }
       }
     });
-  }, [layers, map]);
+  }, [layers, map, apiKey]);
 
   return null;
 }
@@ -208,6 +240,7 @@ export function WeatherMap({
   selectedLocation,
   currentWeatherData,
   className,
+  apiKey,
 }: WeatherMapProps) {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const mapRef = useRef<L.Map | null>(null);
@@ -243,7 +276,7 @@ export function WeatherMap({
         />
 
         {/* Weather layers */}
-        <WeatherLayers layers={weatherLayers} />
+        <WeatherLayers layers={weatherLayers} apiKey={apiKey} />
 
         {/* Map updater */}
         <MapUpdater center={center} zoom={zoom} />
@@ -252,40 +285,40 @@ export function WeatherMap({
         <MapReset center={DEFAULT_MAP_CENTER} zoom={DEFAULT_MAP_ZOOM} />
 
         {/* Location marker */}
-        {selectedLocation?.latitude && selectedLocation?.longitude && (
+        {selectedLocation?.lat && selectedLocation?.lon && (
           <Marker
-            position={[selectedLocation.latitude, selectedLocation.longitude]}
-            icon={createWeatherIcon(currentWeatherData?.icon || "")}
+            position={[selectedLocation.lat, selectedLocation.lon]}
+            icon={createWeatherIcon(currentWeatherData?.current?.weather[0]?.icon || "")}
           >
             <Popup>
               <Card className="min-w-[250px] p-4 border-0 shadow-none">
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <h3 className="font-semibold text-slate-800">
-                      {selectedLocation.districtName}
+                      {selectedLocation.name}
                     </h3>
                     <Badge variant="secondary">Live</Badge>
                   </div>
 
-                  {currentWeatherData ? (
+                  {currentWeatherData?.current ? (
                     <div className="space-y-2">
                       <div className="flex items-center space-x-3">
                         <div className="text-2xl">
-                          {currentWeatherData.icon.startsWith("01")
+                          {currentWeatherData.current.weather[0].icon.startsWith("01")
                             ? "☀️"
-                            : currentWeatherData.icon.startsWith("09") ||
-                              currentWeatherData.icon.startsWith("10")
+                            : currentWeatherData.current.weather[0].icon.startsWith("09") ||
+                              currentWeatherData.current.weather[0].icon.startsWith("10")
                             ? "🌧️"
-                            : currentWeatherData.icon.startsWith("11")
+                            : currentWeatherData.current.weather[0].icon.startsWith("11")
                             ? "⛈️"
                             : "☁️"}
                         </div>
                         <div>
                           <div className="text-xl font-bold text-blue-600">
-                            {Math.round(currentWeatherData.temperature)}°C
+                            {Math.round(currentWeatherData.current.main.temp)}°C
                           </div>
                           <div className="text-sm text-slate-600 capitalize">
-                            {currentWeatherData.description}
+                            {currentWeatherData.current.weather[0].description}
                           </div>
                         </div>
                       </div>
@@ -294,36 +327,36 @@ export function WeatherMap({
                         <div className="flex items-center space-x-2">
                           <Thermometer className="w-4 h-4 text-red-500" />
                           <span>
-                            Terasa: {Math.round(currentWeatherData.feelsLike)}°C
+                            Terasa: {Math.round(currentWeatherData.current.main.feels_like)}°C
                           </span>
                         </div>
                         <div className="flex items-center space-x-2">
                           <Cloud className="w-4 h-4 text-gray-500" />
                           <span>
-                            Kelembapan: {currentWeatherData.humidity}%
+                            Kelembapan: {currentWeatherData.current.main.humidity}%
                           </span>
                         </div>
                         <div className="flex items-center space-x-2">
                           <Wind className="w-4 h-4 text-green-500" />
                           <span>
-                            Angin: {Math.round(currentWeatherData.windSpeed)}{" "}
+                            Angin: {Math.round(currentWeatherData.current.wind.speed * 3.6)}{" "}
                             km/h
                           </span>
                         </div>
                         <div className="flex items-center space-x-2">
                           <Gauge className="w-4 h-4 text-purple-500" />
                           <span>
-                            Tekanan: {currentWeatherData.pressure} hPa
+                            Tekanan: {currentWeatherData.current.main.pressure} hPa
                           </span>
                         </div>
                       </div>
 
-                      {currentWeatherData.rain1h &&
-                        currentWeatherData.rain1h > 0 && (
+                      {currentWeatherData.current.rain?.['1h'] &&
+                        currentWeatherData.current.rain['1h'] > 0 && (
                           <div className="flex items-center space-x-2 p-2 bg-blue-50 rounded">
                             <CloudRain className="w-4 h-4 text-blue-500" />
                             <span className="text-sm text-blue-700">
-                              Hujan: {currentWeatherData.rain1h} mm/jam
+                              Hujan: {currentWeatherData.current.rain['1h']} mm/jam
                             </span>
                           </div>
                         )}
@@ -335,8 +368,8 @@ export function WeatherMap({
                   )}
 
                   <div className="text-xs text-slate-500 border-t pt-2">
-                    Lat: {selectedLocation.latitude.toFixed(4)}, Lng:{" "}
-                    {selectedLocation.longitude.toFixed(4)}
+                    Lat: {selectedLocation.lat.toFixed(4)}, Lng:{" "}
+                    {selectedLocation.lon.toFixed(4)}
                   </div>
                 </div>
               </Card>
