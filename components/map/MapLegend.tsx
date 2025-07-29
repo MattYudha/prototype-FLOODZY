@@ -1,48 +1,48 @@
-"use client";
+'use client';
 
-import { motion } from "framer-motion";
-import { Card } from "@/components/ui/Card";
-import { Badge } from "@/components/ui/Badge";
-import { FLOOD_RISK_COLORS } from "@/lib/constants";
+import { motion } from 'framer-motion';
+import { Card } from '@/components/ui/Card';
+import { Badge } from '@/components/ui/Badge';
+import { FLOOD_RISK_COLORS } from '@/lib/constants';
 
 const legendItems = [
   {
     color: FLOOD_RISK_COLORS.low,
-    label: "Risiko Rendah",
-    description: "Zona aman dari banjir",
+    label: 'Risiko Rendah',
+    description: 'Zona aman dari banjir',
   },
   {
     color: FLOOD_RISK_COLORS.medium,
-    label: "Risiko Sedang",
-    description: "Berpotensi banjir ringan",
+    label: 'Risiko Sedang',
+    description: 'Berpotensi banjir ringan',
   },
   {
     color: FLOOD_RISK_COLORS.high,
-    label: "Risiko Tinggi",
-    description: "Rawan banjir berat",
+    label: 'Risiko Tinggi',
+    description: 'Rawan banjir berat',
   },
   {
     color: FLOOD_RISK_COLORS.critical,
-    label: "Risiko Kritis",
-    description: "Zona bahaya ekstrim",
+    label: 'Risiko Kritis',
+    description: 'Zona bahaya ekstrim',
   },
 ];
 
 const markerItems = [
   {
-    icon: "🌊",
-    label: "Sensor Banjir",
-    color: "#EF4444",
+    icon: '🌊',
+    label: 'Sensor Banjir',
+    color: '#EF4444',
   },
   {
-    icon: "⛅",
-    label: "Stasiun Cuaca",
-    color: "#3B82F6",
+    icon: '⛅',
+    label: 'Stasiun Cuaca',
+    color: '#3B82F6',
   },
   {
-    icon: "🚨",
-    label: "Peringatan Aktif",
-    color: "#F59E0B",
+    icon: '🚨',
+    label: 'Peringatan Aktif',
+    color: '#F59E0B',
   },
 ];
 
@@ -97,7 +97,7 @@ export function MapLegend() {
           {/* Update Time */}
           <div className="pt-2 border-t border-white/20">
             <p className="text-xs text-white/70">
-              Diperbarui: {new Date().toLocaleTimeString("id-ID")}
+              Diperbarui: {new Date().toLocaleTimeString('id-ID')}
             </p>
           </div>
         </div>

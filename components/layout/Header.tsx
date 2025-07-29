@@ -1,9 +1,9 @@
 // components/layout/Header.tsx
-"use client";
+'use client';
 
-import { useState } from "react";
-import Link from "next/link"; // <-- IMPORT Link di sini
-import { motion } from "framer-motion";
+import { useState } from 'react';
+import Link from 'next/link'; // <-- IMPORT Link di sini
+import { motion } from 'framer-motion';
 import {
   Menu,
   X,
@@ -17,13 +17,13 @@ import {
   MapPin,
   Shield,
   Home,
-} from "lucide-react";
-import { Button } from "@/components/ui/Button";
-import { Badge } from "@/components/ui/Badge";
-import { useTheme } from "@/hooks/useTheme";
-import { useMediaQuery } from "@/hooks/useMediaQuery";
-import { cn } from "@/lib/utils";
-import { useAlertCount } from "@/components/contexts/AlertCountContext";
+} from 'lucide-react';
+import { Button } from '@/components/ui/Button';
+import { Badge } from '@/components/ui/Badge';
+import { useTheme } from '@/hooks/useTheme';
+import { useMediaQuery } from '@/hooks/useMediaQuery';
+import { cn } from '@/lib/utils';
+import { useAlertCount } from '@/components/contexts/AlertCountContext';
 
 interface HeaderProps {
   onMenuToggle?: () => void;
@@ -33,7 +33,7 @@ interface HeaderProps {
 export function Header({ onMenuToggle, isMenuOpen }: HeaderProps) {
   const { theme, setTheme } = useTheme();
   const [isSearchOpen, setIsSearchOpen] = useState(false);
-  const isMobile = useMediaQuery("(max-width: 768px)");
+  const isMobile = useMediaQuery('(max-width: 768px)');
 
   const { highAlertCount, loadingAlerts } = useAlertCount();
 
@@ -49,7 +49,7 @@ export function Header({ onMenuToggle, isMenuOpen }: HeaderProps) {
     <motion.header
       initial={{ y: -100 }}
       animate={{ y: 0 }}
-      transition={{ type: "spring", damping: 20, stiffness: 300 }}
+      transition={{ type: 'spring', damping: 20, stiffness: 300 }}
       className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60"
     >
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
@@ -162,7 +162,7 @@ export function Header({ onMenuToggle, isMenuOpen }: HeaderProps) {
             variant="ghost"
             size="icon"
             onClick={() => {
-              const themes: Array<typeof theme> = ["light", "dark", "system"];
+              const themes: Array<typeof theme> = ['light', 'dark', 'system'];
               const currentIndex = themes.indexOf(theme);
               const nextIndex = (currentIndex + 1) % themes.length;
               setTheme(themes[nextIndex]);
@@ -187,7 +187,7 @@ export function Header({ onMenuToggle, isMenuOpen }: HeaderProps) {
                 <motion.div
                   className="absolute -top-1 -right-1 h-3 w-3 bg-secondary rounded-full"
                   animate={{ scale: [1, 1.2, 1] }}
-                  transition={{ duration: 1, repeat: Infinity, type: "tween" }}
+                  transition={{ duration: 1, repeat: Infinity, type: 'tween' }}
                 />
               )}
             </Button>
@@ -204,7 +204,7 @@ export function Header({ onMenuToggle, isMenuOpen }: HeaderProps) {
       {isSearchOpen && isMobile && (
         <motion.div
           initial={{ opacity: 0, height: 0 }}
-          animate={{ opacity: 1, height: "auto" }}
+          animate={{ opacity: 1, height: 'auto' }}
           exit={{ opacity: 0, height: 0 }}
           className="border-t bg-background/95 backdrop-blur"
         >

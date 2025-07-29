@@ -30,6 +30,7 @@
 Floodzy is a cutting-edge platform designed to provide real-time flood detection and weather monitoring across Indonesia. Built with modern web technologies, it offers an intuitive interface and integrated data sources to help communities, authorities, and organizations make informed decisions for disaster mitigation.
 
 ### 🎯 Mission
+
 To create a comprehensive, accessible, and reliable flood monitoring system that empowers communities with real-time information for better disaster preparedness and response.
 
 ---
@@ -37,31 +38,37 @@ To create a comprehensive, accessible, and reliable flood monitoring system that
 ## ✨ Features
 
 ### 🗺️ **Interactive Mapping**
+
 - Real-time flood risk visualization using Leaflet
 - Weather station and water level monitoring points
 - Responsive map controls with custom markers
 
 ### 🌡️ **Weather Monitoring**
+
 - Live weather data (temperature, humidity, wind speed)
 - Integration with OpenWeatherMap API
 - Location-specific weather forecasts
 
 ### 🚨 **Flood Detection & Alerts**
+
 - Early warning system based on integrated data sources
 - Real-time flood risk assessment
 - Automated alert notifications
 
 ### 📍 **Region Selection**
+
 - Granular location selection (Province → Regency/City → District)
 - Localized data display
 - Regional-specific monitoring
 
 ### 🔧 **Infrastructure Monitoring**
+
 - Flood pump status tracking
 - Water level monitoring stations
 - Equipment operational status
 
 ### 📱 **Modern UI/UX**
+
 - Responsive design for all devices
 - Smooth animations with Framer Motion
 - Dark/light theme support
@@ -120,12 +127,14 @@ To create a comprehensive, accessible, and reliable flood monitoring system that
 ### Installation
 
 1. **Clone the repository**
+
    ```bash
    git clone https://github.com/mattyudha/floodzy.git
    cd floodzy
    ```
 
 2. **Install dependencies**
+
    ```bash
    npm install
    # or
@@ -133,22 +142,24 @@ To create a comprehensive, accessible, and reliable flood monitoring system that
    ```
 
 3. **Environment setup**
-   
+
    Create a `.env.local` file in the root directory:
+
    ```env
    # Supabase Configuration
    NEXT_PUBLIC_SUPABASE_URL="your_supabase_project_url"
    NEXT_PUBLIC_SUPABASE_ANON_KEY="your_supabase_anon_key"
    SUPABASE_SERVICE_ROLE_KEY="your_service_role_key"
-   
+
    # OpenWeatherMap API
    OPENWEATHER_API_KEY="your_openweathermap_api_key"
-   
+
    # Optional: Mapbox (if using Mapbox features)
    NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN="your_mapbox_token"
    ```
 
 4. **Start development server**
+
    ```bash
    npm run dev
    # or
@@ -156,7 +167,7 @@ To create a comprehensive, accessible, and reliable flood monitoring system that
    ```
 
 5. **Open your browser**
-   
+
    Navigate to `http://localhost:3000`
 
 ### 🎯 Getting API Keys
@@ -264,17 +275,18 @@ Detailed component documentation available in the `/docs` directory.
 
 ### Environment Variables
 
-| Variable | Description | Required |
-|----------|-------------|----------|
-| `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL | Yes |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anonymous key | Yes |
-| `SUPABASE_SERVICE_ROLE_KEY` | Supabase service role key | Yes |
-| `OPENWEATHER_API_KEY` | OpenWeatherMap API key | Yes |
-| `NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN` | Mapbox access token | Optional |
+| Variable                          | Description               | Required |
+| --------------------------------- | ------------------------- | -------- |
+| `NEXT_PUBLIC_SUPABASE_URL`        | Supabase project URL      | Yes      |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY`   | Supabase anonymous key    | Yes      |
+| `SUPABASE_SERVICE_ROLE_KEY`       | Supabase service role key | Yes      |
+| `OPENWEATHER_API_KEY`             | OpenWeatherMap API key    | Yes      |
+| `NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN` | Mapbox access token       | Optional |
 
 ### Deployment
 
 The app is optimized for deployment on:
+
 - **Vercel** (recommended)
 - **Netlify**
 - **AWS Amplify**
@@ -303,18 +315,21 @@ The app is optimized for deployment on:
 ## 🌟 Roadmap
 
 ### Phase 1 (Current)
+
 - [x] Basic flood monitoring
 - [x] Weather integration
 - [x] Interactive mapping
 - [x] Region selection
 
 ### Phase 2 (Next)
+
 - [ ] Mobile app development
 - [ ] Advanced analytics
 - [ ] Machine learning predictions
 - [ ] Multi-language support
 
 ### Phase 3 (Future)
+
 - [ ] Satellite imagery integration
 - [ ] IoT sensor network
 - [ ] Community reporting system
@@ -342,7 +357,7 @@ The app is optimized for deployment on:
 
 MIT License
 
-Copyright (c) 2025 Matt 
+Copyright (c) 2025 Matt
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

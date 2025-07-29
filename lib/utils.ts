@@ -22,7 +22,7 @@ export function formatDate(date: string | Date): string {
     month: 'long',
     day: 'numeric',
     hour: '2-digit',
-    minute: '2-digit'
+    minute: '2-digit',
   });
 }
 
@@ -30,22 +30,23 @@ export function formatTime(date: string | Date): string {
   const d = new Date(date);
   return d.toLocaleTimeString('id-ID', {
     hour: '2-digit',
-    minute: '2-digit'
+    minute: '2-digit',
   });
 }
 
 export function getTimeAgo(date: string | Date): string {
   const now = new Date();
   const past = new Date(date);
-  
+
   // Jika 'past' tidak valid atau tanggal di masa depan (bisa menyebabkan NaN)
   if (isNaN(past.getTime())) {
-    return 'Waktu tidak valid'; 
+    return 'Waktu tidak valid';
   }
 
   const diffInSeconds = Math.floor((now.getTime() - past.getTime()) / 1000);
 
-  if (diffInSeconds < 0) { // Jika tanggal di masa depan
+  if (diffInSeconds < 0) {
+    // Jika tanggal di masa depan
     return 'Di masa depan';
   } else if (diffInSeconds < 60) {
     return 'Baru saja';
@@ -63,7 +64,7 @@ export function getTimeAgo(date: string | Date): string {
 
 export function debounce<T extends (...args: any[]) => void>(
   func: T,
-  delay: number
+  delay: number,
 ): (...args: Parameters<T>) => void {
   let timeoutId: NodeJS.Timeout;
   return (...args: Parameters<T>) => {
@@ -74,14 +75,14 @@ export function debounce<T extends (...args: any[]) => void>(
 
 export function throttle<T extends (...args: any[]) => void>(
   func: T,
-  limit: number
+  limit: number,
 ): (...args: Parameters<T>) => void {
   let inThrottle: boolean;
   return (...args: Parameters<T>) => {
     if (!inThrottle) {
       func(...args);
       inThrottle = true;
-      setTimeout(() => inThrottle = false, limit);
+      setTimeout(() => (inThrottle = false), limit);
     }
   };
 }
@@ -115,8 +116,18 @@ export function hexToRgba(hex: string, alpha: number): string {
 
 export function getRandomColor(): string {
   const colors = [
-    '#06B6D4', '#3B82F6', '#8B5CF6', '#10B981', '#F59E0B', '#EF4444',
-    '#EC4899', '#14B8A6', '#F97316', '#84CC16', '#6366F1', '#F43F5E'
+    '#06B6D4',
+    '#3B82F6',
+    '#8B5CF6',
+    '#10B981',
+    '#F59E0B',
+    '#EF4444',
+    '#EC4899',
+    '#14B8A6',
+    '#F97316',
+    '#84CC16',
+    '#6366F1',
+    '#F43F5E',
   ];
   return colors[Math.floor(Math.random() * colors.length)];
 }
@@ -141,7 +152,7 @@ export function copyToClipboard(text: string): Promise<void> {
   if (navigator.clipboard) {
     return navigator.clipboard.writeText(text);
   }
-  
+
   const textArea = document.createElement('textarea');
   textArea.value = text;
   document.body.appendChild(textArea);
@@ -151,7 +162,11 @@ export function copyToClipboard(text: string): Promise<void> {
   return Promise.resolve();
 }
 
-export function downloadFile(data: string, filename: string, type: string = 'text/plain'): void {
+export function downloadFile(
+  data: string,
+  filename: string,
+  type: string = 'text/plain',
+): void {
   const blob = new Blob([data], { type });
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
@@ -226,7 +241,9 @@ export function parseQuery(queryString: string): Record<string, string> {
   return result;
 }
 
-export function buildQuery(params: Record<string, string | number | boolean>): string {
+export function buildQuery(
+  params: Record<string, string | number | boolean>,
+): string {
   const searchParams = new URLSearchParams();
   Object.entries(params).forEach(([key, value]) => {
     if (value !== undefined && value !== null) {

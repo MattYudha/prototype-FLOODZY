@@ -1,7 +1,7 @@
-"use client"; // Add this line at the very top
+'use client'; // Add this line at the very top
 
-import React, { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   BarChart3,
   Loader2,
@@ -43,8 +43,8 @@ import {
   ChevronDown,
   ChevronUp,
   ArrowUpRight,
-  ArrowDownRight
-} from "lucide-react";
+  ArrowDownRight,
+} from 'lucide-react';
 import {
   LineChart,
   Line,
@@ -65,8 +65,8 @@ import {
   Cell,
   BarChart as RechartsBarChart,
   Bar,
-  Pie // Add Pie here, as it was used but not imported
-} from "recharts";
+  Pie, // Add Pie here, as it was used but not imported
+} from 'recharts';
 
 // Types
 interface HistoricalIncident {
@@ -108,168 +108,191 @@ interface StatCard {
 // Mock data
 const mockHistoricalIncidents: HistoricalIncident[] = [
   {
-    id: "hist-1",
-    type: "Banjir",
-    location: "Sungai Ciliwung, Jakarta",
-    date: "2024-01-15T08:00:00Z",
-    description: "Banjir parah di bantaran Sungai Ciliwung akibat hujan deras dan luapan waduk. Ketinggian air mencapai 2 meter di beberapa titik.",
+    id: 'hist-1',
+    type: 'Banjir',
+    location: 'Sungai Ciliwung, Jakarta',
+    date: '2024-01-15T08:00:00Z',
+    description:
+      'Banjir parah di bantaran Sungai Ciliwung akibat hujan deras dan luapan waduk. Ketinggian air mencapai 2 meter di beberapa titik.',
     severity: 9,
-    impactAreas: ["Kampung Melayu", "Cawang", "Rawajati"],
+    impactAreas: ['Kampung Melayu', 'Cawang', 'Rawajati'],
     durationHours: 48,
     reportedLosses: 5000000000,
     casualties: 2,
     evacuees: 1250,
-    damageLevel: "Parah",
+    damageLevel: 'Parah',
     responseTime: 45,
-    status: "resolved"
+    status: 'resolved',
   },
   {
-    id: "hist-2",
-    type: "Gempa Bumi",
-    location: "Malang, Jawa Timur",
-    date: "2023-11-20T14:30:00Z",
-    description: "Gempa bumi berkekuatan M 6.5 dirasakan kuat di Malang dan sekitarnya. Menyebabkan kerusakan ringan pada beberapa bangunan.",
+    id: 'hist-2',
+    type: 'Gempa Bumi',
+    location: 'Malang, Jawa Timur',
+    date: '2023-11-20T14:30:00Z',
+    description:
+      'Gempa bumi berkekuatan M 6.5 dirasakan kuat di Malang dan sekitarnya. Menyebabkan kerusakan ringan pada beberapa bangunan.',
     severity: 7,
-    impactAreas: ["Pusat Kota Malang", "Kepanjen"],
+    impactAreas: ['Pusat Kota Malang', 'Kepanjen'],
     reportedLosses: 1000000000,
     casualties: 0,
     evacuees: 450,
-    damageLevel: "Ringan",
+    damageLevel: 'Ringan',
     responseTime: 30,
-    status: "resolved"
+    status: 'resolved',
   },
   {
-    id: "hist-3",
-    type: "Tanah Longsor",
-    location: "Puncak, Bogor",
-    date: "2024-03-01T06:00:00Z",
-    description: "Longsor menutup akses jalan utama Puncak setelah hujan semalaman. Tidak ada korban jiwa, namun lalu lintas terganggu.",
+    id: 'hist-3',
+    type: 'Tanah Longsor',
+    location: 'Puncak, Bogor',
+    date: '2024-03-01T06:00:00Z',
+    description:
+      'Longsor menutup akses jalan utama Puncak setelah hujan semalaman. Tidak ada korban jiwa, namun lalu lintas terganggu.',
     severity: 6,
-    impactAreas: ["Cisarua", "Megamendung"],
+    impactAreas: ['Cisarua', 'Megamendung'],
     durationHours: 72,
     reportedLosses: 500000000,
     casualties: 0,
     evacuees: 120,
-    damageLevel: "Sedang",
+    damageLevel: 'Sedang',
     responseTime: 60,
-    status: "resolved"
+    status: 'resolved',
   },
   {
-    id: "hist-4",
-    type: "Banjir",
-    location: "Semarang, Jawa Tengah",
-    date: "2023-12-05T11:00:00Z",
-    description: "Banjir rob di area pesisir Semarang, diperparah dengan curah hujan tinggi. Menggenangi permukiman dan fasilitas publik.",
+    id: 'hist-4',
+    type: 'Banjir',
+    location: 'Semarang, Jawa Tengah',
+    date: '2023-12-05T11:00:00Z',
+    description:
+      'Banjir rob di area pesisir Semarang, diperparah dengan curah hujan tinggi. Menggenangi permukiman dan fasilitas publik.',
     severity: 8,
-    impactAreas: ["Tugu", "Genuk", "Sayung"],
+    impactAreas: ['Tugu', 'Genuk', 'Sayung'],
     durationHours: 36,
     reportedLosses: 2500000000,
     casualties: 1,
     evacuees: 800,
-    damageLevel: "Sedang",
+    damageLevel: 'Sedang',
     responseTime: 40,
-    status: "resolved"
+    status: 'resolved',
   },
   {
-    id: "hist-5",
-    type: "Kekeringan",
-    location: "Gunungkidul, Yogyakarta",
-    date: "2024-06-10T00:00:00Z",
-    description: "Kekeringan ekstrem yang berlangsung selama 3 bulan, mengakibatkan krisis air bersih di beberapa desa.",
+    id: 'hist-5',
+    type: 'Kekeringan',
+    location: 'Gunungkidul, Yogyakarta',
+    date: '2024-06-10T00:00:00Z',
+    description:
+      'Kekeringan ekstrem yang berlangsung selama 3 bulan, mengakibatkan krisis air bersih di beberapa desa.',
     severity: 7,
-    impactAreas: ["Ponjong", "Semanu", "Tepus"],
+    impactAreas: ['Ponjong', 'Semanu', 'Tepus'],
     durationHours: 2160,
     reportedLosses: 800000000,
     casualties: 0,
     evacuees: 300,
-    damageLevel: "Sedang",
+    damageLevel: 'Sedang',
     responseTime: 120,
-    status: "monitoring"
+    status: 'monitoring',
   },
   {
-    id: "hist-6",
-    type: "Tsunami",
-    location: "Pantai Selatan Jawa",
-    date: "2024-02-18T15:45:00Z",
-    description: "Tsunami kecil akibat gempa laut, ketinggian gelombang 1.5 meter. Evakuasi preventif dilakukan dengan sukses.",
+    id: 'hist-6',
+    type: 'Tsunami',
+    location: 'Pantai Selatan Jawa',
+    date: '2024-02-18T15:45:00Z',
+    description:
+      'Tsunami kecil akibat gempa laut, ketinggian gelombang 1.5 meter. Evakuasi preventif dilakukan dengan sukses.',
     severity: 6,
-    impactAreas: ["Cilacap", "Kebumen", "Purworejo"],
+    impactAreas: ['Cilacap', 'Kebumen', 'Purworejo'],
     durationHours: 6,
     reportedLosses: 300000000,
     casualties: 0,
     evacuees: 2500,
-    damageLevel: "Ringan",
+    damageLevel: 'Ringan',
     responseTime: 15,
-    status: "resolved"
+    status: 'resolved',
   },
   {
-    id: "hist-7",
-    type: "Kebakaran Hutan",
-    location: "Riau",
-    date: "2023-09-01T10:00:00Z",
-    description: "Kebakaran hutan parah menyebabkan kabut asap tebal di beberapa provinsi. Upaya pemadaman masih berlangsung.",
+    id: 'hist-7',
+    type: 'Kebakaran Hutan',
+    location: 'Riau',
+    date: '2023-09-01T10:00:00Z',
+    description:
+      'Kebakaran hutan parah menyebabkan kabut asap tebal di beberapa provinsi. Upaya pemadaman masih berlangsung.',
     severity: 9,
-    impactAreas: ["Pekanbaru", "Dumai", "Pelalawan"],
+    impactAreas: ['Pekanbaru', 'Dumai', 'Pelalawan'],
     durationHours: 720, // Approx 30 days
     reportedLosses: 10000000000,
     casualties: 0,
     evacuees: 5000,
-    damageLevel: "Parah",
+    damageLevel: 'Parah',
     responseTime: 180,
-    status: "ongoing"
+    status: 'ongoing',
   },
   {
-    id: "hist-8",
-    type: "Angin Puting Beliung",
-    location: "Sidoarjo, Jawa Timur",
-    date: "2024-04-22T13:00:00Z",
-    description: "Angin puting beliung merusak puluhan rumah dan fasilitas umum. Tidak ada korban jiwa.",
+    id: 'hist-8',
+    type: 'Angin Puting Beliung',
+    location: 'Sidoarjo, Jawa Timur',
+    date: '2024-04-22T13:00:00Z',
+    description:
+      'Angin puting beliung merusak puluhan rumah dan fasilitas umum. Tidak ada korban jiwa.',
     severity: 5,
-    impactAreas: ["Buduran", "Candi"],
+    impactAreas: ['Buduran', 'Candi'],
     durationHours: 1,
     reportedLosses: 150000000,
     casualties: 0,
     evacuees: 50,
-    damageLevel: "Ringan",
+    damageLevel: 'Ringan',
     responseTime: 20,
-    status: "resolved"
+    status: 'resolved',
   },
   {
-    id: "hist-9",
-    type: "Gelombang Tinggi",
-    location: "Pantai Anyer, Banten",
-    date: "2024-05-15T09:00:00Z",
-    description: "Gelombang tinggi menghantam pesisir Anyer, merusak beberapa warung dan fasilitas wisata.",
+    id: 'hist-9',
+    type: 'Gelombang Tinggi',
+    location: 'Pantai Anyer, Banten',
+    date: '2024-05-15T09:00:00Z',
+    description:
+      'Gelombang tinggi menghantam pesisir Anyer, merusak beberapa warung dan fasilitas wisata.',
     severity: 6,
-    impactAreas: ["Anyer", "Carita"],
+    impactAreas: ['Anyer', 'Carita'],
     durationHours: 24,
     reportedLosses: 200000000,
     casualties: 0,
     evacuees: 0,
-    damageLevel: "Sedang",
+    damageLevel: 'Sedang',
     responseTime: 30,
-    status: "resolved"
+    status: 'resolved',
   },
   {
-    id: "hist-10",
-    type: "Erupsi Gunung Berapi",
-    location: "Gunung Merapi, Yogyakarta",
-    date: "2023-10-01T07:00:00Z",
-    description: "Erupsi freatik Gunung Merapi menyebabkan hujan abu tipis di sekitar lereng. Status siaga tetap.",
+    id: 'hist-10',
+    type: 'Erupsi Gunung Berapi',
+    location: 'Gunung Merapi, Yogyakarta',
+    date: '2023-10-01T07:00:00Z',
+    description:
+      'Erupsi freatik Gunung Merapi menyebabkan hujan abu tipis di sekitar lereng. Status siaga tetap.',
     severity: 7,
-    impactAreas: ["Sleman", "Magelang"],
+    impactAreas: ['Sleman', 'Magelang'],
     durationHours: 240, // 10 days
     reportedLosses: 50000000,
     casualties: 0,
     evacuees: 0,
-    damageLevel: "Sangat Ringan",
+    damageLevel: 'Sangat Ringan',
     responseTime: 10,
-    status: "monitoring"
-  }
+    status: 'monitoring',
+  },
 ];
 
 const generateChartData = (): ChartDataPoint[] => {
-  const months = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"];
+  const months = [
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'Mei',
+    'Jun',
+    'Jul',
+    'Agu',
+    'Sep',
+    'Okt',
+    'Nov',
+    'Des',
+  ];
   const data = [];
 
   for (let i = 0; i < 12; i++) {
@@ -279,7 +302,7 @@ const generateChartData = (): ChartDataPoint[] => {
       severity: parseFloat((Math.random() * 4 + 4).toFixed(1)),
       resolved: Math.floor(Math.random() * 20) + 5,
       ongoing: Math.floor(Math.random() * 5) + 1,
-      losses: Math.floor(Math.random() * 10000000000) + 1000000000
+      losses: Math.floor(Math.random() * 10000000000) + 1000000000,
     });
   }
 
@@ -300,22 +323,23 @@ const pieData = [
   { name: 'Gempa', value: 25, color: '#EF4444' },
   { name: 'Longsor', value: 20, color: '#F59E0B' },
   { name: 'Tsunami', value: 10, color: '#10B981' },
-  { name: 'Lainnya', value: 10, color: '#8B5CF6' }
+  { name: 'Lainnya', value: 10, color: '#8B5CF6' },
 ];
 
-
 export default function StatistikPage() {
-  const [activeTab, setActiveTab] = useState("overview");
+  const [activeTab, setActiveTab] = useState('overview');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [filterType, setFilterType] = useState<string>('all');
   const [timeRange, setTimeRange] = useState<string>('6m');
   const [geminiAnalysis, setGeminiAnalysis] = useState<string | null>(null);
   const [isLoadingAnalysis, setIsLoadingAnalysis] = useState(false);
   const [analysisError, setAnalysisError] = useState<string | null>(null);
-  const [customAnalysisPrompt, setCustomAnalysisPrompt] = useState("");
-  const [historicalIncidents, setHistoricalIncidents] = useState<HistoricalIncident[]>([]);
+  const [customAnalysisPrompt, setCustomAnalysisPrompt] = useState('');
+  const [historicalIncidents, setHistoricalIncidents] = useState<
+    HistoricalIncident[]
+  >([]);
   const [chartData, setChartData] = useState<ChartDataPoint[]>([]);
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState<'date' | 'severity' | 'type'>('date');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [showFilters, setShowFilters] = useState(false);
@@ -327,79 +351,86 @@ export default function StatistikPage() {
 
   const statCards: StatCard[] = [
     {
-      title: "Total Insiden",
+      title: 'Total Insiden',
       value: historicalIncidents.length,
       change: 12,
-      changeType: "increase",
+      changeType: 'increase',
       icon: <Activity className="w-5 h-5" />,
-      color: "blue",
-      trend: [20, 25, 18, 32, 28, 35, 30]
+      color: 'blue',
+      trend: [20, 25, 18, 32, 28, 35, 30],
     },
     {
-      title: "Tingkat Keparahan Avg",
-      value: "7.2",
+      title: 'Tingkat Keparahan Avg',
+      value: '7.2',
       change: -5,
-      changeType: "decrease",
+      changeType: 'decrease',
       icon: <Gauge className="w-5 h-5" />,
-      color: "orange",
-      trend: [8, 7.5, 7.8, 7.2, 6.9, 7.2, 7.1]
+      color: 'orange',
+      trend: [8, 7.5, 7.8, 7.2, 6.9, 7.2, 7.1],
     },
     {
-      title: "Kerugian Total",
-      value: "Rp 9.8T",
+      title: 'Kerugian Total',
+      value: 'Rp 9.8T',
       change: 8,
-      changeType: "increase",
+      changeType: 'increase',
       icon: <TrendingUp className="w-5 h-5" />,
-      color: "red",
-      trend: [5, 6, 7, 8, 9, 9.5, 9.8]
+      color: 'red',
+      trend: [5, 6, 7, 8, 9, 9.5, 9.8],
     },
     {
-      title: "Waktu Respons Avg",
-      value: "42 menit",
+      title: 'Waktu Respons Avg',
+      value: '42 menit',
       change: -15,
-      changeType: "decrease",
+      changeType: 'decrease',
       icon: <Clock className="w-5 h-5" />,
-      color: "green",
-      trend: [60, 55, 50, 45, 42, 40, 42]
+      color: 'green',
+      trend: [60, 55, 50, 45, 42, 40, 42],
     },
     {
-      title: "Korban Jiwa",
+      title: 'Korban Jiwa',
       value: 3,
       change: -50,
-      changeType: "decrease",
+      changeType: 'decrease',
       icon: <Users className="w-5 h-5" />,
-      color: "purple",
-      trend: [8, 6, 4, 3, 2, 1, 3]
+      color: 'purple',
+      trend: [8, 6, 4, 3, 2, 1, 3],
     },
     {
-      title: "Pengungsi",
-      value: "5,420",
+      title: 'Pengungsi',
+      value: '5,420',
       change: 20,
-      changeType: "increase",
+      changeType: 'increase',
       icon: <Shield className="w-5 h-5" />,
-      color: "cyan",
-      trend: [4000, 4500, 5000, 5200, 5400, 5420, 5400]
-    }
+      color: 'cyan',
+      trend: [4000, 4500, 5000, 5200, 5400, 5420, 5400],
+    },
   ];
 
   const filteredIncidents = historicalIncidents
-    .filter(incident =>
-       filterType === 'all' || incident.type.toLowerCase() === filterType.toLowerCase()
+    .filter(
+      (incident) =>
+        filterType === 'all' ||
+        incident.type.toLowerCase() === filterType.toLowerCase(),
     )
-    .filter(incident =>
-      incident.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      incident.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      incident.type.toLowerCase().includes(searchTerm.toLowerCase())
+    .filter(
+      (incident) =>
+        incident.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        incident.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        incident.type.toLowerCase().includes(searchTerm.toLowerCase()),
     )
     .sort((a, b) => {
       if (sortBy === 'date') {
         return sortOrder === 'desc'
-           ? new Date(b.date).getTime() - new Date(a.date).getTime()
+          ? new Date(b.date).getTime() - new Date(a.date).getTime()
           : new Date(a.date).getTime() - new Date(b.date).getTime();
       } else if (sortBy === 'severity') {
-        return sortOrder === 'desc' ? b.severity - a.severity : a.severity - b.severity;
+        return sortOrder === 'desc'
+          ? b.severity - a.severity
+          : a.severity - b.severity;
       } else {
-        return sortOrder === 'desc' ? b.type.localeCompare(a.type) : a.type.localeCompare(b.type);
+        return sortOrder === 'desc'
+          ? b.type.localeCompare(a.type)
+          : a.type.localeCompare(b.type);
       }
     });
 
@@ -408,9 +439,12 @@ export default function StatistikPage() {
     setAnalysisError(null);
     setGeminiAnalysis(null);
 
-    const analysisContext = historicalIncidents.map(inc =>
-      `Tipe: ${inc.type}, Lokasi: ${inc.location}, Tanggal: ${inc.date.split('T')[0]}, Deskripsi: ${inc.description}, Keparahan: ${inc.severity}/10`
-    ).join("\n---\n");
+    const analysisContext = historicalIncidents
+      .map(
+        (inc) =>
+          `Tipe: ${inc.type}, Lokasi: ${inc.location}, Tanggal: ${inc.date.split('T')[0]}, Deskripsi: ${inc.description}, Keparahan: ${inc.severity}/10`,
+      )
+      .join('\n---\n');
 
     const promptText = presetPrompt || customAnalysisPrompt;
 
@@ -444,34 +478,41 @@ Berdasarkan data historis, diproyeksikan peningkatan 15% insiden banjir pada 202
 
   const handlePresetAnalysis = (analysisType: string) => {
     const prompts = {
-      "pola_banjir": "Analisis pola banjir dan faktor pemicu utama berdasarkan data historis",
-      "dampak_infrastruktur": "Evaluasi dampak bencana terhadap infrastruktur kritis",
-      "efektivitas_respons": "Analisis efektivitas waktu respons dan koordinasi penanganan bencana"
+      pola_banjir:
+        'Analisis pola banjir dan faktor pemicu utama berdasarkan data historis',
+      dampak_infrastruktur:
+        'Evaluasi dampak bencana terhadap infrastruktur kritis',
+      efektivitas_respons:
+        'Analisis efektivitas waktu respons dan koordinasi penanganan bencana',
     };
 
-    const prompt = prompts[analysisType as keyof typeof prompts] || "";
+    const prompt = prompts[analysisType as keyof typeof prompts] || '';
     setCustomAnalysisPrompt(prompt);
     runHistoricalAnalysis(prompt);
   };
 
   const getColorClass = (color: string) => {
     const colors = {
-      blue: "from-blue-500 to-blue-600",
-      orange: "from-orange-500 to-orange-600",
-      red: "from-red-500 to-red-600",
-      green: "from-green-500 to-green-600",
-      purple: "from-purple-500 to-purple-600",
-      cyan: "from-cyan-500 to-cyan-600"
+      blue: 'from-blue-500 to-blue-600',
+      orange: 'from-orange-500 to-orange-600',
+      red: 'from-red-500 to-red-600',
+      green: 'from-green-500 to-green-600',
+      purple: 'from-purple-500 to-purple-600',
+      cyan: 'from-cyan-500 to-cyan-600',
     };
     return colors[color as keyof typeof colors] || colors.blue;
   };
 
   const getStatusColor = (status: string) => {
-    switch(status) {
-      case 'resolved': return 'bg-green-500/20 text-green-400 border-green-500/30';
-      case 'ongoing': return 'bg-red-500/20 text-red-400 border-red-500/30';
-      case 'monitoring': return 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30';
-      default: return 'bg-gray-500/20 text-gray-400 border-gray-500/30';
+    switch (status) {
+      case 'resolved':
+        return 'bg-green-500/20 text-green-400 border-green-500/30';
+      case 'ongoing':
+        return 'bg-red-500/20 text-red-400 border-red-500/30';
+      case 'monitoring':
+        return 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30';
+      default:
+        return 'bg-gray-500/20 text-gray-400 border-gray-500/30';
     }
   };
 
@@ -507,7 +548,9 @@ Berdasarkan data historis, diproyeksikan peningkatan 15% insiden banjir pada 202
                 <h1 className="text-4xl font-bold bg-gradient-to-r from-white via-blue-100 to-cyan-100 bg-clip-text text-transparent">
                   Advanced Analytics
                 </h1>
-                <p className="text-slate-400 mt-1">Sistem Analisis Bencana Berbasis AI</p>
+                <p className="text-slate-400 mt-1">
+                  Sistem Analisis Bencana Berbasis AI
+                </p>
               </div>
             </div>
             <div className="flex items-center space-x-3">
@@ -535,7 +578,7 @@ Berdasarkan data historis, diproyeksikan peningkatan 15% insiden banjir pada 202
             {[
               { id: 'overview', label: 'Dashboard', icon: BarChart3 },
               { id: 'historical', label: 'Data Historis', icon: Database },
-              { id: 'analysis', label: 'AI Analysis', icon: Brain }
+              { id: 'analysis', label: 'AI Analysis', icon: Brain },
             ].map((tab) => (
               <button
                 key={tab.id}
@@ -574,10 +617,14 @@ Berdasarkan data historis, diproyeksikan peningkatan 15% insiden banjir pada 202
                     transition={{ delay: index * 0.1 }}
                     className="group relative overflow-hidden rounded-2xl bg-slate-800/40 backdrop-blur-sm border border-slate-700/50 p-6 hover:bg-slate-700/40 transition-all duration-300"
                   >
-                    <div className={`absolute inset-0 bg-gradient-to-br ${getColorClass(card.color)} opacity-0 group-hover:opacity-5 transition-opacity duration-300`}></div>
+                    <div
+                      className={`absolute inset-0 bg-gradient-to-br ${getColorClass(card.color)} opacity-0 group-hover:opacity-5 transition-opacity duration-300`}
+                    ></div>
                     <div className="relative">
                       <div className="flex items-center justify-between mb-4">
-                        <div className={`p-3 rounded-xl bg-gradient-to-r ${getColorClass(card.color)} bg-opacity-10`}>
+                        <div
+                          className={`p-3 rounded-xl bg-gradient-to-r ${getColorClass(card.color)} bg-opacity-10`}
+                        >
                           {card.icon}
                         </div>
                         <div className="flex items-center space-x-1">
@@ -586,38 +633,81 @@ Berdasarkan data historis, diproyeksikan peningkatan 15% insiden banjir pada 202
                           ) : card.changeType === 'decrease' ? (
                             <ArrowDownRight className="w-4 h-4 text-red-400" />
                           ) : null}
-                          <span className={`text-sm font-medium ${
-                            card.changeType === 'increase' ? 'text-green-400' :
-                             card.changeType === 'decrease' ? 'text-red-400' : 'text-slate-400'
-                          }`}>
-                            {card.change > 0 ? '+' : ''}{card.change}%
+                          <span
+                            className={`text-sm font-medium ${
+                              card.changeType === 'increase'
+                                ? 'text-green-400'
+                                : card.changeType === 'decrease'
+                                  ? 'text-red-400'
+                                  : 'text-slate-400'
+                            }`}
+                          >
+                            {card.change > 0 ? '+' : ''}
+                            {card.change}%
                           </span>
                         </div>
                       </div>
-                      <h3 className="text-slate-400 text-sm font-medium mb-2">{card.title}</h3>
-                      <p className="text-2xl font-bold text-white mb-4">{card.value}</p>
+                      <h3 className="text-slate-400 text-sm font-medium mb-2">
+                        {card.title}
+                      </h3>
+                      <p className="text-2xl font-bold text-white mb-4">
+                        {card.value}
+                      </p>
                       <div className="h-8">
                         <ResponsiveContainer width="100%" height="100%">
-                          <LineChart data={card.trend.map((value, index) => ({ value, index }))}>
+                          <LineChart
+                            data={card.trend.map((value, index) => ({
+                              value,
+                              index,
+                            }))}
+                          >
                             <Line
-                               type="monotone"
-                               dataKey="value"
-                               stroke={`url(#gradient-${card.color})`}
+                              type="monotone"
+                              dataKey="value"
+                              stroke={`url(#gradient-${card.color})`}
                               strokeWidth={2}
                               dot={false}
                             />
                             <defs>
-                              <linearGradient id={`gradient-${card.color}`} x1="0" y1="0" x2="1" y2="0">
-                                <stop offset="0%" stopColor={card.color === 'blue' ? '#3B82F6' :
-                                                                card.color === 'orange' ? '#F59E0B' :
-                                                               card.color === 'red' ? '#EF4444' :
-                                                               card.color === 'green' ? '#10B981' :
-                                                               card.color === 'purple' ? '#8B5CF6' : '#06B6D4'} />
-                                <stop offset="100%" stopColor={card.color === 'blue' ? '#1D4ED8' :
-                                                                card.color === 'orange' ? '#D97706' :
-                                                                card.color === 'red' ? '#DC2626' :
-                                                                card.color === 'green' ? '#059669' :
-                                                                card.color === 'purple' ? '#7C3AED' : '#0891B2'} />
+                              <linearGradient
+                                id={`gradient-${card.color}`}
+                                x1="0"
+                                y1="0"
+                                x2="1"
+                                y2="0"
+                              >
+                                <stop
+                                  offset="0%"
+                                  stopColor={
+                                    card.color === 'blue'
+                                      ? '#3B82F6'
+                                      : card.color === 'orange'
+                                        ? '#F59E0B'
+                                        : card.color === 'red'
+                                          ? '#EF4444'
+                                          : card.color === 'green'
+                                            ? '#10B981'
+                                            : card.color === 'purple'
+                                              ? '#8B5CF6'
+                                              : '#06B6D4'
+                                  }
+                                />
+                                <stop
+                                  offset="100%"
+                                  stopColor={
+                                    card.color === 'blue'
+                                      ? '#1D4ED8'
+                                      : card.color === 'orange'
+                                        ? '#D97706'
+                                        : card.color === 'red'
+                                          ? '#DC2626'
+                                          : card.color === 'green'
+                                            ? '#059669'
+                                            : card.color === 'purple'
+                                              ? '#7C3AED'
+                                              : '#0891B2'
+                                  }
+                                />
                               </linearGradient>
                             </defs>
                           </LineChart>
@@ -633,7 +723,9 @@ Berdasarkan data historis, diproyeksikan peningkatan 15% insiden banjir pada 202
                 {/* Trend Chart */}
                 <div className="bg-slate-800/40 backdrop-blur-sm border border-slate-700/50 rounded-2xl p-6">
                   <div className="flex items-center justify-between mb-6">
-                    <h3 className="text-xl font-semibold text-white">Tren Insiden Bulanan</h3>
+                    <h3 className="text-xl font-semibold text-white">
+                      Tren Insiden Bulanan
+                    </h3>
                     <div className="flex items-center space-x-2">
                       <select className="bg-slate-700/50 border border-slate-600/50 rounded-lg px-3 py-1 text-sm text-white">
                         <option>6 Bulan</option>
@@ -646,25 +738,57 @@ Berdasarkan data historis, diproyeksikan peningkatan 15% insiden banjir pada 202
                     <ResponsiveContainer width="100%" height="100%">
                       <AreaChart data={chartData}>
                         <defs>
-                          <linearGradient id="colorIncidents" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.8}/>
-                            <stop offset="95%" stopColor="#3B82F6" stopOpacity={0.1}/>
+                          <linearGradient
+                            id="colorIncidents"
+                            x1="0"
+                            y1="0"
+                            x2="0"
+                            y2="1"
+                          >
+                            <stop
+                              offset="5%"
+                              stopColor="#3B82F6"
+                              stopOpacity={0.8}
+                            />
+                            <stop
+                              offset="95%"
+                              stopColor="#3B82F6"
+                              stopOpacity={0.1}
+                            />
                           </linearGradient>
-                          <linearGradient id="colorSeverity" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="#F59E0B" stopOpacity={0.8}/>
-                            <stop offset="95%" stopColor="#F59E0B" stopOpacity={0.1}/>
+                          <linearGradient
+                            id="colorSeverity"
+                            x1="0"
+                            y1="0"
+                            x2="0"
+                            y2="1"
+                          >
+                            <stop
+                              offset="5%"
+                              stopColor="#F59E0B"
+                              stopOpacity={0.8}
+                            />
+                            <stop
+                              offset="95%"
+                              stopColor="#F59E0B"
+                              stopOpacity={0.1}
+                            />
                           </linearGradient>
                         </defs>
                         <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
                         <XAxis dataKey="name" stroke="#9CA3AF" />
                         <YAxis yAxisId="left" stroke="#3B82F6" />
-                        <YAxis yAxisId="right" orientation="right" stroke="#F59E0B" />
+                        <YAxis
+                          yAxisId="right"
+                          orientation="right"
+                          stroke="#F59E0B"
+                        />
                         <Tooltip
-                           contentStyle={{
+                          contentStyle={{
                             backgroundColor: 'rgba(15, 23, 42, 0.9)',
                             border: '1px solid rgba(71, 85, 105, 0.5)',
                             borderRadius: '12px',
-                            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)'
+                            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
                           }}
                         />
                         <Legend />
@@ -693,7 +817,9 @@ Berdasarkan data historis, diproyeksikan peningkatan 15% insiden banjir pada 202
 
                 {/* Incident Type Distribution (Pie Chart) */}
                 <div className="bg-slate-800/40 backdrop-blur-sm border border-slate-700/50 rounded-2xl p-6">
-                  <h3 className="text-xl font-semibold text-white mb-6">Distribusi Jenis Insiden</h3>
+                  <h3 className="text-xl font-semibold text-white mb-6">
+                    Distribusi Jenis Insiden
+                  </h3>
                   <div className="h-80 flex items-center justify-center">
                     <ResponsiveContainer width="100%" height="100%">
                       <RechartsPieChart>
@@ -707,18 +833,20 @@ Berdasarkan data historis, diproyeksikan peningkatan 15% insiden banjir pada 202
                           paddingAngle={5}
                           dataKey="value"
                           labelLine={false}
-                          label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
+                          label={({ name, percent }) =>
+                            `${name} (${(percent * 100).toFixed(0)}%)`
+                          }
                         >
                           {pieData.map((entry, index) => (
                             <Cell key={`cell-${index}`} fill={entry.color} />
                           ))}
                         </Pie>
                         <Tooltip
-                           contentStyle={{
+                          contentStyle={{
                             backgroundColor: 'rgba(15, 23, 42, 0.9)',
                             border: '1px solid rgba(71, 85, 105, 0.5)',
                             borderRadius: '12px',
-                            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)'
+                            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
                           }}
                         />
                         <Legend />
@@ -729,27 +857,45 @@ Berdasarkan data historis, diproyeksikan peningkatan 15% insiden banjir pada 202
 
                 {/* Radar Chart for Capability Assessment (Example) */}
                 <div className="lg:col-span-2 bg-slate-800/40 backdrop-blur-sm border border-slate-700/50 rounded-2xl p-6">
-                    <h3 className="text-xl font-semibold text-white mb-6">Evaluasi Kesiapan Bencana Berdasarkan Jenis</h3>
-                    <div className="h-80">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <RadarChart outerRadius={90} data={radarData}>
-                                <PolarGrid stroke="#374151" />
-                                <PolarAngleAxis dataKey="subject" stroke="#9CA3AF" />
-                                <PolarRadiusAxis angle={30} domain={[0, 150]} stroke="#374151" />
-                                <Radar name="Kesiapan Saat Ini" dataKey="A" stroke="#8884d8" fill="#8884d8" fillOpacity={0.6} />
-                                <Radar name="Target Kesiapan" dataKey="B" stroke="#82ca9d" fill="#82ca9d" fillOpacity={0.6} />
-                                <Tooltip
-                                    contentStyle={{
-                                        backgroundColor: 'rgba(15, 23, 42, 0.9)',
-                                        border: '1px solid rgba(71, 85, 105, 0.5)',
-                                        borderRadius: '12px',
-                                        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)'
-                                    }}
-                                />
-                                <Legend />
-                            </RadarChart>
-                        </ResponsiveContainer>
-                    </div>
+                  <h3 className="text-xl font-semibold text-white mb-6">
+                    Evaluasi Kesiapan Bencana Berdasarkan Jenis
+                  </h3>
+                  <div className="h-80">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <RadarChart outerRadius={90} data={radarData}>
+                        <PolarGrid stroke="#374151" />
+                        <PolarAngleAxis dataKey="subject" stroke="#9CA3AF" />
+                        <PolarRadiusAxis
+                          angle={30}
+                          domain={[0, 150]}
+                          stroke="#374151"
+                        />
+                        <Radar
+                          name="Kesiapan Saat Ini"
+                          dataKey="A"
+                          stroke="#8884d8"
+                          fill="#8884d8"
+                          fillOpacity={0.6}
+                        />
+                        <Radar
+                          name="Target Kesiapan"
+                          dataKey="B"
+                          stroke="#82ca9d"
+                          fill="#82ca9d"
+                          fillOpacity={0.6}
+                        />
+                        <Tooltip
+                          contentStyle={{
+                            backgroundColor: 'rgba(15, 23, 42, 0.9)',
+                            border: '1px solid rgba(71, 85, 105, 0.5)',
+                            borderRadius: '12px',
+                            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+                          }}
+                        />
+                        <Legend />
+                      </RadarChart>
+                    </ResponsiveContainer>
+                  </div>
                 </div>
               </div>
             </motion.div>
@@ -784,7 +930,11 @@ Berdasarkan data historis, diproyeksikan peningkatan 15% insiden banjir pada 202
                   >
                     <Filter className="w-4 h-4" />
                     <span>Filter</span>
-                    {showFilters ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                    {showFilters ? (
+                      <ChevronUp className="w-3 h-3" />
+                    ) : (
+                      <ChevronDown className="w-3 h-3" />
+                    )}
                   </button>
                   <button
                     onClick={() => setViewMode('grid')}
@@ -811,7 +961,12 @@ Berdasarkan data historis, diproyeksikan peningkatan 15% insiden banjir pada 202
                     className="bg-slate-800/40 backdrop-blur-sm border border-slate-700/50 rounded-2xl p-4 flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4"
                   >
                     <div>
-                      <label htmlFor="filterType" className="block text-sm font-medium text-slate-300 mb-1">Jenis Bencana</label>
+                      <label
+                        htmlFor="filterType"
+                        className="block text-sm font-medium text-slate-300 mb-1"
+                      >
+                        Jenis Bencana
+                      </label>
                       <select
                         id="filterType"
                         className="w-full sm:w-auto bg-slate-700/50 border border-slate-600/50 rounded-lg px-3 py-1 text-sm text-white"
@@ -825,18 +980,33 @@ Berdasarkan data historis, diproyeksikan peningkatan 15% insiden banjir pada 202
                         <option value="Kekeringan">Kekeringan</option>
                         <option value="Tsunami">Tsunami</option>
                         <option value="Kebakaran Hutan">Kebakaran Hutan</option>
-                        <option value="Angin Puting Beliung">Angin Puting Beliung</option>
-                        <option value="Gelombang Tinggi">Gelombang Tinggi</option>
-                        <option value="Erupsi Gunung Berapi">Erupsi Gunung Berapi</option>
+                        <option value="Angin Puting Beliung">
+                          Angin Puting Beliung
+                        </option>
+                        <option value="Gelombang Tinggi">
+                          Gelombang Tinggi
+                        </option>
+                        <option value="Erupsi Gunung Berapi">
+                          Erupsi Gunung Berapi
+                        </option>
                       </select>
                     </div>
                     <div>
-                      <label htmlFor="sortBy" className="block text-sm font-medium text-slate-300 mb-1">Urutkan Berdasarkan</label>
+                      <label
+                        htmlFor="sortBy"
+                        className="block text-sm font-medium text-slate-300 mb-1"
+                      >
+                        Urutkan Berdasarkan
+                      </label>
                       <select
                         id="sortBy"
                         className="w-full sm:w-auto bg-slate-700/50 border border-slate-600/50 rounded-lg px-3 py-1 text-sm text-white"
                         value={sortBy}
-                        onChange={(e) => setSortBy(e.target.value as 'date' | 'severity' | 'type')}
+                        onChange={(e) =>
+                          setSortBy(
+                            e.target.value as 'date' | 'severity' | 'type',
+                          )
+                        }
                       >
                         <option value="date">Tanggal</option>
                         <option value="severity">Keparahan</option>
@@ -844,12 +1014,19 @@ Berdasarkan data historis, diproyeksikan peningkatan 15% insiden banjir pada 202
                       </select>
                     </div>
                     <div>
-                      <label htmlFor="sortOrder" className="block text-sm font-medium text-slate-300 mb-1">Urutan</label>
+                      <label
+                        htmlFor="sortOrder"
+                        className="block text-sm font-medium text-slate-300 mb-1"
+                      >
+                        Urutan
+                      </label>
                       <select
                         id="sortOrder"
                         className="w-full sm:w-auto bg-slate-700/50 border border-slate-600/50 rounded-lg px-3 py-1 text-sm text-white"
                         value={sortOrder}
-                        onChange={(e) => setSortOrder(e.target.value as 'asc' | 'desc')}
+                        onChange={(e) =>
+                          setSortOrder(e.target.value as 'asc' | 'desc')
+                        }
                       >
                         <option value="desc">Terbaru/Tertinggi</option>
                         <option value="asc">Terlama/Terendah</option>
@@ -858,7 +1035,6 @@ Berdasarkan data historis, diproyeksikan peningkatan 15% insiden banjir pada 202
                   </motion.div>
                 )}
               </AnimatePresence>
-
 
               {/* Incident List/Grid */}
               {filteredIncidents.length > 0 ? (
@@ -881,20 +1057,46 @@ Berdasarkan data historis, diproyeksikan peningkatan 15% insiden banjir pada 202
                           <span className="text-sm font-medium text-blue-400 flex items-center">
                             <Layers className="w-4 h-4 mr-2" /> {incident.type}
                           </span>
-                          <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(incident.status)}`}>
-                            {incident.status === 'resolved' ? 'Selesai' : incident.status === 'ongoing' ? 'Berlangsung' : 'Dipantau'}
+                          <span
+                            className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(incident.status)}`}
+                          >
+                            {incident.status === 'resolved'
+                              ? 'Selesai'
+                              : incident.status === 'ongoing'
+                                ? 'Berlangsung'
+                                : 'Dipantau'}
                           </span>
                         </div>
-                        <h4 className="text-lg font-semibold text-white mb-2">{incident.location}</h4>
-                        <p className="text-slate-400 text-sm line-clamp-2">{incident.description}</p>
+                        <h4 className="text-lg font-semibold text-white mb-2">
+                          {incident.location}
+                        </h4>
+                        <p className="text-slate-400 text-sm line-clamp-2">
+                          {incident.description}
+                        </p>
                         <div className="mt-4 text-sm text-slate-400">
                           <div className="flex items-center mb-1">
                             <Calendar className="w-4 h-4 mr-2 text-slate-500" />
-                            <span>{new Date(incident.date).toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
+                            <span>
+                              {new Date(incident.date).toLocaleDateString(
+                                'id-ID',
+                                {
+                                  year: 'numeric',
+                                  month: 'long',
+                                  day: 'numeric',
+                                },
+                              )}
+                            </span>
                           </div>
                           <div className="flex items-center">
                             <Zap className="w-4 h-4 mr-2 text-slate-500" />
-                            <span>Tingkat Keparahan: <span className={`font-semibold ${getSeverityColor(incident.severity)}`}>{incident.severity}/10</span></span>
+                            <span>
+                              Tingkat Keparahan:{' '}
+                              <span
+                                className={`font-semibold ${getSeverityColor(incident.severity)}`}
+                              >
+                                {incident.severity}/10
+                              </span>
+                            </span>
                           </div>
                         </div>
                       </motion.div>
@@ -908,22 +1110,40 @@ Berdasarkan data historis, diproyeksikan peningkatan 15% insiden banjir pada 202
                     <table className="min-w-full divide-y divide-slate-700">
                       <thead className="bg-slate-700/50">
                         <tr>
-                          <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
+                          <th
+                            scope="col"
+                            className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider"
+                          >
                             Jenis
                           </th>
-                          <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
+                          <th
+                            scope="col"
+                            className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider"
+                          >
                             Lokasi
                           </th>
-                          <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
+                          <th
+                            scope="col"
+                            className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider"
+                          >
                             Tanggal
                           </th>
-                          <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
+                          <th
+                            scope="col"
+                            className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider"
+                          >
                             Keparahan
                           </th>
-                          <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
+                          <th
+                            scope="col"
+                            className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider"
+                          >
                             Status
                           </th>
-                          <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
+                          <th
+                            scope="col"
+                            className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider"
+                          >
                             Kerugian
                           </th>
                         </tr>
@@ -947,18 +1167,34 @@ Berdasarkan data historis, diproyeksikan peningkatan 15% insiden banjir pada 202
                                 {incident.location}
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-300">
-                                {new Date(incident.date).toLocaleDateString('id-ID')}
+                                {new Date(incident.date).toLocaleDateString(
+                                  'id-ID',
+                                )}
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold">
-                                <span className={getSeverityColor(incident.severity)}>{incident.severity}/10</span>
+                                <span
+                                  className={getSeverityColor(
+                                    incident.severity,
+                                  )}
+                                >
+                                  {incident.severity}/10
+                                </span>
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap">
-                                <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(incident.status)}`}>
-                                  {incident.status === 'resolved' ? 'Selesai' : incident.status === 'ongoing' ? 'Berlangsung' : 'Dipantau'}
+                                <span
+                                  className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(incident.status)}`}
+                                >
+                                  {incident.status === 'resolved'
+                                    ? 'Selesai'
+                                    : incident.status === 'ongoing'
+                                      ? 'Berlangsung'
+                                      : 'Dipantau'}
                                 </span>
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-300">
-                                {incident.reportedLosses ? `Rp ${incident.reportedLosses.toLocaleString('id-ID')}` : 'N/A'}
+                                {incident.reportedLosses
+                                  ? `Rp ${incident.reportedLosses.toLocaleString('id-ID')}`
+                                  : 'N/A'}
                               </td>
                             </motion.tr>
                           ))}
@@ -974,7 +1210,9 @@ Berdasarkan data historis, diproyeksikan peningkatan 15% insiden banjir pada 202
                   className="text-center py-10 bg-slate-800/40 backdrop-blur-sm border border-slate-700/50 rounded-2xl"
                 >
                   <Info className="w-10 h-10 text-slate-500 mx-auto mb-4" />
-                  <p className="text-slate-400">Tidak ada data insiden yang cocok dengan filter Anda.</p>
+                  <p className="text-slate-400">
+                    Tidak ada data insiden yang cocok dengan filter Anda.
+                  </p>
                 </motion.div>
               )}
             </motion.div>
@@ -992,31 +1230,40 @@ Berdasarkan data historis, diproyeksikan peningkatan 15% insiden banjir pada 202
             >
               <div className="bg-slate-800/40 backdrop-blur-sm border border-slate-700/50 rounded-2xl p-6">
                 <h3 className="text-xl font-semibold text-white mb-4 flex items-center">
-                  <Brain className="w-6 h-6 mr-3 text-blue-400" /> Analisis AI Berbasis Gemini
+                  <Brain className="w-6 h-6 mr-3 text-blue-400" /> Analisis AI
+                  Berbasis Gemini
                 </h3>
                 <p className="text-slate-400 mb-6">
-                  Gunakan kecerdasan buatan untuk mendapatkan wawasan mendalam dari data insiden historis. Anda bisa memilih preset analisis atau menulis prompt Anda sendiri.
+                  Gunakan kecerdasan buatan untuk mendapatkan wawasan mendalam
+                  dari data insiden historis. Anda bisa memilih preset analisis
+                  atau menulis prompt Anda sendiri.
                 </p>
 
                 <div className="mb-6">
-                  <h4 className="text-lg font-medium text-white mb-3">Pilih Preset Analisis:</h4>
+                  <h4 className="text-lg font-medium text-white mb-3">
+                    Pilih Preset Analisis:
+                  </h4>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                     <button
-                      onClick={() => handlePresetAnalysis("pola_banjir")}
+                      onClick={() => handlePresetAnalysis('pola_banjir')}
                       className="flex items-center justify-center space-x-2 px-4 py-3 rounded-xl bg-slate-700/50 hover:bg-slate-600/50 border border-slate-600/50 text-slate-300 transition-all duration-300"
                     >
                       <Zap className="w-4 h-4" />
                       <span>Pola Banjir</span>
                     </button>
                     <button
-                      onClick={() => handlePresetAnalysis("dampak_infrastruktur")}
+                      onClick={() =>
+                        handlePresetAnalysis('dampak_infrastruktur')
+                      }
                       className="flex items-center justify-center space-x-2 px-4 py-3 rounded-xl bg-slate-700/50 hover:bg-slate-600/50 border border-slate-600/50 text-slate-300 transition-all duration-300"
                     >
                       <Target className="w-4 h-4" />
                       <span>Dampak Infrastruktur</span>
                     </button>
                     <button
-                      onClick={() => handlePresetAnalysis("efektivitas_respons")}
+                      onClick={() =>
+                        handlePresetAnalysis('efektivitas_respons')
+                      }
                       className="flex items-center justify-center space-x-2 px-4 py-3 rounded-xl bg-slate-700/50 hover:bg-slate-600/50 border border-slate-600/50 text-slate-300 transition-all duration-300"
                     >
                       <Shield className="w-4 h-4" />
@@ -1026,7 +1273,9 @@ Berdasarkan data historis, diproyeksikan peningkatan 15% insiden banjir pada 202
                 </div>
 
                 <div className="mb-6">
-                  <h4 className="text-lg font-medium text-white mb-3">Atau Tulis Prompt Kustom Anda:</h4>
+                  <h4 className="text-lg font-medium text-white mb-3">
+                    Atau Tulis Prompt Kustom Anda:
+                  </h4>
                   <textarea
                     className="w-full p-4 rounded-xl bg-slate-700/50 border border-slate-600/50 text-white placeholder:text-slate-500 focus:ring-blue-500 focus:border-blue-500 transition-all duration-300 min-h-[120px]"
                     placeholder="Contoh: 'Berikan analisis tren kerugian finansial dari insiden gempa bumi selama 5 tahun terakhir.'"
@@ -1040,7 +1289,10 @@ Berdasarkan data historis, diproyeksikan peningkatan 15% insiden banjir pada 202
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   className="w-full flex items-center justify-center space-x-2 px-6 py-3 rounded-xl bg-gradient-to-r from-blue-500 to-cyan-500 text-white font-semibold shadow-lg shadow-blue-500/25 hover:from-blue-600 hover:to-cyan-600 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
-                  disabled={isLoadingAnalysis || (!customAnalysisPrompt && !geminiAnalysis)}
+                  disabled={
+                    isLoadingAnalysis ||
+                    (!customAnalysisPrompt && !geminiAnalysis)
+                  }
                 >
                   {isLoadingAnalysis ? (
                     <>
@@ -1066,8 +1318,12 @@ Berdasarkan data historis, diproyeksikan peningkatan 15% insiden banjir pada 202
                     className="bg-slate-800/40 backdrop-blur-sm border border-slate-700/50 rounded-2xl p-6 text-center"
                   >
                     <Loader2 className="w-10 h-10 text-blue-500 animate-spin mx-auto mb-4" />
-                    <p className="text-slate-300 text-lg font-medium">AI sedang bekerja keras menghasilkan wawasan...</p>
-                    <p className="text-slate-500 text-sm mt-2">Ini mungkin memakan waktu beberapa detik.</p>
+                    <p className="text-slate-300 text-lg font-medium">
+                      AI sedang bekerja keras menghasilkan wawasan...
+                    </p>
+                    <p className="text-slate-500 text-sm mt-2">
+                      Ini mungkin memakan waktu beberapa detik.
+                    </p>
                   </motion.div>
                 )}
 
@@ -1081,7 +1337,9 @@ Berdasarkan data historis, diproyeksikan peningkatan 15% insiden banjir pada 202
                   >
                     <AlertTriangle className="w-6 h-6 text-red-400" />
                     <div>
-                      <h4 className="text-red-300 font-semibold">Terjadi Kesalahan</h4>
+                      <h4 className="text-red-300 font-semibold">
+                        Terjadi Kesalahan
+                      </h4>
                       <p className="text-red-400 text-sm">{analysisError}</p>
                     </div>
                   </motion.div>
@@ -1096,11 +1354,20 @@ Berdasarkan data historis, diproyeksikan peningkatan 15% insiden banjir pada 202
                     className="bg-slate-800/40 backdrop-blur-sm border border-slate-700/50 rounded-2xl p-6"
                   >
                     <h3 className="text-xl font-semibold text-white mb-4 flex items-center">
-                      <Lightbulb className="w-6 h-6 mr-3 text-yellow-400" /> Hasil Analisis Gemini
+                      <Lightbulb className="w-6 h-6 mr-3 text-yellow-400" />{' '}
+                      Hasil Analisis Gemini
                     </h3>
                     <div className="prose prose-invert max-w-none text-slate-300">
                       {/* Using dangerouslySetInnerHTML for Markdown-like content. Be cautious with untrusted input. */}
-                      <div dangerouslySetInnerHTML={{ __html: geminiAnalysis.replace(/\n/g, '<br/>').replace(/## (.*)/g, '<h2>$1</h2>').replace(/### (.*)/g, '<h3>$1</h3>').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') }} />
+                      <div
+                        dangerouslySetInnerHTML={{
+                          __html: geminiAnalysis
+                            .replace(/\n/g, '<br/>')
+                            .replace(/## (.*)/g, '<h2>$1</h2>')
+                            .replace(/### (.*)/g, '<h3>$1</h3>')
+                            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>'),
+                        }}
+                      />
                     </div>
                   </motion.div>
                 )}

@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   Layers,
   Eye,
@@ -13,11 +13,11 @@ import {
   Minimize2,
   Settings,
   AlertTriangle, // Import AlertTriangle untuk ikon peringatan
-} from "lucide-react";
-import { Button } from "@/components/ui/Button";
-import { Card } from "@/components/ui/Card";
-import { Badge } from "@/components/ui/Badge";
-import { cn } from "@/lib/utils";
+} from 'lucide-react';
+import { Button } from '@/components/ui/Button';
+import { Card } from '@/components/ui/Card';
+import { Badge } from '@/components/ui/Badge';
+import { cn } from '@/lib/utils';
 
 interface MapControlsProps {
   onFullscreenToggle: () => void;
@@ -33,9 +33,9 @@ interface MapControlsProps {
 }
 
 const mapLayers = [
-  { id: "street", name: "Jalan", icon: MapPin },
-  { id: "satellite", name: "Satelit", icon: Navigation },
-  { id: "terrain", name: "Terrain", icon: Layers },
+  { id: 'street', name: 'Jalan', icon: MapPin },
+  { id: 'satellite', name: 'Satelit', icon: Navigation },
+  { id: 'terrain', name: 'Terrain', icon: Layers },
 ];
 
 export function MapControls({
@@ -101,7 +101,7 @@ export function MapControls({
                     <Button
                       key={layer.id}
                       variant={
-                        selectedLayer === layer.id ? "secondary" : "ghost"
+                        selectedLayer === layer.id ? 'secondary' : 'ghost'
                       }
                       size="sm"
                       onClick={() => onLayerChange(layer.id)}

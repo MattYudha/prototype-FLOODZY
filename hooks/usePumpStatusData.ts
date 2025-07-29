@@ -1,4 +1,3 @@
-
 import { useState, useCallback } from 'react';
 import { fetchPumpStatusData, PumpData } from '@/lib/api';
 

@@ -1,9 +1,9 @@
 // mattyudha/floodzy/Floodzy-04cbe0509e23f883f290033cafa7f880e929fe65/app/peringatan/page.tsx
-"use client";
+'use client';
 
-import React, { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { motion, AnimatePresence } from "framer-motion";
+import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   Bell,
   AlertTriangle,
@@ -20,24 +20,24 @@ import {
   ChevronLeft,
   Newspaper, // New icon for news section
   MessageSquare, // Icon for Gemini
-} from "lucide-react";
+} from 'lucide-react';
 
-import { Button } from "@/components/ui/Button";
-import { Badge } from "@/components/ui/Badge"; // Import Badge
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"; // Import Alert components
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"; // Import Tabs components
+import { Button } from '@/components/ui/Button';
+import { Badge } from '@/components/ui/Badge'; // Import Badge
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'; // Import Alert components
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'; // Import Tabs components
 
 import {
   fetchBmkgLatestQuake,
   fetchPetabencanaReports,
   BmkgGempaData,
   PetabencanaReport,
-} from "@/lib/api";
+} from '@/lib/api';
 
 // Tipe data untuk peringatan
 interface Alert {
   id: string;
-  level: "Rendah" | "Sedang" | "Tinggi";
+  level: 'Rendah' | 'Sedang' | 'Tinggi';
   location: string;
   timestamp: string;
   reason: string;
@@ -68,41 +68,41 @@ const fetchNewsAndReports = async (): Promise<NewsReport[]> => {
   const now = new Date();
   return [
     {
-      id: "news-1",
-      title: "Banjir Jakarta: Ketinggian Air Terus Meningkat di Beberapa Titik",
+      id: 'news-1',
+      title: 'Banjir Jakarta: Ketinggian Air Terus Meningkat di Beberapa Titik',
       content:
-        "Jakarta, [tanggal]. Curah hujan tinggi semalam menyebabkan peningkatan drastis ketinggian air di beberapa wilayah Jakarta, termasuk Kemang, Cipinang Melayu, dan Bidara Cina. BPBD DKI Jakarta mengimbau warga untuk tetap waspada dan mempersiapkan diri untuk evakuasi.",
-      source: "Detik News",
-      url: "https://www.detik.com/banjirjakarta",
+        'Jakarta, [tanggal]. Curah hujan tinggi semalam menyebabkan peningkatan drastis ketinggian air di beberapa wilayah Jakarta, termasuk Kemang, Cipinang Melayu, dan Bidara Cina. BPBD DKI Jakarta mengimbau warga untuk tetap waspada dan mempersiapkan diri untuk evakuasi.',
+      source: 'Detik News',
+      url: 'https://www.detik.com/banjirjakarta',
       timestamp: new Date(now.getTime() - 2 * 60 * 60 * 1000).toISOString(), // 2 hours ago
     },
     {
-      id: "news-2",
+      id: 'news-2',
       title:
-        "Gempa Bumi Magnitudo 5.2 Guncang Malang, Tidak Berpotensi Tsunami",
+        'Gempa Bumi Magnitudo 5.2 Guncang Malang, Tidak Berpotensi Tsunami',
       content:
-        "Malang, [tanggal]. Gempa bumi berkekuatan Magnitudo 5.2 mengguncang wilayah Malang, Jawa Timur pada pagi hari. Menurut BMKG, pusat gempa berada di laut dengan kedalaman 10 km dan tidak berpotensi tsunami. Getaran dirasakan hingga beberapa kota di sekitarnya.",
-      source: "Kompas.com",
-      url: "https://www.kompas.com/gempa-malang",
+        'Malang, [tanggal]. Gempa bumi berkekuatan Magnitudo 5.2 mengguncang wilayah Malang, Jawa Timur pada pagi hari. Menurut BMKG, pusat gempa berada di laut dengan kedalaman 10 km dan tidak berpotensi tsunami. Getaran dirasakan hingga beberapa kota di sekitarnya.',
+      source: 'Kompas.com',
+      url: 'https://www.kompas.com/gempa-malang',
       timestamp: new Date(now.getTime() - 5 * 60 * 60 * 1000).toISOString(), // 5 hours ago
     },
     {
-      id: "news-3",
-      title: "Peringatan Dini Cuaca Ekstrem di Sumatera Barat Minggu Ini",
+      id: 'news-3',
+      title: 'Peringatan Dini Cuaca Ekstrem di Sumatera Barat Minggu Ini',
       content:
-        "Padang, [tanggal]. Badan Meteorologi, Klimatologi, dan Geofisika (BMKG) mengeluarkan peringatan dini cuaca ekstrem untuk wilayah Sumatera Barat. Hujan lebat disertai angin kencang berpotensi terjadi di sejumlah daerah, meningkatkan risiko banjir dan longsor.",
-      source: "Antara News",
-      url: "https://www.antaranews.com/cuaca-sumbar",
+        'Padang, [tanggal]. Badan Meteorologi, Klimatologi, dan Geofisika (BMKG) mengeluarkan peringatan dini cuaca ekstrem untuk wilayah Sumatera Barat. Hujan lebat disertai angin kencang berpotensi terjadi di sejumlah daerah, meningkatkan risiko banjir dan longsor.',
+      source: 'Antara News',
+      url: 'https://www.antaranews.com/cuaca-sumbar',
       timestamp: new Date(now.getTime() - 10 * 60 * 60 * 1000).toISOString(), // 10 hours ago
     },
     {
-      id: "news-4",
+      id: 'news-4',
       title:
-        "Debit Air Sungai Ciliwung Mencapai Siaga 3, Warga Diminta Waspada",
+        'Debit Air Sungai Ciliwung Mencapai Siaga 3, Warga Diminta Waspada',
       content:
-        "Bogor, [tanggal]. Debit air Sungai Ciliwung terpantau terus meningkat dan kini mencapai status Siaga 3. Pintu air Katulampa mencatat kenaikan signifikan setelah hujan deras di kawasan Puncak. Warga yang tinggal di bantaran sungai diimbau untuk meningkatkan kewaspadaan.",
-      source: "Tempo",
-      url: "https://www.tempo.co/ciliwung",
+        'Bogor, [tanggal]. Debit air Sungai Ciliwung terpantau terus meningkat dan kini mencapai status Siaga 3. Pintu air Katulampa mencatat kenaikan signifikan setelah hujan deras di kawasan Puncak. Warga yang tinggal di bantaran sungai diimbau untuk meningkatkan kewaspadaan.',
+      source: 'Tempo',
+      url: 'https://www.tempo.co/ciliwung',
       timestamp: new Date(now.getTime() - 1 * 60 * 60 * 1000).toISOString(), // 1 hour ago
     },
   ];
@@ -115,7 +115,7 @@ export default function PeringatanPage() {
   const [newsReports, setNewsReports] = useState<NewsReport[]>([]); // New state for news reports
   const [selectedAlert, setSelectedAlert] = useState<Alert | null>(null);
   const [geminiExplanation, setGeminiExplanation] = useState<string | null>(
-    null
+    null,
   );
   const [geminiNewsSummary, setGeminiNewsSummary] = useState<{
     [key: string]: string;
@@ -127,14 +127,14 @@ export default function PeringatanPage() {
 
   const fetchLatestAlerts = async () => {
     try {
-      const response = await fetch("/api/alerts-data");
+      const response = await fetch('/api/alerts-data');
       if (!response.ok) {
-        throw new Error("Failed to fetch latest alerts.");
+        throw new Error('Failed to fetch latest alerts.');
       }
       const data = await response.json();
       setAlerts(data);
     } catch (err: any) {
-      console.error("Error fetching latest alerts:", err);
+      console.error('Error fetching latest alerts:', err);
       // Anda bisa menampilkan pesan error di UI jika diperlukan
     }
   };
@@ -147,52 +147,26 @@ export default function PeringatanPage() {
       const reports = await fetchNewsAndReports(); // Fetch mock news
       setNewsReports(reports);
 
-      const newSummaries: { [key: string]: string } = {};
-      for (const report of reports) {
-        try {
-          const summaryResponse = await fetch("/api/gemini-alerts", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              alertData: {
-                level: "info", // Default level for news summary context
-                location: report.source,
-                timestamp: report.timestamp,
-                reason: report.title,
-                severity: 5, // Default severity for news summary context
-                affectedAreas: [], // No specific affected areas from news
-                estimatedPopulation: 0, // No specific population from news
-                newsContent: report.content, // Pass the full news content
-                requestType: "news_summary", // Indicate this is a news summary request
-              },
-            }),
-          });
+      const batchSummaryResponse = await fetch('/api/summarize-news-batch', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ newsReports: reports }),
+      });
 
-          if (!summaryResponse.ok) {
-            const errorData = await summaryResponse.json();
-            throw new Error(
-              errorData.error ||
-                `Failed to summarize news from Gemini: ${report.id}`
-            );
-          }
-          const summaryData = await summaryResponse.json();
-          newSummaries[report.id] = summaryData.explanation;
-        } catch (summaryErr: any) {
-          console.error(
-            `Error summarizing news report ${report.id}:`,
-            summaryErr
-          );
-          newSummaries[
-            report.id
-          ] = `Gagal merangkum berita ini: ${summaryErr.message}`;
-        }
+      if (!batchSummaryResponse.ok) {
+        const errorData = await batchSummaryResponse.json();
+        throw new Error(
+          errorData.error || 'Failed to summarize news in batch from Gemini.',
+        );
       }
-      setGeminiNewsSummary(newSummaries);
+
+      const { summaries } = await batchSummaryResponse.json();
+      setGeminiNewsSummary(summaries);
     } catch (err: any) {
-      console.error("Error fetching news and reports:", err);
-      setNewsError(err.message || "Gagal memuat berita dan laporan.");
+      console.error('Error fetching news and reports:', err);
+      setNewsError(err.message || 'Gagal memuat berita dan laporan.');
     } finally {
       setIsNewsLoading(false);
     }
@@ -213,24 +187,24 @@ export default function PeringatanPage() {
 
   const getLevelColor = (level: string) => {
     switch (level) {
-      case "Tinggi":
-        return "text-red-400 bg-red-500/10 border-red-500/20";
-      case "Sedang":
-        return "text-yellow-400 bg-yellow-500/10 border-yellow-500/20";
-      case "Rendah":
-        return "text-green-400 bg-green-500/10 border-green-500/20";
+      case 'Tinggi':
+        return 'text-red-400 bg-red-500/10 border-red-500/20';
+      case 'Sedang':
+        return 'text-yellow-400 bg-yellow-500/10 border-yellow-500/20';
+      case 'Rendah':
+        return 'text-green-400 bg-green-500/10 border-green-500/20';
       default:
-        return "text-gray-400 bg-gray-500/10 border-gray-500/20";
+        return 'text-gray-400 bg-gray-500/10 border-gray-500/20';
     }
   };
 
   const getLevelIcon = (level: string) => {
     switch (level) {
-      case "Tinggi":
+      case 'Tinggi':
         return <AlertTriangle className="h-5 w-5" />;
-      case "Sedang":
+      case 'Sedang':
         return <Info className="h-5 w-5" />;
-      case "Rendah":
+      case 'Rendah':
         return <Bell className="h-5 w-5" />;
       default:
         return <Bell className="h-5 w-5" />;
@@ -244,10 +218,10 @@ export default function PeringatanPage() {
     setSelectedAlert(alert);
 
     try {
-      const response = await fetch("/api/gemini-alerts", {
-        method: "POST",
+      const response = await fetch('/api/gemini-alerts', {
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({ alertData: alert }),
       });
@@ -255,17 +229,17 @@ export default function PeringatanPage() {
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(
-          errorData.error || "Gagal mengambil penjelasan dari Gemini API."
+          errorData.error || 'Gagal mengambil penjelasan dari Gemini API.',
         );
       }
 
       const data = await response.json();
       setGeminiExplanation(data.explanation);
     } catch (err: any) {
-      console.error("Error fetching explanation:", err);
+      console.error('Error fetching explanation:', err);
       setError(
         err.message ||
-          "Terjadi kesalahan saat memuat penjelasan detail. Silakan coba lagi."
+          'Terjadi kesalahan saat memuat penjelasan detail. Silakan coba lagi.',
       );
     } finally {
       setIsLoading(false);
@@ -273,9 +247,9 @@ export default function PeringatanPage() {
   };
 
   const totalAlerts = alerts.length;
-  const highAlerts = alerts.filter((a) => a.level === "Tinggi").length;
-  const mediumAlerts = alerts.filter((a) => a.level === "Sedang").length;
-  const lowAlerts = alerts.filter((a) => a.level === "Rendah").length;
+  const highAlerts = alerts.filter((a) => a.level === 'Tinggi').length;
+  const mediumAlerts = alerts.filter((a) => a.level === 'Sedang').length;
+  const lowAlerts = alerts.filter((a) => a.level === 'Rendah').length;
 
   return (
     <div className="min-h-screen bg-gray-900 text-white">
@@ -425,8 +399,8 @@ export default function PeringatanPage() {
                       transition={{ duration: 0.5, delay: index * 0.1 }}
                       className={`bg-gray-800 border border-gray-700 rounded-xl p-6 cursor-pointer transition-all duration-200 hover:border-cyan-500/50 hover:shadow-lg hover:shadow-cyan-500/10 ${
                         selectedAlert?.id === alert.id
-                          ? "border-cyan-500 shadow-lg shadow-cyan-500/20"
-                          : ""
+                          ? 'border-cyan-500 shadow-lg shadow-cyan-500/20'
+                          : ''
                       }`}
                       onClick={() => fetchGeminiExplanation(alert)}
                     >
@@ -434,7 +408,7 @@ export default function PeringatanPage() {
                       <div className="flex items-center justify-between mb-4">
                         <div
                           className={`flex items-center space-x-2 px-3 py-1 rounded-full border ${getLevelColor(
-                            alert.level
+                            alert.level,
                           )}`}
                         >
                           {getLevelIcon(alert.level)}
@@ -444,7 +418,7 @@ export default function PeringatanPage() {
                         </div>
                         <div className="flex items-center space-x-1 text-gray-400 text-sm">
                           <Clock className="h-4 w-4" />
-                          <span>{alert.timestamp.split(" ")[1]}</span>
+                          <span>{alert.timestamp.split(' ')[1]}</span>
                         </div>
                       </div>
 
@@ -471,7 +445,7 @@ export default function PeringatanPage() {
                             </span>
                           </div>
                           <span className="text-sm font-medium">
-                            {alert.estimatedPopulation?.toLocaleString("id-ID")}
+                            {alert.estimatedPopulation?.toLocaleString('id-ID')}
                           </span>
                         </div>
                         <div className="bg-gray-700/50 rounded-lg p-3">
@@ -544,7 +518,7 @@ export default function PeringatanPage() {
                   </h3>
                   <div
                     className={`flex items-center space-x-2 px-4 py-2 rounded-full border ${getLevelColor(
-                      selectedAlert.level
+                      selectedAlert.level,
                     )}`}
                   >
                     {getLevelIcon(selectedAlert.level)}
@@ -644,8 +618,8 @@ export default function PeringatanPage() {
                       </Badge>
                     </div>
                     <p className="text-gray-400 text-sm mb-3">
-                      <Clock className="inline-block h-3 w-3 mr-1" />{" "}
-                      {new Date(report.timestamp).toLocaleString("id-ID")}
+                      <Clock className="inline-block h-3 w-3 mr-1" />{' '}
+                      {new Date(report.timestamp).toLocaleString('id-ID')}
                     </p>
                     <div className="flex items-center space-x-2 text-cyan-400 mb-3">
                       <MessageSquare className="h-5 w-5" />
@@ -672,7 +646,7 @@ export default function PeringatanPage() {
                         rel="noopener noreferrer"
                         className="text-cyan-400 hover:text-cyan-300 flex items-center text-sm"
                       >
-                        Baca Selengkapnya{" "}
+                        Baca Selengkapnya{' '}
                         <ChevronRight className="h-4 w-4 ml-1" />
                       </a>
                     )}

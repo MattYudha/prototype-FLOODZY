@@ -1,5 +1,4 @@
-
-import type { OverpassElement } from "@/lib/api";
+import type { OverpassElement } from '@/lib/api';
 
 export interface SelectedLocation {
   districtCode: string;
@@ -23,7 +22,7 @@ export interface AppState {
   mapBounds: MapBounds | null;
 }
 
-export type AppAction = 
+export type AppAction =
   | { type: 'SET_LOCATION'; payload: SelectedLocation | null }
   | { type: 'SET_MAP_BOUNDS'; payload: MapBounds | null };
 

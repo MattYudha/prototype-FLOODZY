@@ -1,7 +1,7 @@
 // src/components/dashboard/DashboardStats.tsx
-"use client";
+'use client';
 
-import { motion } from "framer-motion";
+import { motion } from 'framer-motion';
 import {
   MapPin,
   Bell,
@@ -17,14 +17,14 @@ import {
   CheckCircle, // Icon untuk status 'Online' atau 'Beroperasi'
   XCircle, // Icon untuk status 'Tidak Beroperasi' atau 'Rusak'
   AlertTriangle, // Icon untuk peringatan
-} from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
-import { Badge } from "@/components/ui/Badge";
-import { cn } from "@/lib/utils";
-import { getTimeAgo } from "@/lib/utils";
+} from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
+import { Badge } from '@/components/ui/Badge';
+import { cn } from '@/lib/utils';
+import { getTimeAgo } from '@/lib/utils';
 
 // Import untuk data API
-import { WaterLevelPost, PumpData } from "@/lib/api"; // === IMPORT BARU: PumpData ===
+import { WaterLevelPost, PumpData } from '@/lib/api'; // === IMPORT BARU: PumpData ===
 
 // Definisi props untuk DashboardStats
 interface DashboardStatsProps {
@@ -62,22 +62,22 @@ export function DashboardStats({
   const activePumps = pumpStatusData.filter(
     (pump) =>
       pump.kondisi_bangunan &&
-      pump.kondisi_bangunan.toLowerCase().includes("beroperasi")
+      pump.kondisi_bangunan.toLowerCase().includes('beroperasi'),
   ).length;
   const inactivePumps = totalPumps - activePumps;
   const pumpsNeedingMaintenance = pumpStatusData.filter(
     (pump) =>
       pump.kondisi_bangunan &&
-      (pump.kondisi_bangunan.toLowerCase().includes("rusak") ||
-        pump.kondisi_bangunan.toLowerCase().includes("tidak beroperasi"))
+      (pump.kondisi_bangunan.toLowerCase().includes('rusak') ||
+        pump.kondisi_bangunan.toLowerCase().includes('tidak beroperasi')),
   ).length;
 
   const getPumpStatusBadge = (status: string) => {
-    if (status.toLowerCase().includes("beroperasi"))
+    if (status.toLowerCase().includes('beroperasi'))
       return <Badge variant="success">Beroperasi</Badge>;
     if (
-      status.toLowerCase().includes("tidak beroperasi") ||
-      status.toLowerCase().includes("rusak")
+      status.toLowerCase().includes('tidak beroperasi') ||
+      status.toLowerCase().includes('rusak')
     )
       return <Badge variant="danger">Tidak Beroperasi</Badge>;
     return <Badge variant="secondary">Tidak Diketahui</Badge>;
@@ -85,54 +85,54 @@ export function DashboardStats({
 
   const statsConfig = [
     {
-      title: "Total Wilayah",
+      title: 'Total Wilayah',
       value: stats.totalRegions,
-      unit: "",
+      unit: '',
       icon: MapPin,
-      color: "text-blue-500",
-      change: "2%",
-      changeType: "up",
+      color: 'text-blue-500',
+      change: '2%',
+      changeType: 'up',
     },
     {
-      title: "Peringatan Aktif",
+      title: 'Peringatan Aktif',
       value: stats.activeAlerts,
-      unit: "",
+      unit: '',
       icon: Bell,
-      color: "text-yellow-500",
-      change: "5%",
-      changeType: "down",
+      color: 'text-yellow-500',
+      change: '5%',
+      changeType: 'down',
     },
     {
-      title: "Zona Banjir",
+      title: 'Zona Banjir',
       value: stats.floodZones,
-      unit: "",
+      unit: '',
       icon: Shield,
-      color: "text-red-500",
-      change: "3%",
-      changeType: "up",
+      color: 'text-red-500',
+      change: '3%',
+      changeType: 'up',
     },
     {
-      title: "Orang Berisiko",
+      title: 'Orang Berisiko',
       value: `${(stats.peopleAtRisk / 1000000).toFixed(1)}M`, // Mengubah 2.5M menjadi 2.5M
-      unit: "",
+      unit: '',
       icon: Users,
-      color: "text-purple-500",
-      change: "12%",
-      changeType: "down",
+      color: 'text-purple-500',
+      change: '12%',
+      changeType: 'down',
     },
     {
-      title: "Stasiun Cuaca",
+      title: 'Stasiun Cuaca',
       value: stats.weatherStations,
-      unit: "",
+      unit: '',
       icon: Activity,
-      color: "text-green-500",
-      change: "1%",
-      changeType: "up",
+      color: 'text-green-500',
+      change: '1%',
+      changeType: 'up',
     },
   ];
 
   return (
-    <div className={cn("space-y-6", className)}>
+    <div className={cn('space-y-6', className)}>
       {/* Main Stats Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
         {statsConfig.map((item, index) => (
@@ -146,14 +146,14 @@ export function DashboardStats({
               <CardContent className="p-4">
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center space-x-2">
-                    <item.icon className={cn("h-5 w-5", item.color)} />
+                    <item.icon className={cn('h-5 w-5', item.color)} />
                     <span className="text-sm font-medium text-muted-foreground">
                       {item.title}
                     </span>
                   </div>
                   {item.change && (
                     <Badge
-                      variant={item.changeType === "up" ? "success" : "danger"}
+                      variant={item.changeType === 'up' ? 'success' : 'danger'}
                       className="text-xs"
                     >
                       {item.change}
@@ -267,41 +267,41 @@ export function DashboardStats({
                 waterLevelPosts.length > 0 ? (
                   waterLevelPosts.slice(0, 3).map(
                     (
-                      post // Tampilkan hingga 3 pos TMA terdekat
+                      post, // Tampilkan hingga 3 pos TMA terdekat
                     ) => (
                       <div
                         key={post.id}
                         className="flex items-center space-x-3"
                       >
-                        <div className="w-2 h-2 bg-blue-400 rounded-full" />{" "}
+                        <div className="w-2 h-2 bg-blue-400 rounded-full" />{' '}
                         {/* Warna biru untuk TMA */}
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium text-white">
-                            Tinggi Air {post.name}: {post.water_level || "N/A"}{" "}
-                            {post.unit || "m"}
+                            Tinggi Air {post.name}: {post.water_level || 'N/A'}{' '}
+                            {post.unit || 'm'}
                             {post.status && ` (${post.status})`}
                           </p>
                           <p className="text-xs text-muted-foreground">
                             {post.timestamp
                               ? getTimeAgo(new Date(post.timestamp))
-                              : "Waktu tidak tersedia"}
+                              : 'Waktu tidak tersedia'}
                           </p>
                         </div>
                         {post.status && (
                           <Badge
                             variant={
-                              post.status.toLowerCase().includes("awas")
-                                ? "danger"
-                                : post.status.toLowerCase().includes("siaga")
-                                ? "warning"
-                                : "success"
+                              post.status.toLowerCase().includes('awas')
+                                ? 'danger'
+                                : post.status.toLowerCase().includes('siaga')
+                                  ? 'warning'
+                                  : 'success'
                             }
                           >
                             {post.status}
                           </Badge>
                         )}
                       </div>
-                    )
+                    ),
                   )
                 ) : !loadingWaterLevel &&
                   !waterLevelError &&
@@ -311,8 +311,6 @@ export function DashboardStats({
                     wilayah anda.
                   </p>
                 ) : null}
-
-                
               </div>
             </CardContent>
           </Card>

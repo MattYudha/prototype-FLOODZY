@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import React, {
   useState,
@@ -7,21 +7,21 @@ import React, {
   useRef,
   useCallback,
   useReducer,
-} from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import "leaflet/dist/leaflet.css";
-import Image from "next/image";
+} from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import 'leaflet/dist/leaflet.css';
+import Image from 'next/image';
 
 // State Management
-import { appReducer, initialState, SelectedLocation, MapBounds } from "./state";
+import { appReducer, initialState, SelectedLocation, MapBounds } from './state';
 
 // UI Components
-import { WeatherDisplay } from "@/components/weather/WeatherDisplay";
-import { DashboardStats } from "@/components/dashboard/DashboardStats";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
-import { Button } from "@/components/ui/Button";
-import { Badge } from "@/components/ui/Badge";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { WeatherDisplay } from '@/components/weather/WeatherDisplay';
+import { DashboardStats } from '@/components/dashboard/DashboardStats';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
+import { Button } from '@/components/ui/Button';
+import { Badge } from '@/components/ui/Badge';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 // Icons
 import {
@@ -46,34 +46,40 @@ import {
   X,
   Loader2,
   Eye,
-} from "lucide-react";
+} from 'lucide-react';
 
 // Hooks & Utils
-import { useMediaQuery } from "@/hooks/useMediaQuery";
-import { useWeatherData } from "@/hooks/useWeatherData";
-import { useDisasterData } from "@/hooks/useDisasterData";
-import { useWaterLevelData } from "@/hooks/useWaterLevelData";
-import { usePumpStatusData } from "@/hooks/usePumpStatusData";
-import { useBmkgQuakeData } from "@/hooks/useBmkgQuakeData";
+import { useMediaQuery } from '@/hooks/useMediaQuery';
+import { useWeatherData } from '@/hooks/useWeatherData';
+import { useDisasterData } from '@/hooks/useDisasterData';
+import { useWaterLevelData } from '@/hooks/useWaterLevelData';
+import { usePumpStatusData } from '@/hooks/usePumpStatusData';
+import { useBmkgQuakeData } from '@/hooks/useBmkgQuakeData';
 import {
   FLOOD_MOCK_ALERTS,
   DASHBOARD_STATS_MOCK,
   DEFAULT_MAP_CENTER,
   DEFAULT_MAP_ZOOM,
-} from "@/lib/constants";
-import { cn, formatNumber, getTimeAgo } from "@/lib/utils";
+} from '@/lib/constants';
+import { cn, formatNumber, getTimeAgo } from '@/lib/utils';
 
 // App Components
-import { RegionDropdown } from "@/components/region-selector/RegionDropdown";
-import { FloodMap } from "@/components/map/FloodMap";
-import { PeringatanBencanaCard } from "@/components/flood/PeringatanBencanaCard";
+import { RegionDropdown } from '@/components/region-selector/RegionDropdown';
+import { FloodMap } from '@/components/map/FloodMap';
+import { PeringatanBencanaCard } from '@/components/flood/PeringatanBencanaCard';
 
 // Types
-import type { FloodAlert as FloodAlertType } from "@/types";
+import type { FloodAlert as FloodAlertType } from '@/types';
 
 const ROTATION_INTERVAL_MS = 10000;
 
-const CyclingAlertCard = ({ alerts, initialOffset = 0 }: { alerts: FloodAlertType[]; initialOffset?: number }) => {
+const CyclingAlertCard = ({
+  alerts,
+  initialOffset = 0,
+}: {
+  alerts: FloodAlertType[];
+  initialOffset?: number;
+}) => {
   const [currentIndex, setCurrentIndex] = useState(0);
 
   useEffect(() => {
@@ -89,10 +95,15 @@ const CyclingAlertCard = ({ alerts, initialOffset = 0 }: { alerts: FloodAlertTyp
 
   if (alerts.length === 0) {
     return (
-      <Alert variant="default" className="w-full h-full flex flex-col justify-center">
+      <Alert
+        variant="default"
+        className="w-full h-full flex flex-col justify-center"
+      >
         <Bell className="h-4 w-4" />
         <AlertTitle>Tidak Ada Peringatan</AlertTitle>
-        <AlertDescription>Tidak ada berita atau peringatan yang tersedia saat ini.</AlertDescription>
+        <AlertDescription>
+          Tidak ada berita atau peringatan yang tersedia saat ini.
+        </AlertDescription>
       </Alert>
     );
   }
@@ -113,7 +124,10 @@ const CyclingAlertCard = ({ alerts, initialOffset = 0 }: { alerts: FloodAlertTyp
         transition={{ duration: 0.5 }}
         className="h-full"
       >
-        <PeringatanBencanaCard alert={currentAlert} className={`level-${currentAlert.level}`} />
+        <PeringatanBencanaCard
+          alert={currentAlert}
+          className={`level-${currentAlert.level}`}
+        />
       </motion.div>
     </AnimatePresence>
   );
@@ -124,19 +138,50 @@ export default function Home() {
   const { selectedLocation, mapBounds } = state;
 
   // UI State
-  const isMobile = useMediaQuery("(max-width: 768px)");
-  const isLargeScreen = useMediaQuery("(min-width: 1024px)");
+  const isMobile = useMediaQuery('(max-width: 768px)');
+  const isLargeScreen = useMediaQuery('(min-width: 1024px)');
 
   // Data Fetching Hooks
-  const { weatherData, isLoading: isLoadingWeather, error: weatherError, fetchWeather } = useWeatherData();
-  const { disasterProneAreas, isLoading: isLoadingDisaster, error: disasterError, fetchDisasterAreas } = useDisasterData();
-  const { waterLevelPosts, isLoading: isLoadingWaterLevel, error: waterLevelError, fetchWaterLevels } = useWaterLevelData();
-  const { pumpStatusData, isLoading: isLoadingPumpStatus, error: pumpStatusError, fetchPumpStatus } = usePumpStatusData();
-  const { latestQuake, isLoading: isLoadingQuake, error: quakeError } = useBmkgQuakeData();
+  const {
+    weatherData,
+    isLoading: isLoadingWeather,
+    error: weatherError,
+    fetchWeather,
+  } = useWeatherData();
+  const {
+    disasterProneAreas,
+    isLoading: isLoadingDisaster,
+    error: disasterError,
+    fetchDisasterAreas,
+  } = useDisasterData();
+  const {
+    waterLevelPosts,
+    isLoading: isLoadingWaterLevel,
+    error: waterLevelError,
+    fetchWaterLevels,
+  } = useWaterLevelData();
+  const {
+    pumpStatusData,
+    isLoading: isLoadingPumpStatus,
+    error: pumpStatusError,
+    fetchPumpStatus,
+  } = usePumpStatusData();
+  const {
+    latestQuake,
+    isLoading: isLoadingQuake,
+    error: quakeError,
+  } = useBmkgQuakeData();
 
   // Chatbot State
-  const [chatInput, setChatInput] = useState<string>("");
-  const [chatHistory, setChatHistory] = useState<{ sender: "user" | "bot"; message: string; timestamp: Date; isError?: boolean; }[]>([]);
+  const [chatInput, setChatInput] = useState<string>('');
+  const [chatHistory, setChatHistory] = useState<
+    {
+      sender: 'user' | 'bot';
+      message: string;
+      timestamp: Date;
+      isError?: boolean;
+    }[]
+  >([]);
   const [isChatLoading, setIsChatLoading] = useState(false);
   const [chatError, setChatError] = useState<string | null>(null);
   const [isTyping, setIsTyping] = useState(false);
@@ -157,27 +202,30 @@ export default function Home() {
   }, [chatHistory, isTyping]);
 
   // --- Handlers ---
-  const handleRegionSelect = useCallback((location: SelectedLocation) => {
-    dispatch({ type: 'SET_LOCATION', payload: location });
+  const handleRegionSelect = useCallback(
+    (location: SelectedLocation) => {
+      dispatch({ type: 'SET_LOCATION', payload: location });
 
-    if (location && location.latitude != null && location.longitude != null) {
-      const { latitude, longitude } = location;
-      fetchWeather(latitude, longitude);
-      fetchPumpStatus(location.districtName);
-      fetchWaterLevels(location.districtName);
+      if (location && location.latitude != null && location.longitude != null) {
+        const { latitude, longitude } = location;
+        fetchWeather(latitude, longitude);
+        fetchPumpStatus(location.districtName);
+        fetchWaterLevels(location.districtName);
 
-      const buffer = 0.05;
-      const newBounds = {
-        south: latitude - buffer,
-        west: longitude - buffer,
-        north: latitude + buffer,
-        east: longitude + buffer,
-      };
-      dispatch({ type: 'SET_MAP_BOUNDS', payload: newBounds });
-    } else {
-      dispatch({ type: 'SET_MAP_BOUNDS', payload: null });
-    }
-  }, [fetchWeather, fetchWaterLevels, fetchPumpStatus]);
+        const buffer = 0.05;
+        const newBounds = {
+          south: latitude - buffer,
+          west: longitude - buffer,
+          north: latitude + buffer,
+          east: longitude + buffer,
+        };
+        dispatch({ type: 'SET_MAP_BOUNDS', payload: newBounds });
+      } else {
+        dispatch({ type: 'SET_MAP_BOUNDS', payload: null });
+      }
+    },
+    [fetchWeather, fetchWaterLevels, fetchPumpStatus],
+  );
 
   const handleMapBoundsChange = useCallback((bounds: MapBounds) => {
     dispatch({ type: 'SET_MAP_BOUNDS', payload: bounds });
@@ -191,110 +239,125 @@ export default function Home() {
     if (latestQuake) {
       const quakeWilayah = latestQuake.Wilayah.toLowerCase();
       // Filter gempa jika ada lokasi yang dipilih dan wilayah gempa cocok
-      if (!selectedDistrictName || quakeWilayah.includes(selectedDistrictName)) {
-        const quakeTimestampISO = latestQuake.DateTime.replace(" ", "T") + "+07:00";
+      if (
+        !selectedDistrictName ||
+        quakeWilayah.includes(selectedDistrictName)
+      ) {
+        const quakeTimestampISO =
+          latestQuake.DateTime.replace(' ', 'T') + '+07:00';
         alerts.push({
           id: `bmkg-quake-${latestQuake.DateTime}`,
           regionId: latestQuake.Wilayah,
-          level: parseFloat(latestQuake.Magnitude) >= 5 ? "danger" : "warning",
+          level: parseFloat(latestQuake.Magnitude) >= 5 ? 'danger' : 'warning',
           title: `Gempa M${latestQuake.Magnitude} di ${latestQuake.Wilayah}`,
           message: `Pusat gempa di ${latestQuake.Kedalaman}. Dirasakan: ${latestQuake.Dirasakan}`,
           timestamp: quakeTimestampISO,
           isActive: true,
-          affectedAreas: latestQuake.Wilayah.split(",").map((s) => s.trim()),
+          affectedAreas: latestQuake.Wilayah.split(',').map((s) => s.trim()),
         });
       }
     }
 
-    const filteredMockAlerts = FLOOD_MOCK_ALERTS.filter(alert => {
+    const filteredMockAlerts = FLOOD_MOCK_ALERTS.filter((alert) => {
       if (!selectedDistrictName) return true; // Jika tidak ada lokasi dipilih, tampilkan semua
-      return alert.affectedAreas.some(area => area.toLowerCase().includes(selectedDistrictName));
+      return alert.affectedAreas.some((area) =>
+        area.toLowerCase().includes(selectedDistrictName),
+      );
     });
 
     const combinedAlerts = [...alerts, ...filteredMockAlerts];
-    return combinedAlerts.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+    return combinedAlerts.sort(
+      (a, b) =>
+        new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime(),
+    );
   }, [latestQuake, selectedLocation]);
 
-  const heroCards = useMemo(() => [
-    {
-      title: "Total Wilayah",
-      description: "Wilayah yang dipantau",
-      count: DASHBOARD_STATS_MOCK.totalRegions,
-      icon: MapPin,
-      color: "text-primary",
-      bgColor: "bg-primary/20",
-    },
-    {
-      title: "Peringatan Aktif",
-      description: "Peringatan banjir saat ini",
-      count: realTimeAlerts.filter((a) => a.level !== "info").length,
-      icon: Bell,
-      color: "text-warning",
-      bgColor: "bg-warning/20",
-    },
-    {
-      title: "Zona Rawan",
-      description: "Area yang teridentifikasi",
-      count: disasterProneAreas.length,
-      icon: Shield,
-      color: "text-danger",
-      bgColor: "bg-danger/20",
-    },
-    {
-      title: "Orang Berisiko",
-      description: "Estimasi populasi berisiko",
-      count: formatNumber(DASHBOARD_STATS_MOCK.peopleAtRisk),
-      icon: Users,
-      color: "text-purple-500",
-      bgColor: "bg-secondary/20",
-    },
-  ], [realTimeAlerts, disasterProneAreas.length]);
+  const heroCards = useMemo(
+    () => [
+      {
+        title: 'Total Wilayah',
+        description: 'Wilayah yang dipantau',
+        count: DASHBOARD_STATS_MOCK.totalRegions,
+        icon: MapPin,
+        color: 'text-primary',
+        bgColor: 'bg-primary/20',
+      },
+      {
+        title: 'Peringatan Aktif',
+        description: 'Peringatan banjir saat ini',
+        count: realTimeAlerts.filter((a) => a.level !== 'info').length,
+        icon: Bell,
+        color: 'text-warning',
+        bgColor: 'bg-warning/20',
+      },
+      {
+        title: 'Zona Rawan',
+        description: 'Area yang teridentifikasi',
+        count: disasterProneAreas.length,
+        icon: Shield,
+        color: 'text-danger',
+        bgColor: 'bg-danger/20',
+      },
+      {
+        title: 'Orang Berisiko',
+        description: 'Estimasi populasi berisiko',
+        count: formatNumber(DASHBOARD_STATS_MOCK.peopleAtRisk),
+        icon: Users,
+        color: 'text-purple-500',
+        bgColor: 'bg-secondary/20',
+      },
+    ],
+    [realTimeAlerts, disasterProneAreas.length],
+  );
 
   // Chatbot logic remains the same...
   const quickActions = [
     {
       icon: Droplets,
-      text: "Status Banjir",
-      query: "Bagaimana status banjir saat ini?",
+      text: 'Status Banjir',
+      query: 'Bagaimana status banjir saat ini?',
     },
     {
       icon: MapPin,
-      text: "Lokasi Rawan",
-      query: "Dimana lokasi rawan banjir?",
+      text: 'Lokasi Rawan',
+      query: 'Dimana lokasi rawan banjir?',
     },
     {
       icon: AlertTriangle,
-      text: "Peringatan",
-      query: "Apakah ada peringatan banjir?",
+      text: 'Peringatan',
+      query: 'Apakah ada peringatan banjir?',
     },
     {
       icon: Info,
-      text: "Info Cuaca",
-      query: "Bagaimana kondisi cuaca hari ini?",
+      text: 'Info Cuaca',
+      query: 'Bagaimana kondisi cuaca hari ini?',
     },
   ];
 
   const formatTime = (timestamp: Date) => {
-    return timestamp.toLocaleTimeString("id-ID", {
-      hour: "2-digit",
-      minute: "2-digit",
+    return timestamp.toLocaleTimeString('id-ID', {
+      hour: '2-digit',
+      minute: '2-digit',
     });
   };
 
   const simulateTyping = (
     message: string,
     isError: boolean = false,
-    callback: () => void
+    callback: () => void,
   ) => {
     setIsTyping(true);
-    setTimeout(() => {
-      setIsTyping(false);
-      setChatHistory((prev) => [
-        ...prev,
-        { sender: "bot", message, timestamp: new Date(), isError },
-      ]);
-      callback();
-    }, 1000 + Math.random() * 1000);
+    setTimeout(
+      () => {
+        setIsTyping(false);
+        setChatHistory((prev) => [
+          ...prev,
+          { sender: 'bot', message, timestamp: new Date(), isError },
+        ]);
+        callback();
+      },
+      1000 + Math.random() * 1000,
+    );
   };
 
   const sendChatMessage = async (customMessage: string | null = null) => {
@@ -302,34 +365,34 @@ export default function Home() {
     if (!messageToSend || isChatLoading) return;
 
     const userMessage = {
-      sender: "user" as const,
+      sender: 'user' as const,
       message: messageToSend,
       timestamp: new Date(),
     };
 
     setChatHistory((prev) => [...prev, userMessage]);
-    setChatInput("");
+    setChatInput('');
     setIsChatLoading(true);
     setChatError(null);
 
     try {
-      const response = await fetch("/api/chatbot", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const response = await fetch('/api/chatbot', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ question: messageToSend }),
       });
 
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(
-          errorData.message || "Gagal mendapatkan respons dari chatbot."
+          errorData.message || 'Gagal mendapatkan respons dari chatbot.',
         );
       }
 
       const data = await response.json();
       simulateTyping(data.answer, false, () => setIsChatLoading(false));
     } catch (err: any) {
-      console.error("Error sending message to chatbot:", err);
+      console.error('Error sending message to chatbot:', err);
       const errorMessage = `Maaf, saya tidak dapat memproses permintaan Anda saat ini. (${err.message})`;
       setChatError(errorMessage);
       simulateTyping(errorMessage, true, () => setIsChatLoading(false));
@@ -409,8 +472,8 @@ export default function Home() {
                   <Card className="bg-white/5 border-white/10 backdrop-blur-md text-white hover:bg-white/10 transition-colors h-full">
                     <CardContent className="p-5">
                       <div className="flex items-center justify-between mb-4">
-                        <div className={cn("p-2 rounded-lg", card.bgColor)}>
-                          <card.icon className={cn("h-6 w-6", card.color)} />
+                        <div className={cn('p-2 rounded-lg', card.bgColor)}>
+                          <card.icon className={cn('h-6 w-6', card.color)} />
                         </div>
                         <Badge
                           variant="outline"
@@ -485,8 +548,8 @@ export default function Home() {
                   <CardTitle className="flex items-center space-x-2">
                     <MapPin className="h-5 w-5 text-primary" />
                     <span>
-                      Peta Banjir -{" "}
-                      {selectedLocation?.districtName || "Indonesia"}
+                      Peta Banjir -{' '}
+                      {selectedLocation?.districtName || 'Indonesia'}
                     </span>
                     <Badge variant="success" className="ml-auto">
                       Live
@@ -495,7 +558,7 @@ export default function Home() {
                 </CardHeader>
                 <CardContent>
                   <div
-                    style={{ height: "600px", width: "100%" }}
+                    style={{ height: '600px', width: '100%' }}
                     className="w-full rounded-lg border border-slate-800/50 relative overflow-hidden"
                   >
                     <FloodMap
@@ -726,26 +789,26 @@ export default function Home() {
                   <div
                     key={index}
                     className={`flex ${
-                      msg.sender === "user" ? "justify-end" : "justify-start"
+                      msg.sender === 'user' ? 'justify-end' : 'justify-start'
                     } animate-fade-in`}
                   >
                     <div
                       className={`flex items-start space-x-2 max-w-[80%] ${
-                        msg.sender === "user"
-                          ? "flex-row-reverse space-x-reverse"
-                          : ""
+                        msg.sender === 'user'
+                          ? 'flex-row-reverse space-x-reverse'
+                          : ''
                       }`}
                     >
                       <div
                         className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 ${
-                          msg.sender === "user"
-                            ? "bg-blue-600"
+                          msg.sender === 'user'
+                            ? 'bg-blue-600'
                             : msg.isError
-                            ? "bg-red-600"
-                            : "bg-cyan-600"
+                              ? 'bg-red-600'
+                              : 'bg-cyan-600'
                         }`}
                       >
-                        {msg.sender === "user" ? (
+                        {msg.sender === 'user' ? (
                           <User className="w-3.5 h-3.5 text-white" />
                         ) : (
                           <Bot className="w-3.5 h-3.5 text-white" />
@@ -753,22 +816,22 @@ export default function Home() {
                       </div>
                       <div
                         className={`rounded-xl px-3 py-2 ${
-                          msg.sender === "user"
-                            ? "bg-blue-600 text-white"
+                          msg.sender === 'user'
+                            ? 'bg-blue-600 text-white'
                             : msg.isError
-                            ? "bg-red-900/50 text-red-300 border border-red-600"
-                            : "bg-slate-800 text-gray-100 border border-slate-700"
+                              ? 'bg-red-900/50 text-red-300 border border-red-600'
+                              : 'bg-slate-800 text-gray-100 border border-slate-700'
                         }`}
                       >
                         <p className="text-xs leading-relaxed">{msg.message}</p>
                         <div className="flex items-center justify-between mt-1">
                           <span
                             className={`text-xxs ${
-                              msg.sender === "user"
-                                ? "text-blue-200"
+                              msg.sender === 'user'
+                                ? 'text-blue-200'
                                 : msg.isError
-                                ? "text-red-400"
-                                : "text-gray-400"
+                                  ? 'text-red-400'
+                                  : 'text-gray-400'
                             }`}
                           >
                             {formatTime(msg.timestamp)}
@@ -789,11 +852,11 @@ export default function Home() {
                           <div className="w-1.5 h-1.5 bg-cyan-400 rounded-full animate-bounce"></div>
                           <div
                             className="w-1.5 h-1.5 bg-cyan-400 rounded-full animate-bounce"
-                            style={{ animationDelay: "0.1s" }}
+                            style={{ animationDelay: '0.1s' }}
                           ></div>
                           <div
                             className="w-1.5 h-1.5 bg-cyan-400 rounded-full animate-bounce"
-                            style={{ animationDelay: "0.2s" }}
+                            style={{ animationDelay: '0.2s' }}
                           ></div>
                         </div>
                       </div>
@@ -809,7 +872,7 @@ export default function Home() {
                       value={chatInput}
                       onChange={(e) => setChatInput(e.target.value)}
                       onKeyPress={(e) => {
-                        if (e.key === "Enter" && !isChatLoading) {
+                        if (e.key === 'Enter' && !isChatLoading) {
                           sendChatMessage();
                         }
                       }}

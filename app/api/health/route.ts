@@ -20,7 +20,7 @@ export async function GET() {
         .from('provinces')
         .select('province_code, province_name')
         .limit(1);
-      
+
       if (error) {
         supabaseTest = { status: 'error', message: error.message };
       } else {
@@ -37,17 +37,16 @@ export async function GET() {
         hasSupabaseUrl: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
         hasSupabaseKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
         hasOpenWeatherKey: !!process.env.OPENWEATHER_API_KEY,
-      }
+      },
     });
-
   } catch (error: any) {
     return NextResponse.json(
-      { 
-        status: 'error', 
+      {
+        status: 'error',
         message: error.message,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

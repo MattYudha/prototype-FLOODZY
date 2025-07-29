@@ -1,14 +1,14 @@
 // mattyudha/floodzy/Floodzy-04cbe0509e23f883f290033cafa7f880e929fe65/app/api/gemini-alerts/route.ts
-import { NextResponse } from "next/server";
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { NextResponse } from 'next/server';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
 // Load API key from .env
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
 // Debug log untuk memastikan API key ter-load
 console.log(
-  "[Gemini API] Key Loaded:",
-  GEMINI_API_KEY ? "✅ Yes" : "❌ Missing"
+  '[Gemini API] Key Loaded:',
+  GEMINI_API_KEY ? '✅ Yes' : '❌ Missing',
 );
 
 // Inisialisasi AI instance
@@ -16,16 +16,16 @@ const genAI = GEMINI_API_KEY ? new GoogleGenerativeAI(GEMINI_API_KEY) : null;
 
 export async function POST(request: Request) {
   if (!genAI) {
-    console.error("[Gemini API] ❌ API key not found.");
+    console.error('[Gemini API] ❌ API key not found.');
     return NextResponse.json(
-      { error: "GEMINI_API_KEY is missing in environment." },
-      { status: 500 }
+      { error: 'GEMINI_API_KEY is missing in environment.' },
+      { status: 500 },
     );
   }
 
   try {
     const rawBody = await request.text();
-    console.log("[Gemini API] 📥 Raw Request Body:", rawBody);
+    console.log('[Gemini API] 📥 Raw Request Body:', rawBody);
 
     const body = JSON.parse(rawBody);
     const alertData = body?.alertData;
@@ -34,7 +34,7 @@ export async function POST(request: Request) {
       console.warn("[Gemini API] ⚠️ 'alertData' missing in request.");
       return NextResponse.json(
         { error: "'alertData' is required in request body." },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -53,9 +53,9 @@ export async function POST(request: Request) {
     } = alertData;
 
     let prompt: string;
-    let modelName = "gemini-1.5-flash"; // Default model
+    let modelName = 'gemini-1.5-flash'; // Default model
 
-    if (requestType === "news_summary" && newsContent) {
+    if (requestType === 'news_summary' && newsContent) {
       // Prompt for news summary
       prompt = `
 Anda adalah seorang analis berita yang ahli dalam merangkum informasi penting terkait bencana.
@@ -72,7 +72,7 @@ ${newsContent}
 
 Ringkasan:
 `;
-    } else if (requestType === "historical_analysis" && historicalData) {
+    } else if (requestType === 'historical_analysis' && historicalData) {
       // Prompt for historical incident analysis
       prompt = `
 Anda adalah seorang ilmuwan data dan analis bencana yang ahli dalam mengidentifikasi pola dan insight dari data historis.
@@ -87,9 +87,17 @@ ${historicalData}
 
 Analisis Mendalam (dalam bahasa Indonesia, berformat markdown untuk keterbacaan):
 `;
-    } else if (!level || !location || !timestamp || !reason || severity == null) {
+    } else if (
+      !level ||
+      !location ||
+      !timestamp ||
+      !reason ||
+      severity == null
+    ) {
       // Original prompt for disaster analysis
-      console.warn("[Gemini API] ⚠️ Required fields missing for alert analysis.");
+      console.warn(
+        '[Gemini API] ⚠️ Required fields missing for alert analysis.',
+      );
       return NextResponse.json(
         {
           error: "Missing required fields in 'alertData'.",
@@ -101,7 +109,7 @@ Analisis Mendalam (dalam bahasa Indonesia, berformat markdown untuk keterbacaan)
             severity: severity == null,
           },
         },
-        { status: 400 }
+        { status: 400 },
       );
     } else {
       // Original prompt for disaster analysis
@@ -115,10 +123,10 @@ Anda adalah Ahli Mitigasi Bencana dan Analisis Risiko profesional dengan spesial
 ⏰ Waktu Kejadian: ${timestamp}
 💡 Penyebab Utama: ${reason}
 🏘️ Wilayah Terdampak: ${
-        affectedAreas?.length ? affectedAreas.join(", ") : "Tidak diketahui"
+        affectedAreas?.length ? affectedAreas.join(', ') : 'Tidak diketahui'
       }
 👥 Estimasi Populasi: ${
-        estimatedPopulation?.toLocaleString("id-ID") ?? "Tidak diketahui"
+        estimatedPopulation?.toLocaleString('id-ID') ?? 'Tidak diketahui'
       } jiwa
 ⚠️ Tingkat Keparahan: ${severity}/10
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -201,9 +209,8 @@ PENTING:
     `.trim();
     }
 
-
     console.log(
-      `[Gemini API] ✉️ Sending ${requestType === "news_summary" ? "NEWS SUMMARY" : requestType === "historical_analysis" ? "HISTORICAL ANALYSIS" : "DISASTER ANALYSIS"} prompt to Gemini...`
+      `[Gemini API] ✉️ Sending ${requestType === 'news_summary' ? 'NEWS SUMMARY' : requestType === 'historical_analysis' ? 'HISTORICAL ANALYSIS' : 'DISASTER ANALYSIS'} prompt to Gemini...`,
     );
     const model = genAI.getGenerativeModel({
       model: modelName,
@@ -220,7 +227,10 @@ PENTING:
     const explanation = await response.text();
 
     let statisticalData = {};
-    if (requestType !== "news_summary" && requestType !== "historical_analysis") {
+    if (
+      requestType !== 'news_summary' &&
+      requestType !== 'historical_analysis'
+    ) {
       // Generate statistical data for dashboard only for alert analysis
       const generateStatisticalData = (alertData: any) => {
         const { severity, estimatedPopulation } = alertData; // Removed affectedAreas from destructuring as it's not always used directly here
@@ -245,9 +255,9 @@ PENTING:
             affectedInfrastructure: Math.floor(severity * 12) + 5,
           },
           riskDistribution: {
-            highRisk: Math.floor(baseImpact * 100 * 0.3) + "%",
-            mediumRisk: Math.floor(baseImpact * 100 * 0.4) + "%",
-            lowRisk: Math.floor(baseImpact * 100 * 0.3) + "%",
+            highRisk: Math.floor(baseImpact * 100 * 0.3) + '%',
+            mediumRisk: Math.floor(baseImpact * 100 * 0.4) + '%',
+            lowRisk: Math.floor(baseImpact * 100 * 0.3) + '%',
           },
           timeSeriesData: Array.from({ length: 24 }, (_, i) => ({
             hour: i,
@@ -280,31 +290,31 @@ PENTING:
           resourceAllocation:
             alertData?.affectedAreas?.map((area: string, index: number) => ({
               area: area,
-              priority: severity >= 7 ? "HIGH" : severity >= 4 ? "MEDIUM" : "LOW",
+              priority:
+                severity >= 7 ? 'HIGH' : severity >= 4 ? 'MEDIUM' : 'LOW',
               resources: Math.floor(severity * 15) + 10,
               personnel: Math.floor(severity * 8) + 5,
               equipment: Math.floor(severity * 6) + 3,
               status:
                 index % 3 === 0
-                  ? "ACTIVE"
+                  ? 'ACTIVE'
                   : index % 3 === 1
-                  ? "STANDBY"
-                  : "DEPLOYED",
+                    ? 'STANDBY'
+                    : 'DEPLOYED',
             })) || [],
           performanceMetrics: {
-            responseTime: Math.floor(severity * 2) + 3 + " minutes",
-            resolutionRate: Math.floor(90 - severity * 3) + "%",
-            publicSatisfaction: Math.floor(85 - severity * 2) + "%",
-            resourceEfficiency: Math.floor(80 - severity * 1.5) + "%",
+            responseTime: Math.floor(severity * 2) + 3 + ' minutes',
+            resolutionRate: Math.floor(90 - severity * 3) + '%',
+            publicSatisfaction: Math.floor(85 - severity * 2) + '%',
+            resourceEfficiency: Math.floor(80 - severity * 1.5) + '%',
           },
         };
       };
       statisticalData = generateStatisticalData(alertData);
     }
 
-
     console.log(
-      `[Gemini API] ✅ ${requestType === "news_summary" ? "NEWS SUMMARY" : requestType === "historical_analysis" ? "HISTORICAL ANALYSIS" : "DISASTER ANALYSIS"} generated.`
+      `[Gemini API] ✅ ${requestType === 'news_summary' ? 'NEWS SUMMARY' : requestType === 'historical_analysis' ? 'HISTORICAL ANALYSIS' : 'DISASTER ANALYSIS'} generated.`,
     );
     return NextResponse.json(
       {
@@ -313,33 +323,40 @@ PENTING:
         metadata: {
           generatedAt: new Date().toISOString(),
           modelUsed: modelName,
-          promptVersion: requestType === "news_summary" ? "news_summary_v1.0" : requestType === "historical_analysis" ? "historical_analysis_v1.0" : "professional-v2.0",
+          promptVersion:
+            requestType === 'news_summary'
+              ? 'news_summary_v1.0'
+              : requestType === 'historical_analysis'
+                ? 'historical_analysis_v1.0'
+                : 'professional-v2.0',
           responseLength: explanation.length,
           alertLevel: level,
           severityScore: severity,
-          includesStatistics: requestType !== "news_summary" && requestType !== "historical_analysis",
+          includesStatistics:
+            requestType !== 'news_summary' &&
+            requestType !== 'historical_analysis',
           requestType: requestType,
         },
       },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error: any) {
-    console.error("[Gemini API] ❌ Error:", error?.message);
+    console.error('[Gemini API] ❌ Error:', error?.message);
     return NextResponse.json(
       {
-        error: "Failed to generate explanation.",
-        message: error?.message || "Unknown error",
+        error: 'Failed to generate explanation.',
+        message: error?.message || 'Unknown error',
         stack: error?.stack || null,
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
 
 export async function GET() {
-  console.log("[Gemini API] 🔎 Health check passed.");
+  console.log('[Gemini API] 🔎 Health check passed.');
   return NextResponse.json(
-    { message: "Gemini API (Flash) is running OK" },
-    { status: 200 }
+    { message: 'Gemini API (Flash) is running OK' },
+    { status: 200 },
   );
 }

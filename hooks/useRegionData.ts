@@ -1,11 +1,11 @@
 // src/hooks/useRegionData.ts
-import { useState, useEffect } from "react";
+import { useState, useEffect } from 'react';
 // === PERBAIKAN DI SINI: Ubah cara import fetchRegions ===
-import * as apiService from "@/lib/api"; // Import seluruh modul sebagai alias apiService
-import { RegionData } from "@/lib/api"; // RegionData tetap diimpor secara named
+import * as apiService from '@/lib/api'; // Import seluruh modul sebagai alias apiService
+import { RegionData } from '@/lib/api'; // RegionData tetap diimpor secara named
 
 interface UseRegionDataOptions {
-  type: "provinces" | "regencies" | "districts" | "villages";
+  type: 'provinces' | 'regencies' | 'districts' | 'villages';
   parentCode?: number | string | null;
   enabled?: boolean; // Untuk mengontrol kapan fetching aktif
 }
@@ -30,7 +30,7 @@ export function useRegionData({
     if (
       !enabled ||
       (parentCode === null &&
-        (type === "regencies" || type === "districts" || type === "villages"))
+        (type === 'regencies' || type === 'districts' || type === 'villages'))
     ) {
       setData([]); // Kosongkan data jika tidak enabled atau parentCode null
       setLoading(false);
@@ -42,11 +42,17 @@ export function useRegionData({
       setError(null);
       try {
         // === PERBAIKAN DI SINI: Panggil fetchRegions melalui alias apiService ===
-        const result = await apiService.fetchRegions(type, parentCode || undefined);
-        console.log(`DEBUG useRegionData: Raw API response for type '${type}' and parent '${parentCode}':`, result);
+        const result = await apiService.fetchRegions(
+          type,
+          parentCode || undefined,
+        );
+        console.log(
+          `DEBUG useRegionData: Raw API response for type '${type}' and parent '${parentCode}':`,
+          result,
+        );
         setData(result);
       } catch (err: any) {
-        setError(err.message || "An unknown error occurred");
+        setError(err.message || 'An unknown error occurred');
         setData([]); // Clear data on error
       } finally {
         setLoading(false);

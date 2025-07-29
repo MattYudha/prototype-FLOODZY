@@ -1,10 +1,10 @@
-"use client";
+'use client';
 
-import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import axios from "axios";
-import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
-import L from "leaflet";
+import { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import axios from 'axios';
+import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import L from 'leaflet';
 import {
   Search,
   MapPin,
@@ -36,7 +36,7 @@ import {
   Sunset,
   LocateFixed,
   RefreshCw,
-} from "lucide-react";
+} from 'lucide-react';
 
 // Hapus 'icon' dari leaflet default agar bisa di-override
 delete L.Icon.Default.prototype._getIconUrl;
@@ -44,202 +44,96 @@ delete L.Icon.Default.prototype._getIconUrl;
 // Atur path ikon marker leaflet secara manual
 L.Icon.Default.mergeOptions({
   iconRetinaUrl:
-    "https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon-2x.png",
-  iconUrl: "https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png",
-  shadowUrl: "https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png",
+    'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon-2x.png',
+  iconUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png',
+  shadowUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png',
 });
 
-// --- UI Components (Tidak ada perubahan) ---
-const Card = ({ children, className = "" }) => (
-  <div
-    className={`bg-slate-800/60 backdrop-blur-xl border border-slate-700/50 rounded-2xl shadow-2xl ${className}`}
-  >
-    {children}
-  </div>
-);
-const CardContent = ({ children, className = "" }) => (
-  <div className={`p-6 ${className}`}>{children}</div>
-);
-const CardHeader = ({ children, className = "" }) => (
-  <div className={`p-6 pb-2 ${className}`}>{children}</div>
-);
-const CardTitle = ({ children, className = "" }) => (
-  <h3 className={`text-lg font-semibold ${className}`}>{children}</h3>
-);
-const Button = ({
-  children,
-  onClick,
-  variant = "default",
-  size = "default",
-  className = "",
-  disabled = false,
-}) => {
-  const baseClasses =
-    "inline-flex items-center justify-center rounded-xl font-medium transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500/50";
-  const variants = {
-    default:
-      "bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white shadow-lg shadow-blue-500/25",
-    ghost:
-      "bg-transparent hover:bg-slate-700/30 text-slate-300 hover:text-white",
-    outline:
-      "border border-slate-600 bg-transparent hover:bg-slate-700/30 text-slate-300 hover:text-white",
-  };
-  const sizes = {
-    default: "px-4 py-2 text-sm",
-    sm: "px-3 py-1.5 text-xs",
-    lg: "px-6 py-3 text-base",
-    icon: "p-2 w-10 h-10",
-  };
-  return (
-    <button
-      onClick={onClick}
-      disabled={disabled}
-      className={`${baseClasses} ${variants[variant]} ${sizes[size]} ${
-        disabled ? "opacity-50 cursor-not-allowed" : ""
-      } ${className}`}
-    >
-      {children}
-    </button>
-  );
-};
-const Input = ({
-  type = "text",
-  placeholder,
-  value,
-  onChange,
-  onKeyPress,
-  disabled = false,
-  className = "",
-}) => (
-  <input
-    type={type}
-    placeholder={placeholder}
-    value={value}
-    onChange={onChange}
-    onKeyPress={onKeyPress}
-    disabled={disabled}
-    className={`w-full px-4 py-3 bg-slate-800/50 border border-slate-600/50 rounded-xl text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all duration-300 ${className}`}
-  />
-);
-const Badge = ({ children, variant = "default", className = "" }) => {
-  const variants = {
-    default: "bg-blue-600/20 text-blue-400 border-blue-500/30",
-    outline: "border border-slate-600 bg-transparent text-slate-300",
-    success: "bg-green-600/20 text-green-400 border-green-500/30",
-    warning: "bg-yellow-600/20 text-yellow-400 border-yellow-500/30",
-    danger: "bg-red-600/20 text-red-400 border-red-500/30",
-  };
-  return (
-    <span
-      className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border ${variants[variant]} ${className}`}
-    >
-      {children}
-    </span>
-  );
-};
-const Alert = ({ children, variant = "default", className = "" }) => {
-  const variants = {
-    default: "bg-slate-800/50 border-slate-600/50 text-slate-200",
-    destructive: "bg-red-900/20 border-red-500/50 text-red-400",
-    warning: "bg-yellow-900/20 border-yellow-500/50 text-yellow-400",
-    success: "bg-green-900/20 border-green-500/50 text-green-400",
-  };
-  return (
-    <div className={`p-4 rounded-xl border ${variants[variant]} ${className}`}>
-      {children}
-    </div>
-  );
-};
-const AlertDescription = ({ children, className = "" }) => (
-  <p className={`text-sm ${className}`}>{children}</p>
-);
-const Switch = ({ checked, onCheckedChange, className = "" }) => (
-  <button
-    onClick={() => onCheckedChange(!checked)}
-    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2 ${
-      checked ? "bg-blue-600" : "bg-slate-600"
-    } ${className}`}
-  >
-    <span
-      className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-        checked ? "translate-x-6" : "translate-x-1"
-      }`}
-    />
-  </button>
-);
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
+import { Button } from '@/components/ui/Button';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/Badge';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Switch } from '@/components/ui/switch';
 
 // --- Helper Functions (Tidak ada perubahan) ---
 const getWeatherIcon = (iconCode: string, size = 8) => {
   const props = { className: `w-${size} h-${size} text-white` };
   switch (iconCode) {
-    case "01d":
+    case '01d':
       return <Sun {...props} />;
-    case "01n":
+    case '01n':
       return <Moon {...props} />;
-    case "02d":
+    case '02d':
       return <CloudSun {...props} />;
-    case "02n":
+    case '02n':
       return <CloudMoon {...props} />;
-    case "03d":
-    case "03n":
+    case '03d':
+    case '03n':
       return <Cloud {...props} />;
-    case "04d":
-    case "04n":
+    case '04d':
+    case '04n':
       return <Cloud {...props} />;
-    case "09d":
-    case "09n":
+    case '09d':
+    case '09n':
       return <CloudDrizzle {...props} />;
-    case "10d":
-    case "10n":
+    case '10d':
+    case '10n':
       return <CloudRain {...props} />;
-    case "11d":
-    case "11n":
+    case '11d':
+    case '11n':
       return <Zap {...props} />;
-    case "13d":
-    case "13n":
+    case '13d':
+    case '13n':
       return <Snowflake {...props} />;
-    case "50d":
-    case "50n":
+    case '50d':
+    case '50n':
       return <CloudFog {...props} />;
     default:
       return <Cloud {...props} />;
   }
 };
 const formatDay = (timestamp: number) => {
-  return new Date(timestamp * 1000).toLocaleDateString("id-ID", {
-    weekday: "short",
+  return new Date(timestamp * 1000).toLocaleDateString('id-ID', {
+    weekday: 'short',
   });
 };
 
 // --- Data & Komponen Statis (Tidak ada perubahan) ---
 const regionData = [
-  { name: "Jakarta Pusat", lat: -6.1751, lon: 106.865 },
-  { name: "Bandung", lat: -6.9175, lon: 107.6191 },
-  { name: "Surabaya", lat: -7.2575, lon: 112.7521 },
-  { name: "Yogyakarta", lat: -7.7956, lon: 110.3695 },
-  { name: "Medan", lat: 3.5952, lon: 98.6722 },
+  { name: 'Jakarta Pusat', lat: -6.1751, lon: 106.865 },
+  { name: 'Bandung', lat: -6.9175, lon: 107.6191 },
+  { name: 'Surabaya', lat: -7.2575, lon: 112.7521 },
+  { name: 'Yogyakarta', lat: -7.7956, lon: 110.3695 },
+  { name: 'Medan', lat: 3.5952, lon: 98.6722 },
 ];
-const RegionDropdown = ({ onSelectRegion, selectedLocation }: any) => {
+const RegionDropdown = ({
+  onSelectRegion,
+  selectedLocation,
+}: {
+  onSelectRegion: (region: unknown) => void;
+  selectedLocation: unknown;
+}) => {
   return (
     <div className="space-y-2">
       {regionData.map((region) => (
-        <button
+        <Button
           key={region.name}
           onClick={() => onSelectRegion(region)}
           className={`w-full text-left p-3 rounded-xl border transition-all duration-300 flex items-center space-x-3 ${
             selectedLocation?.name === region.name
-              ? "bg-blue-600/20 border-blue-500/50 text-blue-400"
-              : "bg-slate-700/30 border-slate-600/30 text-slate-300 hover:bg-slate-600/40"
+              ? 'bg-blue-600/20 border-blue-500/50 text-blue-400'
+              : 'bg-slate-700/30 border-slate-600/30 text-slate-300 hover:bg-slate-600/40'
           }`}
         >
           <MapPin className="w-4 h-4" />
           <span className="font-medium">{region.name}</span>
-        </button>
+        </Button>
       ))}
     </div>
   );
 };
-const MapUpdater = ({ center, zoom }: any) => {
+const MapUpdater = ({ center, zoom }: { center: unknown; zoom: unknown }) => {
   const map = useMap();
   useEffect(() => {
     if (center) {
@@ -254,7 +148,13 @@ const WeatherMap = ({
   weatherLayers,
   selectedLocation,
   apiKey,
-}: any) => {
+}: {
+  center: unknown;
+  zoom: unknown;
+  weatherLayers: unknown;
+  selectedLocation: unknown;
+  apiKey: unknown;
+}) => {
   const layerUrls: { [key: string]: string } = {
     clouds: `https://tile.openweathermap.org/map/clouds_new/{z}/{x}/{y}.png?appid=${apiKey}`,
     precipitation: `https://tile.openweathermap.org/map/precipitation_new/{z}/{x}/{y}.png?appid=${apiKey}`,
@@ -267,10 +167,10 @@ const WeatherMap = ({
       center={center}
       zoom={zoom}
       style={{
-        height: "100%",
-        width: "100%",
-        backgroundColor: "#1e293b",
-        borderRadius: "1rem",
+        height: '100%',
+        width: '100%',
+        backgroundColor: '#1e293b',
+        borderRadius: '1rem',
       }}
       zoomControl={false}
     >
@@ -285,7 +185,7 @@ const WeatherMap = ({
       )}
       {Object.entries(weatherLayers).map(
         ([key, value]) =>
-          value && <TileLayer key={key} url={layerUrls[key]} opacity={0.7} />
+          value && <TileLayer key={key} url={layerUrls[key]} opacity={0.7} />,
       )}
       <MapUpdater center={center} zoom={zoom} />
     </MapContainer>
@@ -293,10 +193,18 @@ const WeatherMap = ({
 };
 
 // --- Komponen Display (Ada Perubahan) ---
-const WeatherDisplay = ({ data, loading, error }: any) => {
+const WeatherDisplay = ({
+  data,
+  loading,
+  error,
+}: {
+  data: unknown;
+  loading: unknown;
+  error: unknown;
+}) => {
   if (loading) {
     return (
-      <Card className="h-full flex items-center justify-center">
+      <Card className="h-full flex items-center justify-center bg-slate-800/60 backdrop-blur-xl border border-slate-700/50 rounded-2xl shadow-2xl">
         <CardContent>
           <div className="text-center">
             <Loader2 className="w-8 h-8 animate-spin text-blue-400 mx-auto mb-4" />
@@ -309,11 +217,14 @@ const WeatherDisplay = ({ data, loading, error }: any) => {
 
   if (error) {
     return (
-      <Card className="border-red-500/20">
+      <Card className="border-red-500/20 bg-slate-800/60 backdrop-blur-xl border border-slate-700/50 rounded-2xl shadow-2xl">
         <CardContent>
-          <Alert variant="destructive" className="flex items-center space-x-3">
+          <Alert
+            variant="destructive"
+            className="flex items-center space-x-3 p-4 rounded-xl border bg-red-900/20 border-red-500/50 text-red-400"
+          >
             <AlertTriangle className="w-5 h-5" />
-            <AlertDescription>{error}</AlertDescription>
+            <AlertDescription className="text-sm">{error}</AlertDescription>
           </Alert>
         </CardContent>
       </Card>
@@ -323,7 +234,7 @@ const WeatherDisplay = ({ data, loading, error }: any) => {
   // ✅ PERBAIKAN: Cek data.current yang sekarang berasal dari endpoint 2.5/weather
   if (!data || !data.current) {
     return (
-      <Card className="border-slate-600/30">
+      <Card className="border-slate-600/30 bg-slate-800/60 backdrop-blur-xl border border-slate-700/50 rounded-2xl shadow-2xl">
         <CardContent>
           <div className="text-center py-8">
             <Cloud className="w-16 h-16 text-slate-600 mx-auto mb-4" />
@@ -339,12 +250,17 @@ const WeatherDisplay = ({ data, loading, error }: any) => {
   const { current } = data;
 
   return (
-    <Card className="bg-gradient-to-br from-slate-800/60 to-slate-900/60">
+    <Card className="bg-gradient-to-br from-slate-800/60 to-slate-900/60 bg-slate-800/60 backdrop-blur-xl border border-slate-700/50 rounded-2xl shadow-2xl">
       <CardHeader>
         <CardTitle className="text-white flex items-center space-x-2">
           <Activity className="w-5 h-5 text-cyan-400" />
           <span>Cuaca Saat Ini</span>
-          <Badge variant="success">Live</Badge>
+          <Badge
+            variant="success"
+            className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border bg-green-600/20 text-green-400 border-green-500/30"
+          >
+            Live
+          </Badge>
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
@@ -413,8 +329,8 @@ const WeatherDisplay = ({ data, loading, error }: any) => {
               <div className="text-xs text-slate-400">Terbit</div>
               <div className="font-semibold text-white">
                 {new Date(current.sys.sunrise * 1000).toLocaleTimeString(
-                  "id-ID",
-                  { hour: "2-digit", minute: "2-digit" }
+                  'id-ID',
+                  { hour: '2-digit', minute: '2-digit' },
                 )}
               </div>
             </div>
@@ -425,8 +341,8 @@ const WeatherDisplay = ({ data, loading, error }: any) => {
               <div className="text-xs text-slate-400">Terbenam</div>
               <div className="font-semibold text-white">
                 {new Date(current.sys.sunset * 1000).toLocaleTimeString(
-                  "id-ID",
-                  { hour: "2-digit", minute: "2-digit" }
+                  'id-ID',
+                  { hour: '2-digit', minute: '2-digit' },
                 )}
               </div>
             </div>
@@ -437,12 +353,18 @@ const WeatherDisplay = ({ data, loading, error }: any) => {
   );
 };
 
-const DailyForecast = ({ data, loading }: any) => {
+const DailyForecast = ({
+  data,
+  loading,
+}: {
+  data: unknown;
+  loading: unknown;
+}) => {
   // ✅ PERBAIKAN: Cek data.daily yang sekarang berasal dari endpoint 2.5/forecast
   if (loading || !data || !data.daily) return null;
 
   return (
-    <Card>
+    <Card className="bg-slate-800/60 backdrop-blur-xl border border-slate-700/50 rounded-2xl shadow-2xl">
       <CardHeader>
         <CardTitle className="text-white flex items-center space-x-2">
           <TrendingUp className="w-5 h-5 text-green-400" />
@@ -479,18 +401,24 @@ const DailyForecast = ({ data, loading }: any) => {
 
 export default function PrakiraanCuacaPage() {
   const API_KEY = process.env.NEXT_PUBLIC_OPENWEATHER_API_KEY;
-  console.log("OpenWeatherMap API Key:", API_KEY);
 
-  const [selectedLocation, setSelectedLocation] = useState<any>(null);
+  const [selectedLocation, setSelectedLocation] = useState<null | {
+    name: string;
+    lat: number;
+    lon: number;
+  }>(null);
   const [currentMapCenter, setCurrentMapCenter] = useState([-6.1751, 106.865]);
   const [currentMapZoom, setCurrentMapZoom] = useState(10);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState('');
   const [isSearchingLocation, setIsSearchingLocation] = useState(false);
   const [searchLocationError, setSearchLocationError] = useState<string | null>(
-    null
+    null,
   );
 
-  const [currentWeatherData, setCurrentWeatherData] = useState<any>(null);
+  const [currentWeatherData, setCurrentWeatherData] = useState<null | {
+    current: any;
+    daily: any;
+  }>(null);
   const [loadingWeather, setLoadingWeather] = useState(false);
   const [weatherError, setWeatherError] = useState<string | null>(null);
 
@@ -505,22 +433,25 @@ export default function PrakiraanCuacaPage() {
 
   // ✅ PERBAIKAN TOTAL: Menggunakan 2 endpoint gratis dan menggabungkan datanya
   useEffect(() => {
-    console.log("useEffect for weather data triggered. selectedLocation:", selectedLocation);
+    console.log(
+      'useEffect for weather data triggered. selectedLocation:',
+      selectedLocation,
+    );
     if (selectedLocation) {
       const fetchWeatherData = async () => {
         setLoadingWeather(true);
         setWeatherError(null);
         setCurrentWeatherData(null);
 
-        const weatherUrl = "https://api.openweathermap.org/data/2.5/weather";
-        const forecastUrl = "https://api.openweathermap.org/data/2.5/forecast";
+        const weatherUrl = 'https://api.openweathermap.org/data/2.5/weather';
+        const forecastUrl = 'https://api.openweathermap.org/data/2.5/forecast';
 
         const commonParams = {
           lat: selectedLocation.lat,
           lon: selectedLocation.lon,
           appid: API_KEY,
-          units: "metric",
-          lang: "id",
+          units: 'metric',
+          lang: 'id',
         };
 
         try {
@@ -530,12 +461,12 @@ export default function PrakiraanCuacaPage() {
             axios.get(forecastUrl, { params: commonParams }),
           ]);
 
-          console.log("Weather API Response:", weatherResponse.data);
-          console.log("Forecast API Response:", forecastResponse.data);
+          console.log('Weather API Response:', weatherResponse.data);
+          console.log('Forecast API Response:', forecastResponse.data);
 
           // Proses data prakiraan untuk mendapatkan 1 data per hari
           const dailyForecasts = forecastResponse.data.list.filter(
-            (forecast: any) => forecast.dt_txt.includes("12:00:00")
+            (forecast: any) => forecast.dt_txt.includes('12:00:00'),
           );
 
           // Gabungkan hasil dari 2 API menjadi satu objek state
@@ -548,10 +479,10 @@ export default function PrakiraanCuacaPage() {
           setCurrentMapCenter([selectedLocation.lat, selectedLocation.lon]);
           setCurrentMapZoom(12);
         } catch (error: any) {
-          console.error("Error fetching weather data:", error);
+          console.error('Error fetching weather data:', error);
           const errorMessage =
             error.response?.data?.message ||
-            "Gagal mengambil data cuaca. Coba lagi nanti.";
+            'Gagal mengambil data cuaca. Coba lagi nanti.';
           setWeatherError(errorMessage);
         } finally {
           setLoadingWeather(false);
@@ -569,7 +500,7 @@ export default function PrakiraanCuacaPage() {
       lon: region.lon,
     };
     setSelectedLocation(newLocation);
-    console.log("Selected location via RegionDropdown:", newLocation);
+    console.log('Selected location via RegionDropdown:', newLocation);
   };
 
   const handleSearchLocation = async () => {
@@ -579,23 +510,23 @@ export default function PrakiraanCuacaPage() {
     setSearchLocationError(null);
     try {
       const response = await axios.get(
-        "https://api.openweathermap.org/geo/1.0/direct",
+        'https://api.openweathermap.org/geo/1.0/direct',
         {
           params: { q: searchQuery, limit: 1, appid: API_KEY },
-        }
+        },
       );
       if (response.data && response.data.length > 0) {
         const { name, lat, lon, country, state } = response.data[0];
         const newLocation = { name: `${name}, ${state || country}`, lat, lon };
         setSelectedLocation(newLocation);
-        console.log("Selected location via search:", newLocation);
-        setSearchQuery("");
+        console.log('Selected location via search:', newLocation);
+        setSearchQuery('');
       } else {
         setSearchLocationError(`Lokasi "${searchQuery}" tidak ditemukan.`);
       }
     } catch (error) {
-      console.error("Error geocoding location:", error);
-      setSearchLocationError("Gagal mencari lokasi. Periksa koneksi Anda.");
+      console.error('Error geocoding location:', error);
+      setSearchLocationError('Gagal mencari lokasi. Periksa koneksi Anda.');
     } finally {
       setIsSearchingLocation(false);
     }
@@ -609,7 +540,7 @@ export default function PrakiraanCuacaPage() {
           const { latitude, longitude } = position.coords;
           try {
             const response = await axios.get(
-              "https://api.openweathermap.org/geo/1.0/reverse",
+              'https://api.openweathermap.org/geo/1.0/reverse',
               {
                 params: {
                   lat: latitude,
@@ -617,7 +548,7 @@ export default function PrakiraanCuacaPage() {
                   limit: 1,
                   appid: API_KEY,
                 },
-              }
+              },
             );
             if (response.data && response.data.length > 0) {
               const { name, country, state } = response.data[0];
@@ -628,15 +559,15 @@ export default function PrakiraanCuacaPage() {
               });
             } else {
               setSelectedLocation({
-                name: "Lokasi Saat Ini",
+                name: 'Lokasi Saat Ini',
                 lat: latitude,
                 lon: longitude,
               });
             }
           } catch (error) {
-            setSearchLocationError("Gagal mendapatkan nama lokasi.");
+            setSearchLocationError('Gagal mendapatkan nama lokasi.');
             setSelectedLocation({
-              name: "Lokasi Saat Ini",
+              name: 'Lokasi Saat Ini',
               lat: latitude,
               lon: longitude,
             });
@@ -646,13 +577,13 @@ export default function PrakiraanCuacaPage() {
         },
         (error) => {
           setSearchLocationError(
-            "Gagal mengakses lokasi. Izinkan akses di browser Anda."
+            'Gagal mengakses lokasi. Izinkan akses di browser Anda.',
           );
           setIsSearchingLocation(false);
-        }
+        },
       );
     } else {
-      setSearchLocationError("Geolocation tidak didukung oleh browser ini.");
+      setSearchLocationError('Geolocation tidak didukung oleh browser ini.');
     }
   };
 
@@ -662,39 +593,39 @@ export default function PrakiraanCuacaPage() {
 
   const weatherLayerConfigs = [
     {
-      key: "clouds",
-      label: "Awan",
+      key: 'clouds',
+      label: 'Awan',
       icon: Cloud,
-      color: "text-gray-400",
-      description: "Tutupan awan",
+      color: 'text-gray-400',
+      description: 'Tutupan awan',
     },
     {
-      key: "precipitation",
-      label: "Curah Hujan",
+      key: 'precipitation',
+      label: 'Curah Hujan',
       icon: CloudRain,
-      color: "text-blue-400",
-      description: "Intensitas hujan",
+      color: 'text-blue-400',
+      description: 'Intensitas hujan',
     },
     {
-      key: "temperature",
-      label: "Suhu",
+      key: 'temperature',
+      label: 'Suhu',
       icon: Thermometer,
-      color: "text-red-400",
-      description: "Distribusi suhu",
+      color: 'text-red-400',
+      description: 'Distribusi suhu',
     },
     {
-      key: "wind",
-      label: "Angin",
+      key: 'wind',
+      label: 'Angin',
       icon: Wind,
-      color: "text-green-400",
-      description: "Kecepatan angin",
+      color: 'text-green-400',
+      description: 'Kecepatan angin',
     },
     {
-      key: "pressure",
-      label: "Tekanan",
+      key: 'pressure',
+      label: 'Tekanan',
       icon: Gauge,
-      color: "text-purple-400",
-      description: "Tekanan atmosfer",
+      color: 'text-purple-400',
+      description: 'Tekanan atmosfer',
     },
   ];
 
@@ -721,13 +652,16 @@ export default function PrakiraanCuacaPage() {
               </div>
             </div>
             <div className="flex items-center space-x-2">
-              <Badge variant={API_KEY ? "success" : "danger"}>
+              <Badge
+                variant={API_KEY ? 'success' : 'danger'}
+                className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border ${API_KEY ? 'bg-green-600/20 text-green-400 border-green-500/30' : 'bg-red-600/20 text-red-400 border-red-500/30'}`}
+              >
                 {API_KEY ? (
                   <Wifi className="w-3 h-3 mr-1.5" />
                 ) : (
                   <AlertTriangle className="w-3 h-3 mr-1.5" />
                 )}
-                {API_KEY ? "Online" : "API Key Error"}
+                {API_KEY ? 'Online' : 'API Key Error'}
               </Badge>
               <Button
                 variant="ghost"
@@ -735,9 +669,10 @@ export default function PrakiraanCuacaPage() {
                 onClick={() =>
                   selectedLocation && handleRegionSelect(selectedLocation)
                 }
+                className="inline-flex items-center justify-center rounded-xl font-medium transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500/50 bg-transparent hover:bg-slate-700/30 text-slate-300 hover:text-white p-2 w-10 h-10"
               >
                 <RefreshCw
-                  className={`w-4 h-4 ${loadingWeather ? "animate-spin" : ""}`}
+                  className={`w-4 h-4 ${loadingWeather ? 'animate-spin' : ''}`}
                 />
               </Button>
             </div>
@@ -753,7 +688,7 @@ export default function PrakiraanCuacaPage() {
             transition={{ delay: 0.1 }}
             className="lg:col-span-3 space-y-6"
           >
-            <Card>
+            <Card className="bg-slate-800/60 backdrop-blur-xl border border-slate-700/50 rounded-2xl shadow-2xl">
               <CardHeader>
                 <CardTitle className="text-white flex items-center space-x-2">
                   <Search className="w-5 h-5 text-blue-400" />
@@ -767,10 +702,10 @@ export default function PrakiraanCuacaPage() {
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     onKeyPress={(e) =>
-                      e.key === "Enter" && handleSearchLocation()
+                      e.key === 'Enter' && handleSearchLocation()
                     }
                     disabled={isSearchingLocation}
-                    className="pl-4"
+                    className="pl-4 w-full px-4 py-3 bg-slate-800/50 border border-slate-600/50 rounded-xl text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all duration-300"
                   />
                   {isSearchingLocation && (
                     <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-blue-400 animate-spin" />
@@ -780,7 +715,7 @@ export default function PrakiraanCuacaPage() {
                   <Button
                     onClick={handleSearchLocation}
                     disabled={isSearchingLocation || !searchQuery.trim()}
-                    className="w-full"
+                    className="w-full inline-flex items-center justify-center rounded-xl font-medium transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500/50 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white shadow-lg shadow-blue-500/25 px-4 py-2 text-sm"
                   >
                     <Search className="w-4 h-4 mr-2" /> Cari
                   </Button>
@@ -789,19 +724,25 @@ export default function PrakiraanCuacaPage() {
                     variant="outline"
                     size="icon"
                     disabled={isSearchingLocation}
+                    className="inline-flex items-center justify-center rounded-xl font-medium transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500/50 border border-slate-600 bg-transparent hover:bg-slate-700/30 text-slate-300 hover:text-white p-2 w-10 h-10"
                   >
                     <LocateFixed className="w-4 h-4" />
                   </Button>
                 </div>
                 {searchLocationError && (
-                  <Alert variant="destructive">
-                    <AlertDescription>{searchLocationError}</AlertDescription>
+                  <Alert
+                    variant="destructive"
+                    className="p-4 rounded-xl border bg-red-900/20 border-red-500/50 text-red-400"
+                  >
+                    <AlertDescription className="text-sm">
+                      {searchLocationError}
+                    </AlertDescription>
                   </Alert>
                 )}
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="bg-slate-800/60 backdrop-blur-xl border border-slate-700/50 rounded-2xl shadow-2xl">
               <CardHeader>
                 <CardTitle className="text-white flex items-center space-x-2">
                   <MapPin className="w-5 h-5 text-green-400" />
@@ -816,7 +757,7 @@ export default function PrakiraanCuacaPage() {
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="bg-slate-800/60 backdrop-blur-xl border border-slate-700/50 rounded-2xl shadow-2xl">
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-white flex items-center space-x-2">
@@ -827,6 +768,7 @@ export default function PrakiraanCuacaPage() {
                     variant="ghost"
                     size="icon"
                     onClick={() => setShowFilters(!showFilters)}
+                    className="inline-flex items-center justify-center rounded-xl font-medium transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500/50 bg-transparent hover:bg-slate-700/30 text-slate-300 hover:text-white p-2 w-10 h-10"
                   >
                     <Filter className="w-4 h-4" />
                   </Button>
@@ -836,7 +778,7 @@ export default function PrakiraanCuacaPage() {
                 {showFilters && (
                   <motion.div
                     initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: "auto" }}
+                    animate={{ opacity: 1, height: 'auto' }}
                     exit={{ opacity: 0, height: 0 }}
                   >
                     <CardContent className="space-y-3">
@@ -861,6 +803,7 @@ export default function PrakiraanCuacaPage() {
                             onCheckedChange={() =>
                               toggleWeatherLayer(layer.key)
                             }
+                            className="relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2"
                           />
                         </div>
                       ))}
@@ -877,13 +820,13 @@ export default function PrakiraanCuacaPage() {
             transition={{ delay: 0.2 }}
             className="lg:col-span-5"
           >
-            <Card className="h-full">
+            <Card className="h-full bg-slate-800/60 backdrop-blur-xl border border-slate-700/50 rounded-2xl shadow-2xl">
               <CardHeader className="bg-gradient-to-r from-slate-800/50 to-slate-700/50 border-b border-slate-700/50">
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-white flex items-center space-x-2 truncate">
                     <Globe className="w-5 h-5 text-blue-400 flex-shrink-0" />
                     <span className="truncate">
-                      {selectedLocation?.name || "Peta Cuaca Interaktif"}
+                      {selectedLocation?.name || 'Peta Cuaca Interaktif'}
                     </span>
                   </CardTitle>
                 </div>
@@ -900,9 +843,12 @@ export default function PrakiraanCuacaPage() {
                     />
                   ) : (
                     <div className="h-full flex items-center justify-center text-center p-4">
-                      <Alert variant="destructive">
+                      <Alert
+                        variant="destructive"
+                        className="p-4 rounded-xl border bg-red-900/20 border-red-500/50 text-red-400"
+                      >
                         <AlertTriangle className="w-4 h-4" />
-                        <AlertDescription>
+                        <AlertDescription className="text-sm">
                           API Key OpenWeatherMap tidak valid. Silakan periksa
                           file .env.local Anda.
                         </AlertDescription>
@@ -927,7 +873,7 @@ export default function PrakiraanCuacaPage() {
             />
             <DailyForecast data={currentWeatherData} loading={loadingWeather} />
             {selectedLocation && (
-              <Card>
+              <Card className="bg-slate-800/60 backdrop-blur-xl border border-slate-700/50 rounded-2xl shadow-2xl">
                 <CardHeader>
                   <CardTitle className="text-white flex items-center space-x-2">
                     <Compass className="w-5 h-5 text-cyan-400" />

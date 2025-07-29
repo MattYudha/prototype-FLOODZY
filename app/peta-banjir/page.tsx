@@ -1,7 +1,7 @@
-"use client";
-import React, { useState } from "react";
+'use client';
+import React, { useState } from 'react';
 // 1. Impor motion dan AnimatePresence dari framer-motion
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   MapPin,
   Bell,
@@ -25,7 +25,7 @@ import {
   Droplets,
   Wind,
   Thermometer,
-} from "lucide-react";
+} from 'lucide-react';
 
 // 2. Varian animasi (tidak ada perubahan)
 const containerVariants = {
@@ -43,15 +43,15 @@ const itemVariants = {
   visible: {
     opacity: 1,
     y: 0,
-    transition: { type: "spring", stiffness: 100 },
+    transition: { type: 'spring', stiffness: 100 },
   },
 };
 
 const FloodMapInterface = () => {
   const [selectedLocation, setSelectedLocation] = useState(null);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState('');
   const [showFilters, setShowFilters] = useState(true);
-  const [activeLayer, setActiveLayer] = useState("street");
+  const [activeLayer, setActiveLayer] = useState('street');
   const [isLoading, setIsLoading] = useState(false);
 
   const [layers, setLayers] = useState({
@@ -74,24 +74,24 @@ const FloodMapInterface = () => {
     alerts: [
       {
         id: 1,
-        type: "warning",
-        location: "Kemang",
-        message: "Peringatan banjir sedang",
-        time: "2 menit lalu",
+        type: 'warning',
+        location: 'Kemang',
+        message: 'Peringatan banjir sedang',
+        time: '2 menit lalu',
       },
       {
         id: 2,
-        type: "critical",
-        location: "Kelapa Gading",
-        message: "Banjir tinggi terdeteksi",
-        time: "5 menit lalu",
+        type: 'critical',
+        location: 'Kelapa Gading',
+        message: 'Banjir tinggi terdeteksi',
+        time: '5 menit lalu',
       },
       {
         id: 3,
-        type: "warning",
-        location: "Ciledug",
-        message: "Ketinggian air naik",
-        time: "15 menit lalu",
+        type: 'warning',
+        location: 'Ciledug',
+        message: 'Ketinggian air naik',
+        time: '15 menit lalu',
       },
     ],
     sensors: { active: 89, total: 100, offline: 11 },
@@ -100,48 +100,48 @@ const FloodMapInterface = () => {
 
   const layerControls = [
     {
-      key: "floodZones",
-      label: "Zona Rawan Banjir",
+      key: 'floodZones',
+      label: 'Zona Rawan Banjir',
       icon: MapPin,
-      color: "text-red-400",
+      color: 'text-red-400',
     },
     {
-      key: "waterLevel",
-      label: "Pos Duga Air",
+      key: 'waterLevel',
+      label: 'Pos Duga Air',
       icon: Waves,
-      color: "text-blue-400",
+      color: 'text-blue-400',
     },
     {
-      key: "pumpStatus",
-      label: "Status Pompa",
+      key: 'pumpStatus',
+      label: 'Status Pompa',
       icon: Wrench,
-      color: "text-green-400",
+      color: 'text-green-400',
     },
     {
-      key: "reports",
-      label: "Laporan Warga",
+      key: 'reports',
+      label: 'Laporan Warga',
       icon: Bell,
-      color: "text-yellow-400",
+      color: 'text-yellow-400',
     },
     {
-      key: "weather",
-      label: "Cuaca Real-time",
+      key: 'weather',
+      label: 'Cuaca Real-time',
       icon: CloudRain,
-      color: "text-purple-400",
+      color: 'text-purple-400',
     },
     {
-      key: "sensors",
-      label: "Sensor Network",
+      key: 'sensors',
+      label: 'Sensor Network',
       icon: Activity,
-      color: "text-cyan-400",
+      color: 'text-cyan-400',
     },
   ];
 
   const baseMapLayers = [
-    { key: "street", label: "Street Map", icon: Layers },
-    { key: "satellite", label: "Satellite", icon: Layers },
-    { key: "hybrid", label: "Hybrid", icon: Layers },
-    { key: "terrain", label: "Terrain", icon: Layers },
+    { key: 'street', label: 'Street Map', icon: Layers },
+    { key: 'satellite', label: 'Satellite', icon: Layers },
+    { key: 'hybrid', label: 'Hybrid', icon: Layers },
+    { key: 'terrain', label: 'Terrain', icon: Layers },
   ];
 
   return (
@@ -159,7 +159,7 @@ const FloodMapInterface = () => {
       <motion.div
         initial={{ y: -60, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        transition={{ type: "spring", stiffness: 50, delay: 0.1 }}
+        transition={{ type: 'spring', stiffness: 50, delay: 0.1 }}
         className="sticky top-0 z-20 border-b border-slate-700/50 bg-slate-900/80 backdrop-blur-xl"
       >
         <div className="max-w-7xl mx-auto px-6 py-4">
@@ -245,7 +245,7 @@ const FloodMapInterface = () => {
                   )}
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  {["Jakarta", "Bekasi", "Tangerang", "Depok"].map((city) => (
+                  {['Jakarta', 'Bekasi', 'Tangerang', 'Depok'].map((city) => (
                     <motion.button
                       key={city}
                       whileHover={{ y: -2 }}
@@ -276,7 +276,7 @@ const FloodMapInterface = () => {
                 >
                   <AnimatePresence mode="wait">
                     <motion.div
-                      key={showFilters ? "eye-off" : "eye"}
+                      key={showFilters ? 'eye-off' : 'eye'}
                       initial={{ opacity: 0, rotate: -90 }}
                       animate={{ opacity: 1, rotate: 0 }}
                       exit={{ opacity: 0, rotate: 90 }}
@@ -294,9 +294,9 @@ const FloodMapInterface = () => {
                 {showFilters && (
                   <motion.div
                     initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: "auto" }}
+                    animate={{ opacity: 1, height: 'auto' }}
                     exit={{ opacity: 0, height: 0 }}
-                    transition={{ duration: 0.4, ease: "easeInOut" }}
+                    transition={{ duration: 0.4, ease: 'easeInOut' }}
                     className="space-y-6 overflow-hidden"
                   >
                     {/* Konten filter (tidak diubah) */}
@@ -313,8 +313,8 @@ const FloodMapInterface = () => {
                             whileTap={{ scale: 0.95 }}
                             className={`p-3 rounded-xl border transition-all duration-300 ${
                               activeLayer === layer.key
-                                ? "bg-cyan-500/20 border-cyan-400/50 text-cyan-400"
-                                : "bg-slate-700/30 border-slate-600/30 text-slate-300 hover:bg-slate-600/50"
+                                ? 'bg-cyan-500/20 border-cyan-400/50 text-cyan-400'
+                                : 'bg-slate-700/30 border-slate-600/30 text-slate-300 hover:bg-slate-600/50'
                             }`}
                           >
                             <layer.icon className="w-4 h-4 mx-auto mb-1" />
@@ -352,15 +352,15 @@ const FloodMapInterface = () => {
                               onClick={() => toggleLayer(layer.key)}
                               className={`relative w-10 h-5 rounded-full transition-colors duration-300 ${
                                 layers[layer.key]
-                                  ? "bg-cyan-500"
-                                  : "bg-slate-600"
+                                  ? 'bg-cyan-500'
+                                  : 'bg-slate-600'
                               }`}
                             >
                               <motion.div
                                 layout
                                 className="absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full"
                                 transition={{
-                                  type: "spring",
+                                  type: 'spring',
                                   stiffness: 700,
                                   damping: 30,
                                 }}
@@ -486,9 +486,9 @@ const FloodMapInterface = () => {
                     key={alert.id}
                     whileHover={{
                       borderColor:
-                        alert.type === "critical"
-                          ? "rgba(239, 68, 68, 0.5)"
-                          : "rgba(245, 158, 11, 0.5)",
+                        alert.type === 'critical'
+                          ? 'rgba(239, 68, 68, 0.5)'
+                          : 'rgba(245, 158, 11, 0.5)',
                       scale: 1.02,
                     }}
                     className="p-3 rounded-xl bg-slate-700/30 border border-slate-600/30 transition-colors duration-300"
@@ -496,9 +496,9 @@ const FloodMapInterface = () => {
                     <div className="flex items-start space-x-3">
                       <div
                         className={`w-2 h-2 rounded-full mt-2 flex-shrink-0 ${
-                          alert.type === "critical"
-                            ? "bg-red-500 animate-pulse"
-                            : "bg-yellow-500"
+                          alert.type === 'critical'
+                            ? 'bg-red-500 animate-pulse'
+                            : 'bg-yellow-500'
                         }`}
                       ></div>
                       <div className="flex-1">

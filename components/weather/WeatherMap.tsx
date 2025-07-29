@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
-import { useEffect, useRef, useState } from "react";
-import { motion } from "framer-motion";
-import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
-import { Icon, LatLngExpression } from "leaflet";
+import { useEffect, useRef, useState } from 'react';
+import { motion } from 'framer-motion';
+import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import { Icon, LatLngExpression } from 'leaflet';
 import {
   RotateCcw,
   Maximize2,
@@ -15,14 +15,14 @@ import {
   Thermometer,
   Wind,
   Gauge,
-} from "lucide-react";
+} from 'lucide-react';
 
-import { Button } from "@/components/ui/Button";
-import { Card } from "@/components/ui/Card";
-import { Badge } from "@/components/ui/Badge";
-import { WeatherData } from "@/lib/api";
-import { DEFAULT_MAP_CENTER, DEFAULT_MAP_ZOOM } from "@/lib/constants";
-import { cn } from "@/lib/utils";
+import { Button } from '@/components/ui/Button';
+import { Card } from '@/components/ui/Card';
+import { Badge } from '@/components/ui/Badge';
+import { WeatherData } from '@/lib/api';
+import { DEFAULT_MAP_CENTER, DEFAULT_MAP_ZOOM } from '@/lib/constants';
+import { cn } from '@/lib/utils';
 
 interface OpenWeatherMapCurrentResponse {
   main: {
@@ -75,6 +75,12 @@ interface SelectedLocationDetails {
   lon: number; // Add lon property from page.tsx
 }
 
+/**
+ * Props for the WeatherMap component.
+ * @property apiKey This API key is intended for public client-side use (e.g., for tile map services).
+ *                  It should be a `NEXT_PUBLIC_` prefixed environment variable and configured with appropriate domain restrictions
+ *                  on the service provider's side (e.g., OpenWeatherMap).
+ */
 interface WeatherMapProps {
   center: [number, number];
   zoom: number;
@@ -87,17 +93,17 @@ interface WeatherMapProps {
 
 // Custom weather marker icon
 const createWeatherIcon = (iconCode: string) => {
-  let emoji = "☁️";
+  let emoji = '☁️';
   if (iconCode) {
-    if (iconCode.startsWith("01")) emoji = iconCode === "01d" ? "☀️" : "🌙";
-    else if (iconCode.startsWith("02")) emoji = "🌤️";
-    else if (iconCode.startsWith("03") || iconCode.startsWith("04"))
-      emoji = "☁️";
-    else if (iconCode.startsWith("09") || iconCode.startsWith("10"))
-      emoji = "🌧️";
-    else if (iconCode.startsWith("11")) emoji = "⛈️";
-    else if (iconCode.startsWith("13")) emoji = "🌨️";
-    else if (iconCode.startsWith("50")) emoji = "🌫️";
+    if (iconCode.startsWith('01')) emoji = iconCode === '01d' ? '☀️' : '🌙';
+    else if (iconCode.startsWith('02')) emoji = '🌤️';
+    else if (iconCode.startsWith('03') || iconCode.startsWith('04'))
+      emoji = '☁️';
+    else if (iconCode.startsWith('09') || iconCode.startsWith('10'))
+      emoji = '🌧️';
+    else if (iconCode.startsWith('11')) emoji = '⛈️';
+    else if (iconCode.startsWith('13')) emoji = '🌨️';
+    else if (iconCode.startsWith('50')) emoji = '🌫️';
   }
 
   const svgString = `
@@ -176,7 +182,13 @@ function MapReset({
 }
 
 // Weather layer tile component
-function WeatherLayers({ layers, apiKey }: { layers: WeatherLayers; apiKey: string }) {
+function WeatherLayers({
+  layers,
+  apiKey,
+}: {
+  layers: WeatherLayers;
+  apiKey: string;
+}) {
   const map = useMap();
 
   useEffect(() => {
@@ -190,27 +202,27 @@ function WeatherLayers({ layers, apiKey }: { layers: WeatherLayers; apiKey: stri
     // Add active weather layers
     Object.entries(layers).forEach(([layerType, isActive]) => {
       if (isActive) {
-        let layerUrl = "";
+        let layerUrl = '';
         let opacity = 0.6;
 
         switch (layerType) {
-          case "clouds":
+          case 'clouds':
             layerUrl = `https://tile.openweathermap.org/map/clouds_new/{z}/{x}/{y}.png?appid=${apiKey}`;
             opacity = 0.6;
             break;
-          case "precipitation":
+          case 'precipitation':
             layerUrl = `https://tile.openweathermap.org/map/precipitation_new/{z}/{x}/{y}.png?appid=${apiKey}`;
             opacity = 0.7;
             break;
-          case "temperature":
+          case 'temperature':
             layerUrl = `https://tile.openweathermap.org/map/temp_new/{z}/{x}/{y}.png?appid=${apiKey}`;
             opacity = 0.6;
             break;
-          case "wind":
+          case 'wind':
             layerUrl = `https://tile.openweathermap.org/map/wind_new/{z}/{x}/{y}.png?appid=${apiKey}`;
             opacity = 0.6;
             break;
-          case "pressure":
+          case 'pressure':
             layerUrl = `https://tile.openweathermap.org/map/pressure_new/{z}/{x}/{y}.png?appid=${apiKey}`;
             opacity = 0.6;
             break;
@@ -218,7 +230,7 @@ function WeatherLayers({ layers, apiKey }: { layers: WeatherLayers; apiKey: stri
 
         if (layerUrl) {
           const weatherLayer = L.tileLayer(layerUrl, {
-            attribution: "Weather data © OpenWeatherMap",
+            attribution: 'Weather data © OpenWeatherMap',
             opacity: opacity,
             maxZoom: 18,
             isWeatherLayer: true, // Custom property to identify weather layers
@@ -255,11 +267,11 @@ export function WeatherMap({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
       className={cn(
-        "relative rounded-lg overflow-hidden shadow-lg",
-        isFullscreen && "fixed inset-0 z-50 rounded-none",
-        className
+        'relative rounded-lg overflow-hidden shadow-lg',
+        isFullscreen && 'fixed inset-0 z-50 rounded-none',
+        className,
       )}
-      style={{ height: isFullscreen ? "100vh" : "100%" }}
+      style={{ height: isFullscreen ? '100vh' : '100%' }}
     >
       <MapContainer
         center={center}
@@ -288,7 +300,9 @@ export function WeatherMap({
         {selectedLocation?.lat && selectedLocation?.lon && (
           <Marker
             position={[selectedLocation.lat, selectedLocation.lon]}
-            icon={createWeatherIcon(currentWeatherData?.current?.weather[0]?.icon || "")}
+            icon={createWeatherIcon(
+              currentWeatherData?.current?.weather[0]?.icon || '',
+            )}
           >
             <Popup>
               <Card className="min-w-[250px] p-4 border-0 shadow-none">
@@ -304,14 +318,22 @@ export function WeatherMap({
                     <div className="space-y-2">
                       <div className="flex items-center space-x-3">
                         <div className="text-2xl">
-                          {currentWeatherData.current.weather[0].icon.startsWith("01")
-                            ? "☀️"
-                            : currentWeatherData.current.weather[0].icon.startsWith("09") ||
-                              currentWeatherData.current.weather[0].icon.startsWith("10")
-                            ? "🌧️"
-                            : currentWeatherData.current.weather[0].icon.startsWith("11")
-                            ? "⛈️"
-                            : "☁️"}
+                          {currentWeatherData.current.weather[0].icon.startsWith(
+                            '01',
+                          )
+                            ? '☀️'
+                            : currentWeatherData.current.weather[0].icon.startsWith(
+                                  '09',
+                                ) ||
+                                currentWeatherData.current.weather[0].icon.startsWith(
+                                  '10',
+                                )
+                              ? '🌧️'
+                              : currentWeatherData.current.weather[0].icon.startsWith(
+                                    '11',
+                                  )
+                                ? '⛈️'
+                                : '☁️'}
                         </div>
                         <div>
                           <div className="text-xl font-bold text-blue-600">
@@ -327,26 +349,35 @@ export function WeatherMap({
                         <div className="flex items-center space-x-2">
                           <Thermometer className="w-4 h-4 text-red-500" />
                           <span>
-                            Terasa: {Math.round(currentWeatherData.current.main.feels_like)}°C
+                            Terasa:{' '}
+                            {Math.round(
+                              currentWeatherData.current.main.feels_like,
+                            )}
+                            °C
                           </span>
                         </div>
                         <div className="flex items-center space-x-2">
                           <Cloud className="w-4 h-4 text-gray-500" />
                           <span>
-                            Kelembapan: {currentWeatherData.current.main.humidity}%
+                            Kelembapan:{' '}
+                            {currentWeatherData.current.main.humidity}%
                           </span>
                         </div>
                         <div className="flex items-center space-x-2">
                           <Wind className="w-4 h-4 text-green-500" />
                           <span>
-                            Angin: {Math.round(currentWeatherData.current.wind.speed * 3.6)}{" "}
+                            Angin:{' '}
+                            {Math.round(
+                              currentWeatherData.current.wind.speed * 3.6,
+                            )}{' '}
                             km/h
                           </span>
                         </div>
                         <div className="flex items-center space-x-2">
                           <Gauge className="w-4 h-4 text-purple-500" />
                           <span>
-                            Tekanan: {currentWeatherData.current.main.pressure} hPa
+                            Tekanan: {currentWeatherData.current.main.pressure}{' '}
+                            hPa
                           </span>
                         </div>
                       </div>
@@ -356,7 +387,8 @@ export function WeatherMap({
                           <div className="flex items-center space-x-2 p-2 bg-blue-50 rounded">
                             <CloudRain className="w-4 h-4 text-blue-500" />
                             <span className="text-sm text-blue-700">
-                              Hujan: {currentWeatherData.current.rain['1h']} mm/jam
+                              Hujan: {currentWeatherData.current.rain['1h']}{' '}
+                              mm/jam
                             </span>
                           </div>
                         )}
@@ -368,7 +400,7 @@ export function WeatherMap({
                   )}
 
                   <div className="text-xs text-slate-500 border-t pt-2">
-                    Lat: {selectedLocation.lat.toFixed(4)}, Lng:{" "}
+                    Lat: {selectedLocation.lat.toFixed(4)}, Lng:{' '}
                     {selectedLocation.lon.toFixed(4)}
                   </div>
                 </div>
@@ -402,11 +434,11 @@ export function WeatherMap({
                 .filter(([_, isActive]) => isActive)
                 .map(([layerType, _]) => {
                   const layerNames = {
-                    clouds: "Awan",
-                    precipitation: "Hujan",
-                    temperature: "Suhu",
-                    wind: "Angin",
-                    pressure: "Tekanan",
+                    clouds: 'Awan',
+                    precipitation: 'Hujan',
+                    temperature: 'Suhu',
+                    wind: 'Angin',
+                    pressure: 'Tekanan',
                   };
                   return (
                     <Badge

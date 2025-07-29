@@ -1,5 +1,5 @@
 // components/contexts/AlertCountContext.tsx
-"use client";
+'use client';
 
 import React, {
   createContext,
@@ -7,12 +7,12 @@ import React, {
   useState,
   useEffect,
   ReactNode,
-} from "react";
+} from 'react';
 
 // Definisikan tipe data Alert (harus konsisten di seluruh proyek)
 interface Alert {
   id: string;
-  level: "Rendah" | "Sedang" | "Tinggi";
+  level: 'Rendah' | 'Sedang' | 'Tinggi';
   location: string;
   timestamp: string;
   reason: string;
@@ -32,14 +32,14 @@ interface AlertCountContextType {
 
 // Buat Context dengan nilai default
 const AlertCountContext = createContext<AlertCountContextType | undefined>(
-  undefined
+  undefined,
 );
 
 // Hook kustom untuk menggunakan context
 export function useAlertCount() {
   const context = useContext(AlertCountContext);
   if (context === undefined) {
-    throw new Error("useAlertCount must be used within an AlertCountProvider");
+    throw new Error('useAlertCount must be used within an AlertCountProvider');
   }
   return context;
 }
@@ -59,18 +59,18 @@ export function AlertCountProvider({ children }: AlertCountProviderProps) {
     setLoadingAlerts(true);
     setErrorAlerts(null);
     try {
-      const response = await fetch("/api/alerts-data");
+      const response = await fetch('/api/alerts-data');
       if (!response.ok) {
-        throw new Error("Failed to fetch alerts data.");
+        throw new Error('Failed to fetch alerts data.');
       }
       const data: Alert[] = await response.json();
       setAlertCount(data.length); // Update total count
       setHighAlertCount(
-        data.filter((alert) => alert.level === "Tinggi").length
+        data.filter((alert) => alert.level === 'Tinggi').length,
       ); // Hitung peringatan tingkat tinggi
     } catch (err: any) {
-      console.error("Error fetching alerts for header/sidebar:", err);
-      setErrorAlerts(err.message || "Failed to load alerts.");
+      console.error('Error fetching alerts for header/sidebar:', err);
+      setErrorAlerts(err.message || 'Failed to load alerts.');
       setAlertCount(0); // Reset count on error
       setHighAlertCount(0);
     } finally {

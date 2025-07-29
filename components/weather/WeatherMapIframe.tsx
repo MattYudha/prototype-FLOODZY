@@ -44,7 +44,8 @@ export function WeatherMapIframe({
       weatherContentHtml = `<div class="status-overlay loading"><div class="animate-spin"></div><span>Memuat cuaca...</span></div>`;
     } else if (weatherError) {
       weatherContentHtml = `<div class="status-overlay error"><span>Error: ${weatherError}</span></div>`;
-    } else if (currentWeatherData?.current) { // Check for currentWeatherData.current
+    } else if (currentWeatherData?.current) {
+      // Check for currentWeatherData.current
       const { icon, weather, main } = currentWeatherData.current;
       const description = weather[0].description;
       const temperature = main.temp;

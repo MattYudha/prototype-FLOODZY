@@ -191,25 +191,27 @@ export function WeatherDisplay({
               {/* UV Index removed as it's not available from this endpoint */}
               <div className="flex items-center space-x-1 text-sm mt-1">
                 <Thermometer className="h-4 w-4" />
-                <span>Terasa: {getRoundedValue(current.main.feels_like)}°C</span>
+                <span>
+                  Terasa: {getRoundedValue(current.main.feels_like)}°C
+                </span>
               </div>
               <div className="flex items-center space-x-1 text-sm mt-1">
                 <Sunrise className="h-4 w-4" />
                 <span>
-                  Terbit:{" "}
+                  Terbit:{' '}
                   {new Date(current.sys.sunrise * 1000).toLocaleTimeString(
-                    "id-ID",
-                    { hour: "2-digit", minute: "2-digit" }
+                    'id-ID',
+                    { hour: '2-digit', minute: '2-digit' },
                   )}
                 </span>
               </div>
               <div className="flex items-center space-x-1 text-sm mt-1">
                 <Sunset className="h-4 w-4" />
                 <span>
-                  Terbenam:{" "}
+                  Terbenam:{' '}
                   {new Date(current.sys.sunset * 1000).toLocaleTimeString(
-                    "id-ID",
-                    { hour: "2-digit", minute: "2-digit" }
+                    'id-ID',
+                    { hour: '2-digit', minute: '2-digit' },
                   )}
                 </span>
               </div>
@@ -261,12 +263,12 @@ export function WeatherDisplay({
                         metric.key === 'humidity'
                           ? current.main.humidity
                           : metric.key === 'windSpeed'
-                          ? current.wind.speed
-                          : metric.key === 'pressure'
-                          ? current.main.pressure
-                          : metric.key === 'visibility'
-                          ? current.visibility
-                          : undefined,
+                            ? current.wind.speed
+                            : metric.key === 'pressure'
+                              ? current.main.pressure
+                              : metric.key === 'visibility'
+                                ? current.visibility
+                                : undefined,
                         metric.key === 'visibility',
                       )}
                     </span>

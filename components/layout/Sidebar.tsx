@@ -1,9 +1,9 @@
 // components/layout/Sidebar.tsx
-"use client";
+'use client';
 
-import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import Link from "next/link";
+import { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import Link from 'next/link';
 import {
   Home,
   Map,
@@ -19,12 +19,12 @@ import {
   AlertTriangle,
   MapPin,
   TrendingUp,
-} from "lucide-react";
-import { Button } from "@/components/ui/Button";
-import { Badge } from "@/components/ui/Badge";
-import { useMediaQuery } from "@/hooks/useMediaQuery";
-import { cn } from "@/lib/utils";
-import { useAlertCount } from "@/components/contexts/AlertCountContext";
+} from 'lucide-react';
+import { Button } from '@/components/ui/Button';
+import { Badge } from '@/components/ui/Badge';
+import { useMediaQuery } from '@/hooks/useMediaQuery';
+import { cn } from '@/lib/utils';
+import { useAlertCount } from '@/components/contexts/AlertCountContext';
 
 interface NavItem {
   id: string;
@@ -45,71 +45,71 @@ interface QuickActionItem {
 
 const navigationItems: NavItem[] = [
   {
-    id: "home",
-    label: "Dashboard",
-    href: "/",
+    id: 'home',
+    label: 'Dashboard',
+    href: '/',
     icon: Home,
-    color: "text-primary",
+    color: 'text-primary',
   },
   {
-    id: "map",
-    label: "Peta Banjir",
-    href: "/peta-banjir",
+    id: 'map',
+    label: 'Peta Banjir',
+    href: '/peta-banjir',
     icon: Map,
-    color: "text-blue-500",
+    color: 'text-blue-500',
   },
   {
-    id: "weather",
-    label: "Prakiraan Cuaca",
-    href: "/prakiraan-cuaca",
+    id: 'weather',
+    label: 'Prakiraan Cuaca',
+    href: '/prakiraan-cuaca',
     icon: Cloud,
-    color: "text-sky-500",
+    color: 'text-sky-500',
   },
   {
-    id: "alerts",
-    label: "Peringatan",
-    href: "/peringatan",
+    id: 'alerts',
+    label: 'Peringatan',
+    href: '/peringatan',
     icon: Bell,
-    color: "text-warning",
+    color: 'text-warning',
     // badge akan diisi secara dinamis dari context
   },
   {
-    id: "stats",
-    label: "Statistik Data",
-    href: "/statistika",
+    id: 'stats',
+    label: 'Statistik Data',
+    href: '/statistika',
     icon: BarChart,
-    color: "text-green-500",
+    color: 'text-green-500',
   },
 ];
 
 const quickActions: QuickActionItem[] = [
   {
-    id: "report-flood",
-    label: "Lapor Banjir",
+    id: 'report-flood',
+    label: 'Lapor Banjir',
     icon: AlertTriangle,
-    color: "text-red-500",
-    onClick: () => console.log("Lapor Banjir clicked"),
+    color: 'text-red-500',
+    onClick: () => console.log('Lapor Banjir clicked'),
   },
   {
-    id: "evacuation-info",
-    label: "Info Evakuasi",
+    id: 'evacuation-info',
+    label: 'Info Evakuasi',
     icon: Users,
-    color: "text-purple-500",
-    onClick: () => console.log("Evakuasi clicked"),
+    color: 'text-purple-500',
+    onClick: () => console.log('Evakuasi clicked'),
   },
   {
-    id: "current-weather",
-    label: "Cuaca Sekarang",
+    id: 'current-weather',
+    label: 'Cuaca Sekarang',
     icon: Cloud,
-    color: "text-sky-500",
-    onClick: () => console.log("Cuaca clicked"),
+    color: 'text-sky-500',
+    onClick: () => console.log('Cuaca clicked'),
   },
   {
-    id: "sensor-data",
-    label: "Data Sensor",
+    id: 'sensor-data',
+    label: 'Data Sensor',
     icon: TrendingUp,
-    color: "text-green-500",
-    onClick: () => console.log("Sensor clicked"),
+    color: 'text-green-500',
+    onClick: () => console.log('Sensor clicked'),
   },
 ];
 
@@ -126,7 +126,7 @@ export function Sidebar({
   isCollapsed,
   setIsCollapsed,
 }: SidebarProps) {
-  const isMobile = useMediaQuery("(max-width: 768px)");
+  const isMobile = useMediaQuery('(max-width: 768px)');
   const { highAlertCount, loadingAlerts } = useAlertCount();
 
   const sidebarVariants = {
@@ -162,14 +162,14 @@ export function Sidebar({
       {/* Sidebar */}
       <motion.aside
         initial="closed"
-        animate={isOpen ? "open" : "closed"}
+        animate={isOpen ? 'open' : 'closed'}
         variants={sidebarVariants}
-        transition={{ type: "spring", damping: 20, stiffness: 300 }}
+        transition={{ type: 'spring', damping: 20, stiffness: 300 }}
         className={cn(
-          "fixed left-0 top-16 h-[calc(100vh-4rem)] z-50 flex flex-col",
-          "bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60",
-          "border-r border-border shadow-xl",
-          isMobile ? "w-70" : isCollapsed ? "w-16" : "w-64"
+          'fixed left-0 top-16 h-[calc(100vh-4rem)] z-50 flex flex-col',
+          'bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60',
+          'border-r border-border shadow-xl',
+          isMobile ? 'w-70' : isCollapsed ? 'w-16' : 'w-64',
         )}
       >
         {/* Header sidebar */}
@@ -196,7 +196,7 @@ export function Sidebar({
                 <ChevronRight size={16} />
               ) : (
                 <ChevronLeft size={16} />
-              )}{" "}
+              )}{' '}
             </Button>
           )}
         </div>
@@ -206,13 +206,13 @@ export function Sidebar({
           {navigationItems.map((item, index) => {
             // ✅ Tentukan badge secara dinamis untuk item "Peringatan"
             const currentBadge =
-              item.id === "alerts" && highAlertCount > 0 && !loadingAlerts
+              item.id === 'alerts' && highAlertCount > 0 && !loadingAlerts
                 ? highAlertCount
                 : item.badge;
 
             // Pastikan currentBadge adalah number sebelum perbandingan numerik
             const badgeValue =
-              typeof currentBadge === "string"
+              typeof currentBadge === 'string'
                 ? parseInt(currentBadge, 10)
                 : currentBadge;
 
@@ -227,12 +227,12 @@ export function Sidebar({
                   <Button
                     variant="ghost"
                     className={cn(
-                      "w-full justify-start h-12 font-medium transition-all duration-200",
-                      "hover:bg-muted hover:translate-x-1",
-                      isCollapsed && "justify-center"
+                      'w-full justify-start h-12 font-medium transition-all duration-200',
+                      'hover:bg-muted hover:translate-x-1',
+                      isCollapsed && 'justify-center',
                     )}
                   >
-                    <item.icon className={cn("h-5 w-5", item.color)} />
+                    <item.icon className={cn('h-5 w-5', item.color)} />
                     {!isCollapsed && (
                       <>
                         <span className="ml-3">{item.label}</span>
@@ -242,7 +242,7 @@ export function Sidebar({
                             {badgeValue}
                           </Badge>
                         )}
-                        {item.id === "alerts" &&
+                        {item.id === 'alerts' &&
                           loadingAlerts && ( // Indikator loading untuk alerts
                             <motion.div
                               className="absolute right-3 h-2 w-2 bg-warning rounded-full"
@@ -251,7 +251,7 @@ export function Sidebar({
                               transition={{
                                 duration: 1,
                                 repeat: Infinity,
-                                type: "tween",
+                                type: 'tween',
                               }}
                             />
                           )}
@@ -279,8 +279,8 @@ export function Sidebar({
 
           <div
             className={cn(
-              "space-y-2",
-              isCollapsed && "flex flex-col items-center"
+              'space-y-2',
+              isCollapsed && 'flex flex-col items-center',
             )}
           >
             {quickActions.map((action, index) => (
@@ -292,14 +292,14 @@ export function Sidebar({
               >
                 <Button
                   variant="outline"
-                  size={isCollapsed ? "icon" : "sm"}
+                  size={isCollapsed ? 'icon' : 'sm'}
                   className="w-full justify-start hover:scale-105"
                   onClick={action.onClick}
                 >
-                  <action.icon className={cn("h-4 w-4", action.color)} />
+                  <action.icon className={cn('h-4 w-4', action.color)} />
                   {!isCollapsed && (
                     <span className="ml-2">{action.label}</span>
-                  )}{" "}
+                  )}{' '}
                 </Button>
               </motion.div>
             ))}
@@ -311,12 +311,12 @@ export function Sidebar({
           <Button
             variant="ghost"
             className={cn(
-              "w-full justify-start h-10",
-              isCollapsed && "justify-center"
+              'w-full justify-start h-10',
+              isCollapsed && 'justify-center',
             )}
           >
             <Settings className="h-4 w-4 text-muted-foreground" />
-            {!isCollapsed && <span className="ml-3">Pengaturan</span>}{" "}
+            {!isCollapsed && <span className="ml-3">Pengaturan</span>}{' '}
           </Button>
         </div>
       </motion.aside>

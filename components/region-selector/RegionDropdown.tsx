@@ -1,18 +1,18 @@
 // src/components/region-selector/RegionDropdown.tsx
-"use client";
+'use client';
 
-import { useState } from "react";
-import { useRegionData } from "@/hooks/useRegionData";
+import { useState } from 'react';
+import { useRegionData } from '@/hooks/useRegionData';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+} from '@/components/ui/select';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import {
   Frown,
   MapPin,
@@ -23,11 +23,11 @@ import {
   CheckCircle,
   Info,
   Loader2,
-} from "lucide-react";
-import { WeatherData } from "@/lib/api";
-import { WeatherMapIframe } from "@/components/weather/WeatherMapIframe";
+} from 'lucide-react';
+import { WeatherData } from '@/lib/api';
+import { WeatherMapIframe } from '@/components/weather/WeatherMapIframe';
 
-import { SelectedLocation } from "@/app/state";
+import { SelectedLocation } from '@/app/state';
 
 interface RegionDropdownProps {
   onSelectDistrict?: (location: SelectedLocation) => void;
@@ -48,34 +48,34 @@ export function RegionDropdown({
     string | null
   >(null);
   const [selectedRegencyCode, setSelectedRegencyCode] = useState<string | null>(
-    null
+    null,
   );
   const [selectedDistrictCode, setSelectedDistrictCode] = useState<
     string | null
   >(null);
 
   const [displayProvinceName, setDisplayProvinceName] = useState<string | null>(
-    null
+    null,
   );
   const [displayRegencyName, setDisplayRegencyName] = useState<string | null>(
-    null
+    null,
   );
   const [displayDistrictName, setDisplayDistrictName] = useState<string | null>(
-    null
+    null,
   );
 
   const {
     data: provinces,
     loading: loadingProvinces,
     error: errorProvinces,
-  } = useRegionData({ type: "provinces" });
+  } = useRegionData({ type: 'provinces' });
 
   const {
     data: regencies,
     loading: loadingRegencies,
     error: errorRegencies,
   } = useRegionData({
-    type: "regencies",
+    type: 'regencies',
     parentCode: selectedProvinceCode,
     enabled: !!selectedProvinceCode,
   });
@@ -85,7 +85,7 @@ export function RegionDropdown({
     loading: loadingDistricts,
     error: errorDistricts,
   } = useRegionData({
-    type: "districts",
+    type: 'districts',
     parentCode: selectedRegencyCode,
     enabled: !!selectedRegencyCode,
   });
@@ -122,7 +122,7 @@ export function RegionDropdown({
     }
 
     const selectedDistrict = districts.find(
-      (d) => d.sub_district_code === Number(value)
+      (d) => d.sub_district_code === Number(value),
     );
 
     if (selectedDistrict) {
@@ -136,13 +136,13 @@ export function RegionDropdown({
 
       if (lat == null || lng == null || isNaN(lat) || isNaN(lng)) {
         console.warn(
-          `Invalid coordinates for district ${name}: lat=${lat}, lng=${lng}`
+          `Invalid coordinates for district ${name}: lat=${lat}, lng=${lng}`,
         );
       }
 
       const locationData = {
         districtCode: String(selectedDistrict.sub_district_code),
-        districtName: selectedDistrict.sub_district_name || "",
+        districtName: selectedDistrict.sub_district_name || '',
         regencyCode: selectedRegencyCode,
         provinceCode: selectedProvinceCode,
         latitude: lat,
@@ -177,7 +177,7 @@ export function RegionDropdown({
     icon: React.ReactNode,
     valueKey: string,
     nameKey: string,
-    currentDisplayName: string | null
+    currentDisplayName: string | null,
   ) => (
     <div className="space-y-1.5">
       <div className="flex items-center gap-1.5 text-xs font-medium text-gray-300">
@@ -186,7 +186,7 @@ export function RegionDropdown({
         {loading && <Loader2 className="h-3 w-3 animate-spin text-cyan-400" />}
       </div>
       <Select
-        value={selectedValue || ""}
+        value={selectedValue || ''}
         onValueChange={onValueChange}
         disabled={disabled}
       >
@@ -223,7 +223,7 @@ export function RegionDropdown({
             >
               <div className="flex items-center gap-2 w-full">
                 <span className="text-xs text-gray-400 min-w-[20px] sm:min-w-[24px] bg-gray-700/50 px-1 sm:px-1.5 py-0.5 rounded-sm flex-shrink-0">
-                  {String(index + 1).padStart(2, "0")}
+                  {String(index + 1).padStart(2, '0')}
                 </span>
                 <span className="text-xs sm:text-sm font-medium truncate">
                   {item[nameKey]}
@@ -266,27 +266,27 @@ export function RegionDropdown({
             <div className="flex items-center gap-1.5 text-xs text-gray-400">
               <div
                 className={`w-1.5 h-1.5 rounded-full transition-colors ${
-                  selectedProvinceCode ? "bg-cyan-400" : "bg-gray-600"
+                  selectedProvinceCode ? 'bg-cyan-400' : 'bg-gray-600'
                 }`}
               />
               <div
                 className={`w-1.5 h-1.5 rounded-full transition-colors ${
-                  selectedRegencyCode ? "bg-cyan-400" : "bg-gray-600"
+                  selectedRegencyCode ? 'bg-cyan-400' : 'bg-gray-600'
                 }`}
               />
               <div
                 className={`w-1.5 h-1.5 rounded-full transition-colors ${
-                  selectedDistrictCode ? "bg-cyan-400" : "bg-gray-600"
+                  selectedDistrictCode ? 'bg-cyan-400' : 'bg-gray-600'
                 }`}
               />
               <span className="ml-1.5 text-xs">
                 {selectedDistrictCode
-                  ? "Lengkap"
+                  ? 'Lengkap'
                   : selectedRegencyCode
-                  ? "2/3"
-                  : selectedProvinceCode
-                  ? "1/3"
-                  : "0/3"}
+                    ? '2/3'
+                    : selectedProvinceCode
+                      ? '1/3'
+                      : '0/3'}
               </span>
             </div>
           </div>
@@ -319,17 +319,17 @@ export function RegionDropdown({
                 <div className="hidden md:flex items-center gap-2">
                   <div
                     className={`w-2.5 h-2.5 rounded-full transition-colors ${
-                      selectedProvinceCode ? "bg-cyan-400" : "bg-gray-600"
+                      selectedProvinceCode ? 'bg-cyan-400' : 'bg-gray-600'
                     }`}
                   />
                   <div
                     className={`w-2.5 h-2.5 rounded-full transition-colors ${
-                      selectedRegencyCode ? "bg-cyan-400" : "bg-gray-600"
+                      selectedRegencyCode ? 'bg-cyan-400' : 'bg-gray-600'
                     }`}
                   />
                   <div
                     className={`w-2.5 h-2.5 rounded-full transition-colors ${
-                      selectedDistrictCode ? "bg-cyan-400" : "bg-gray-600"
+                      selectedDistrictCode ? 'bg-cyan-400' : 'bg-gray-600'
                     }`}
                   />
                 </div>
@@ -348,42 +348,42 @@ export function RegionDropdown({
                 {renderSelectField(
                   selectedProvinceCode,
                   handleProvinceChange,
-                  "Provinsi",
+                  'Provinsi',
                   loadingProvinces,
                   loadingProvinces,
                   provinces,
                   <Globe className="h-3 w-3 text-cyan-400" />,
-                  "province_code",
-                  "province_name",
-                  displayProvinceName
+                  'province_code',
+                  'province_name',
+                  displayProvinceName,
                 )}
 
                 {/* Regency Selection */}
                 {renderSelectField(
                   selectedRegencyCode,
                   handleRegencyChange,
-                  "Kabupaten/Kota",
+                  'Kabupaten/Kota',
                   loadingRegencies,
                   !selectedProvinceCode || loadingRegencies,
                   regencies,
                   <Building2 className="h-3 w-3 text-cyan-400" />,
-                  "city_code",
-                  "city_name",
-                  displayRegencyName
+                  'city_code',
+                  'city_name',
+                  displayRegencyName,
                 )}
 
                 {/* District Selection */}
                 {renderSelectField(
                   selectedDistrictCode,
                   handleDistrictChange,
-                  "Kecamatan",
+                  'Kecamatan',
                   loadingDistricts,
                   !selectedRegencyCode || loadingDistricts,
                   districts,
                   <MapPin className="h-3 w-3 text-cyan-400" />,
-                  "sub_district_code",
-                  "sub_district_name",
-                  displayDistrictName
+                  'sub_district_code',
+                  'sub_district_name',
+                  displayDistrictName,
                 )}
               </div>
 

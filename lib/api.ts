@@ -20,7 +20,7 @@ export interface RegionData {
 }
 
 export interface OverpassElement {
-  type: "node" | "way" | "relation";
+  type: 'node' | 'way' | 'relation';
   id: number;
   lat?: number;
   lon?: number;
@@ -134,7 +134,7 @@ export interface PetabencanaReport {
   event_type: string;
   geom: {
     coordinates: [number, number];
-    type: "Point";
+    type: 'Point';
   };
   image?: string;
   source: string;
@@ -164,25 +164,25 @@ export interface NominatimResult {
 // ===============================================
 
 export async function fetchRegions(
-  type: "provinces" | "regencies" | "districts" | "villages",
-  parentCode?: number | string
+  type: 'provinces' | 'regencies' | 'districts' | 'villages',
+  parentCode?: number | string,
 ): Promise<RegionData[]> {
   console.log(
-    `fetchRegions called with type: ${type}, parentCode: ${parentCode}`
+    `fetchRegions called with type: ${type}, parentCode: ${parentCode}`,
   );
   const params = new URLSearchParams({ type });
   if (parentCode) {
-    params.append("parent_code", String(parentCode));
+    params.append('parent_code', String(parentCode));
   }
 
   const url = `/api/regions?${params.toString()}`;
   console.log(`Fetching from URL: ${url}`);
   const response = await fetch(url, {
-    method: "GET",
+    method: 'GET',
     headers: {
-      "Content-Type": "application/json",
+      'Content-Type': 'application/json',
     },
-    cache: "no-cache",
+    cache: 'no-cache',
   });
   console.log(`Response status: ${response.status}`);
   if (!response.ok) {
@@ -200,7 +200,7 @@ export async function fetchDisasterProneData(
   south: number,
   west: number,
   north: number,
-  east: number
+  east: number,
 ): Promise<OverpassResponse> {
   const query = `
 [out:json][timeout:25];
@@ -236,18 +236,18 @@ export async function fetchDisasterProneData(
 out body geom;
 `.trim();
 
-  console.log("Overpass API Query:", query);
+  console.log('Overpass API Query:', query);
 
-  const response = await fetch("https://overpass-api.de/api/interpreter", {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+  const response = await fetch('https://overpass-api.de/api/interpreter', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body: `data=${encodeURIComponent(query)}`,
   });
 
   if (!response.ok) {
     const errorText = await response.text();
     throw new Error(
-      `Failed to fetch disaster prone data from Overpass API: ${response.status} ${response.statusText} - ${errorText}`
+      `Failed to fetch disaster prone data from Overpass API: ${response.status} ${response.statusText} - ${errorText}`,
     );
   }
 
@@ -257,7 +257,7 @@ out body geom;
 export async function fetchWeatherData(
   lat: number,
   lon: number,
-  apiKey: string
+  apiKey: string,
 ): Promise<WeatherData> {
   const url = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${apiKey}&units=metric&lang=id`;
   const response = await fetch(url);
@@ -266,7 +266,7 @@ export async function fetchWeatherData(
     const errorData = await response.json();
     throw new Error(
       errorData.message ||
-        `Failed to fetch weather data: ${response.status} ${response.statusText}`
+        `Failed to fetch weather data: ${response.status} ${response.statusText}`,
     );
   }
 
@@ -279,14 +279,14 @@ export async function fetchWeatherData(
     windSpeed: data.wind.speed * 3.6,
     description: data.weather[0].description,
     icon: data.weather[0].icon,
-    rain1h: data.rain?.["1h"] || 0,
+    rain1h: data.rain?.['1h'] || 0,
     dt: data.dt,
   };
   return weather;
 }
 
 export async function fetchWaterLevelData(
-  districtName?: string
+  districtName?: string,
 ): Promise<WaterLevelPost[]> {
   const apiUrl = `/api/water-level-proxy${districtName ? `?districtName=${encodeURIComponent(districtName)}` : ''}`;
   const response = await fetch(apiUrl);
@@ -295,7 +295,7 @@ export async function fetchWaterLevelData(
     const errorData = await response.json();
     throw new Error(
       errorData.error ||
-        `Failed to fetch water level data from local proxy: ${response.status} ${response.statusText}`
+        `Failed to fetch water level data from local proxy: ${response.status} ${response.statusText}`,
     );
   }
 
@@ -304,7 +304,7 @@ export async function fetchWaterLevelData(
 }
 
 export async function fetchPumpStatusData(
-  districtName?: string
+  districtName?: string,
 ): Promise<PumpData[]> {
   const apiUrl = `/api/pump-status-proxy${districtName ? `?districtName=${encodeURIComponent(districtName)}` : ''}`;
   const response = await fetch(apiUrl);
@@ -313,7 +313,7 @@ export async function fetchPumpStatusData(
     const errorData = await response.json();
     throw new Error(
       errorData.error ||
-        `Failed to fetch pump status data from local proxy: ${response.status} ${response.statusText}`
+        `Failed to fetch pump status data from local proxy: ${response.status} ${response.statusText}`,
     );
   }
 
@@ -322,12 +322,12 @@ export async function fetchPumpStatusData(
 }
 
 export async function fetchBmkgLatestQuake(): Promise<BmkgGempaData> {
-  const url = "https://data.bmkg.go.id/DataMKG/TEWS/autogempa.json";
-  const response = await fetch(url, { cache: "no-store" });
+  const url = 'https://data.bmkg.go.id/DataMKG/TEWS/autogempa.json';
+  const response = await fetch(url, { cache: 'no-store' });
 
   if (!response.ok) {
     throw new Error(
-      `Failed to fetch BMKG earthquake data: ${response.statusText}`
+      `Failed to fetch BMKG earthquake data: ${response.statusText}`,
     );
   }
 
@@ -335,21 +335,21 @@ export async function fetchBmkgLatestQuake(): Promise<BmkgGempaData> {
   if (data && data.Infogempa && data.Infogempa.gempa) {
     return data.Infogempa.gempa;
   }
-  throw new Error("Invalid BMKG earthquake data format.");
+  throw new Error('Invalid BMKG earthquake data format.');
 }
 
 export async function fetchPetabencanaReports(
-  hazardType: string = "flood",
-  timeframe: string = "1h"
+  hazardType: string = 'flood',
+  timeframe: string = '1h',
 ): Promise<PetabencanaReport[]> {
-  const apiUrl = `${process.env.NEXT_PUBLIC_APP_URL}/api/petabencana-proxy?hazardType=${hazardType}&timeframe=${timeframe}`;
-  const response = await fetch(apiUrl, { cache: "no-store" });
+  const apiUrl = `/api/petabencana-proxy?hazardType=${hazardType}&timeframe=${timeframe}`;
+  const response = await fetch(apiUrl, { cache: 'no-store' });
 
   if (!response.ok) {
     const errorData = await response.json();
     throw new Error(
       errorData.error ||
-        `Gagal mengambil laporan PetaBencana.id dari proksi: ${response.statusText}`
+        `Gagal mengambil laporan PetaBencana.id dari proksi: ${response.statusText}`,
     );
   }
 
@@ -358,23 +358,23 @@ export async function fetchPetabencanaReports(
 }
 
 export async function geocodeLocation(
-  query: string
+  query: string,
 ): Promise<NominatimResult[]> {
   const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(
-    query
+    query,
   )}&format=json&limit=1&countrycodes=id`;
   console.log(`[Geocoding API] Fetching from URL: ${url}`);
 
   const response = await fetch(url, {
     headers: {
-      "User-Agent": "FloodzyApp/1.0 (devarahmat12334@gmail.com)", // Ganti dengan email Anda
+      'User-Agent': 'FloodzyApp/1.0 (devarahmat12334@gmail.com)', // Ganti dengan email Anda
     },
   });
 
   if (!response.ok) {
     const errorText = await response.text();
     throw new Error(
-      `Failed to geocode location '${query}': ${response.status} - ${errorText}`
+      `Failed to geocode location '${query}': ${response.status} - ${errorText}`,
     );
   }
 

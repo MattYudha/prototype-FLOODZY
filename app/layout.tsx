@@ -1,22 +1,22 @@
 // app/layout.tsx
-"use client"; // <-- Keep this here because useState and useEffect are used
+'use client'; // <-- Keep this here because useState and useEffect are used
 
-import "./globals.css";
-import { Inter } from "next/font/google";
-import { ThemeProvider } from "@/hooks/useTheme";
-import { Toaster } from "react-hot-toast";
+import './globals.css';
+import { Inter } from 'next/font/google';
+import { ThemeProvider } from '@/hooks/useTheme';
+import { Toaster } from 'react-hot-toast';
 
-import { useState, useEffect } from "react"; // <-- Import useEffect
-import { useMediaQuery } from "@/hooks/useMediaQuery"; // <-- Import useMediaQuery
+import { useState, useEffect } from 'react'; // <-- Import useEffect
+import { useMediaQuery } from '@/hooks/useMediaQuery'; // <-- Import useMediaQuery
 
-import { Header } from "@/components/layout/Header";
-import { Sidebar } from "@/components/layout/Sidebar";
-import { AlertCountProvider } from "@/components/contexts/AlertCountContext";
-import "leaflet/dist/leaflet.css";
+import { Header } from '@/components/layout/Header';
+import { Sidebar } from '@/components/layout/Sidebar';
+import { AlertCountProvider } from '@/components/contexts/AlertCountContext';
+import 'leaflet/dist/leaflet.css';
 
 // ... sisa kode layout Anda
 
-const inter = Inter({ subsets: ["latin"] });
+const inter = Inter({ subsets: ['latin'] });
 
 export default function RootLayout({
   children,
@@ -30,7 +30,7 @@ export default function RootLayout({
   const [isCollapsed, setIsCollapsed] = useState(false); // Default ke false (tidak di-collapse)
 
   // Hook untuk mendeteksi ukuran layar
-  const isDesktop = useMediaQuery("(min-width: 768px)");
+  const isDesktop = useMediaQuery('(min-width: 768px)');
 
   // Efek untuk mengatur perilaku sidebar berdasarkan ukuran layar
   useEffect(() => {
@@ -75,9 +75,9 @@ export default function RootLayout({
                   ${
                     isDesktop
                       ? isCollapsed
-                        ? "ml-16" // Jika desktop dan collapsed
-                        : "ml-64" // Jika desktop dan tidak collapsed
-                      : "ml-0" // Jika mobile, margin-left 0 (sidebar akan overlay)
+                        ? 'ml-16' // Jika desktop dan collapsed
+                        : 'ml-64' // Jika desktop dan tidak collapsed
+                      : 'ml-0' // Jika mobile, margin-left 0 (sidebar akan overlay)
                   }
                 `}
               >
@@ -96,9 +96,9 @@ export default function RootLayout({
             toastOptions={{
               duration: 5000,
               style: {
-                background: "hsl(var(--card))",
-                color: "hsl(var(--card-foreground))",
-                border: "1px solid hsl(var(--border))",
+                background: 'hsl(var(--card))',
+                color: 'hsl(var(--card-foreground))',
+                border: '1px solid hsl(var(--border))',
               },
             }}
           />

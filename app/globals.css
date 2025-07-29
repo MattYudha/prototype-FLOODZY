@@ -41,7 +41,7 @@
     --ring: 224 71.4% 4.1%;
     --radius: 0.5rem;
   }
-  
+
   .dark {
     --background: 224 71.4% 4.1%;
     --foreground: 210 20% 98%;
@@ -69,14 +69,19 @@
   * {
     @apply border-border;
   }
-  
+
   body {
     @apply bg-background text-foreground;
     font-family: 'Inter', sans-serif;
     line-height: 1.6;
   }
-  
-  h1, h2, h3, h4, h5, h6 {
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
     line-height: 1.2;
   }
 }
@@ -179,7 +184,7 @@
 
 /* Gradient text */
 .gradient-text {
-  background: linear-gradient(135deg, #06B6D4 0%, #3B82F6 100%);
+  background: linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -223,7 +228,7 @@
   .mobile-padding {
     @apply px-4;
   }
-  
+
   .mobile-text {
     @apply text-sm;
   }

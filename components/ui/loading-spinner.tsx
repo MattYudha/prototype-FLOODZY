@@ -1,28 +1,28 @@
-"use client";
+'use client';
 
-import { cva, type VariantProps } from "class-variance-authority";
-import { motion } from "framer-motion";
-import { Loader2 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cva, type VariantProps } from 'class-variance-authority';
+import { motion } from 'framer-motion';
+import { Loader2 } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
-const spinnerVariants = cva("animate-spin", {
+const spinnerVariants = cva('animate-spin', {
   variants: {
     size: {
-      sm: "h-4 w-4",
-      default: "h-6 w-6",
-      lg: "h-8 w-8",
-      xl: "h-10 w-10",
+      sm: 'h-4 w-4',
+      default: 'h-6 w-6',
+      lg: 'h-8 w-8',
+      xl: 'h-10 w-10',
     },
     color: {
-      default: "text-primary",
-      secondary: "text-secondary",
-      muted: "text-muted-foreground",
-      white: "text-white",
+      default: 'text-primary',
+      secondary: 'text-secondary',
+      muted: 'text-muted-foreground',
+      white: 'text-white',
     },
   },
   defaultVariants: {
-    size: "default",
-    color: "default",
+    size: 'default',
+    color: 'default',
   },
 });
 
@@ -57,7 +57,7 @@ export function LoadingSkeleton({
 }: React.HTMLAttributes<HTMLDivElement>) {
   return (
     <motion.div
-      className={cn("animate-pulse rounded-md bg-muted", className)}
+      className={cn('animate-pulse rounded-md bg-muted', className)}
       initial={{ opacity: 0.5 }}
       animate={{ opacity: [0.5, 0.8, 0.5] }}
       transition={{ duration: 1.5, repeat: Infinity }}
@@ -68,7 +68,7 @@ export function LoadingSkeleton({
 
 export function LoadingDots({ className }: { className?: string }) {
   return (
-    <div className={cn("flex space-x-1", className)}>
+    <div className={cn('flex space-x-1', className)}>
       {[0, 1, 2].map((i) => (
         <motion.div
           key={i}
@@ -91,7 +91,7 @@ export function LoadingDots({ className }: { className?: string }) {
 export function LoadingPulse({ className }: { className?: string }) {
   return (
     <motion.div
-      className={cn("h-4 w-4 bg-primary rounded-full", className)}
+      className={cn('h-4 w-4 bg-primary rounded-full', className)}
       animate={{
         scale: [1, 1.2, 1],
         opacity: [0.5, 1, 0.5],
@@ -106,7 +106,7 @@ export function LoadingPulse({ className }: { className?: string }) {
 
 export function LoadingWave({ className }: { className?: string }) {
   return (
-    <div className={cn("flex space-x-1", className)}>
+    <div className={cn('flex space-x-1', className)}>
       {[0, 1, 2, 3, 4].map((i) => (
         <motion.div
           key={i}

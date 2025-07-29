@@ -20,7 +20,7 @@ export function useDebounce<T>(value: T, delay: number): T {
 
 export function useDebounceCallback<T extends (...args: any[]) => void>(
   callback: T,
-  delay: number
+  delay: number,
 ): T {
   const [timeoutId, setTimeoutId] = useState<NodeJS.Timeout | null>(null);
 

@@ -5,36 +5,39 @@ import { motion } from 'framer-motion';
 import { Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-const spinnerVariants = cva(
-  'animate-spin',
-  {
-    variants: {
-      size: {
-        sm: 'h-4 w-4',
-        default: 'h-6 w-6',
-        lg: 'h-8 w-8',
-        xl: 'h-10 w-10',
-      },
-      color: {
-        default: 'text-primary',
-        secondary: 'text-secondary',
-        muted: 'text-muted-foreground',
-        white: 'text-white',
-      },
+const spinnerVariants = cva('animate-spin', {
+  variants: {
+    size: {
+      sm: 'h-4 w-4',
+      default: 'h-6 w-6',
+      lg: 'h-8 w-8',
+      xl: 'h-10 w-10',
     },
-    defaultVariants: {
-      size: 'default',
-      color: 'default',
+    color: {
+      default: 'text-primary',
+      secondary: 'text-secondary',
+      muted: 'text-muted-foreground',
+      white: 'text-white',
     },
-  }
-);
+  },
+  defaultVariants: {
+    size: 'default',
+    color: 'default',
+  },
+});
 
-export interface LoadingSpinnerProps extends VariantProps<typeof spinnerVariants> {
+export interface LoadingSpinnerProps
+  extends VariantProps<typeof spinnerVariants> {
   className?: string;
   text?: string;
 }
 
-export function LoadingSpinner({ className, size, color, text }: LoadingSpinnerProps) {
+export function LoadingSpinner({
+  className,
+  size,
+  color,
+  text,
+}: LoadingSpinnerProps) {
   return (
     <motion.div
       className="flex items-center justify-center space-x-2"
@@ -48,7 +51,10 @@ export function LoadingSpinner({ className, size, color, text }: LoadingSpinnerP
   );
 }
 
-export function LoadingSkeleton({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
+export function LoadingSkeleton({
+  className,
+  ...props
+}: React.HTMLAttributes<HTMLDivElement>) {
   return (
     <motion.div
       className={cn('animate-pulse rounded-md bg-muted', className)}
