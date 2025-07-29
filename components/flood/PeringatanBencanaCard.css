@@ -36,7 +36,7 @@
 
 /* Efek cahaya di belakang kartu (Blur) */
 .pc-card-wrapper::before {
-  content: "";
+  content: '';
   position: absolute;
   inset: -20px;
   background: var(--behind-gradient);

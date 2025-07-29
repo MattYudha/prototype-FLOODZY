@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
+import { WeatherMap } from '@/components/weather/WeatherMap';
 import {
   Search,
   MapPin,
@@ -142,55 +143,7 @@ const MapUpdater = ({ center, zoom }: { center: unknown; zoom: unknown }) => {
   }, [center, zoom, map]);
   return null;
 };
-const WeatherMap = ({
-  center,
-  zoom,
-  weatherLayers,
-  selectedLocation,
-  apiKey,
-}: {
-  center: unknown;
-  zoom: unknown;
-  weatherLayers: unknown;
-  selectedLocation: unknown;
-  apiKey: unknown;
-}) => {
-  const layerUrls: { [key: string]: string } = {
-    clouds: `https://tile.openweathermap.org/map/clouds_new/{z}/{x}/{y}.png?appid=${apiKey}`,
-    precipitation: `https://tile.openweathermap.org/map/precipitation_new/{z}/{x}/{y}.png?appid=${apiKey}`,
-    pressure: `https://tile.openweathermap.org/map/pressure_new/{z}/{x}/{y}.png?appid=${apiKey}`,
-    wind: `https://tile.openweathermap.org/map/wind_new/{z}/{x}/{y}.png?appid=${apiKey}`,
-    temperature: `https://tile.openweathermap.org/map/temp_new/{z}/{x}/{y}.png?appid=${apiKey}`,
-  };
-  return (
-    <MapContainer
-      center={center}
-      zoom={zoom}
-      style={{
-        height: '100%',
-        width: '100%',
-        backgroundColor: '#1e293b',
-        borderRadius: '1rem',
-      }}
-      zoomControl={false}
-    >
-      <TileLayer
-        url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
-      />
-      {selectedLocation && (
-        <Marker position={[selectedLocation.lat, selectedLocation.lon]}>
-          <Popup>{selectedLocation.name}</Popup>
-        </Marker>
-      )}
-      {Object.entries(weatherLayers).map(
-        ([key, value]) =>
-          value && <TileLayer key={key} url={layerUrls[key]} opacity={0.7} />,
-      )}
-      <MapUpdater center={center} zoom={zoom} />
-    </MapContainer>
-  );
-};
+
 
 // --- Komponen Display (Ada Perubahan) ---
 const WeatherDisplay = ({
@@ -400,7 +353,7 @@ const DailyForecast = ({
 };
 
 export default function PrakiraanCuacaPage() {
-  const API_KEY = process.env.NEXT_PUBLIC_OPENWEATHER_API_KEY;
+  const API_KEY = process.env.NEXT_PUBLIC_OPENWEATHERMAP_API_KEY;
 
   const [selectedLocation, setSelectedLocation] = useState<null | {
     name: string;
@@ -753,6 +706,8 @@ export default function PrakiraanCuacaPage() {
                 <RegionDropdown
                   onSelectRegion={handleRegionSelect}
                   selectedLocation={selectedLocation}
+                  weatherLayers={weatherLayers}
+                  apiKey={API_KEY}
                 />
               </CardContent>
             </Card>
@@ -834,13 +789,21 @@ export default function PrakiraanCuacaPage() {
               <CardContent className="p-0">
                 <div className="h-[500px] lg:h-[calc(100vh-140px)]">
                   {API_KEY ? (
-                    <WeatherMap
-                      center={currentMapCenter}
-                      zoom={currentMapZoom}
-                      weatherLayers={weatherLayers}
-                      selectedLocation={selectedLocation}
-                      apiKey={API_KEY}
-                    />
+                    <>
+                      {console.log('Rendering WeatherMap with props:')}
+                      {console.log('  center:', currentMapCenter)}
+                      {console.log('  zoom:', currentMapZoom)}
+                      {console.log('  weatherLayers:', weatherLayers)}
+                      {console.log('  selectedLocation:', selectedLocation)}
+                      {console.log('  apiKey:', API_KEY)}
+                      <WeatherMap
+                        center={currentMapCenter}
+                        zoom={currentMapZoom}
+                        weatherLayers={weatherLayers}
+                        selectedLocation={selectedLocation}
+                        apiKey={API_KEY}
+                      />
+                    </>
                   ) : (
                     <div className="h-full flex items-center justify-center text-center p-4">
                       <Alert

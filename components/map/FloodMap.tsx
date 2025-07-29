@@ -9,11 +9,12 @@ import {
   Popup,
   Polygon,
   useMap,
+  useMapEvents,
 } from 'react-leaflet';
 import { Icon, LatLngExpression } from 'leaflet';
 
 // Impor dari file proyek Anda
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import {
   Layers,
@@ -29,10 +30,12 @@ import {
   CircleDot, // Icon untuk risiko umum/rendah
   Info, // Icon untuk level info
   XCircle, // Icon untuk level danger/critical
+  Search,
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
+import { Input } from '@/components/ui/input';
 import { MapControls } from './MapControls';
 import { MapLegend } from './MapLegend';
 import {
@@ -46,6 +49,8 @@ import { FloodZone, WeatherData, FloodAlert } from '@/types'; // Import FloodAle
 import { cn } from '@/lib/utils';
 import { OverpassElement } from '@/lib/api';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
+import { getCoordsByLocationName, getLocationNameByCoords } from '@/lib/geocodingService';
+import { GeocodingResponse } from '@/types/geocoding';
 
 // Custom marker icons
 const createCustomIcon = (color: string, iconHtml: string) => {
@@ -97,13 +102,7 @@ function MapUpdater({ center, zoom }: MapUpdaterProps) {
 }
 
 // Map reset component (tetap sama)
-function MapReset({
-  center,
-  zoom,
-}: {
-  center: LatLngExpression;
-  zoom: number;
-}) {
+function MapReset({ center, zoom }: { center: LatLngExpression; zoom: number }) {
   const map = useMap();
 
   const resetView = () => {
@@ -125,6 +124,18 @@ function MapReset({
   );
 }
 
+function MapEvents({ onLocationSelect, onReverseGeocode }) {
+  useMapEvents({
+    click: async (e) => {
+      const { lat, lng } = e.latlng;
+      onLocationSelect(e.latlng);
+      const locationName = await getLocationNameByCoords(lat, lng);
+      onReverseGeocode(e.latlng, locationName);
+    },
+  });
+  return null;
+}
+
 interface FloodMapProps {
   className?: string;
   height?: string;
@@ -137,6 +148,8 @@ interface FloodMapProps {
   realtimeFloodAlerts?: FloodAlert[]; // Properti baru untuk peringatan real-time
   loadingRealtimeAlerts?: boolean; // Properti baru untuk status loading
   realtimeAlertsError?: string | null; // Properti baru untuk error
+  weatherLayers?: { [key: string]: boolean };
+  apiKey?: string;
 }
 
 export function FloodMap({
@@ -151,6 +164,8 @@ export function FloodMap({
   realtimeFloodAlerts = [], // Inisialisasi
   loadingRealtimeAlerts = false, // Inisialisasi
   realtimeAlertsError = null, // Inisialisasi
+  weatherLayers = {}, // Inisialisasi
+  apiKey, // Inisialisasi
 }: FloodMapProps) {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [selectedLayer, setSelectedLayer] = useState('street');
@@ -159,7 +174,28 @@ export function FloodMap({
   const [showRealtimeAlerts, setShowRealtimeAlerts] = useState(true); // State baru untuk toggle peringatan real-time
   const [floodZones] = useState<FloodZone[]>(FLOOD_ZONES_MOCK); // Mock data asli
   const [weatherData] = useState<WeatherData>(WEATHER_MOCK_DATA);
-  const mapRef = useRef<L.Map | null>(null); // PERBAIKAN: Inisialisasi dengan null
+  const mapRef = useRef<L.Map | null>(null);
+
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchedLocation, setSearchedLocation] = useState<GeocodingResponse | null>(null);
+  const [clickedLocation, setClickedLocation] = useState<{ latlng: LatLngExpression, name: string } | null>(null);
+
+  const handleSearch = async () => {
+    if (searchQuery.trim() !== '') {
+      const result = await getCoordsByLocationName(searchQuery);
+      if (result) {
+        setSearchedLocation(result);
+        const map = mapRef.current;
+        if (map) {
+          map.setView([result.lat, result.lon], 13);
+        }
+      }
+    }
+  };
+
+  const handleMapClick = (latlng, locationName) => {
+    setClickedLocation({ latlng, name: locationName?.name || 'Lokasi tidak diketahui' });
+  };
 
   const toggleFullscreen = () => {
     setIsFullscreen(!isFullscreen);
@@ -317,6 +353,29 @@ export function FloodMap({
       )}
       style={{ height: isFullscreen ? '100vh' : height }}
     >
+      <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[1000] w-full max-w-xs sm:max-w-sm md:max-w-md px-4">
+        <div className="relative flex items-center">
+          <Input
+            type="text"
+            placeholder="Cari nama kota atau wilayah..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                handleSearch();
+              }
+            }}
+            className="w-full pl-10 pr-20 py-2 rounded-full bg-slate-900/80 border-slate-700/50 text-white placeholder:text-slate-400 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 shadow-lg backdrop-blur-md transition-colors duration-300"
+          />
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
+          <Button
+            onClick={handleSearch}
+            className="absolute right-2 top-1/2 -translate-y-1/2 px-3 py-1 h-8 rounded-full bg-cyan-600 hover:bg-cyan-700 text-white text-sm"
+          >
+            Cari
+          </Button>
+        </div>
+      </div>
       <MapContainer
         center={center}
         zoom={zoom}
@@ -332,6 +391,30 @@ export function FloodMap({
 
         <MapUpdater center={center} zoom={zoom} />
         <MapReset center={DEFAULT_MAP_CENTER} zoom={DEFAULT_MAP_ZOOM} />
+        <MapEvents onLocationSelect={() => {}} onReverseGeocode={handleMapClick} />
+
+        {Object.entries(weatherLayers).map(
+          ([key, value]) =>
+            value && apiKey && (
+              <TileLayer
+                key={key}
+                url={`https://tile.openweathermap.org/map/${key}_new/{z}/{x}/{y}.png?appid=${apiKey}`}
+                opacity={0.7}
+              />
+            ),
+        )}
+
+        {searchedLocation && (
+          <Marker position={[searchedLocation.lat, searchedLocation.lon]}>
+            <Popup>{searchedLocation.name}</Popup>
+          </Marker>
+        )}
+
+        {clickedLocation && (
+          <Marker position={clickedLocation.latlng}>
+            <Popup>{clickedLocation.name}</Popup>
+          </Marker>
+        )}
 
         {/* Marker di lokasi yang dipilih (dari RegionDropdown via page.tsx) */}
         {center[0] !== DEFAULT_MAP_CENTER[0] ||

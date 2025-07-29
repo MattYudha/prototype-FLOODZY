@@ -288,7 +288,11 @@ export async function fetchWeatherData(
 export async function fetchWaterLevelData(
   districtName?: string,
 ): Promise<WaterLevelPost[]> {
-  const apiUrl = `/api/water-level-proxy${districtName ? `?districtName=${encodeURIComponent(districtName)}` : ''}`;
+  let apiUrl = '/api/water-level-proxy';
+  const trimmedDistrictName = districtName?.trim();
+  if (trimmedDistrictName) {
+    apiUrl += `?districtName=${encodeURIComponent(trimmedDistrictName)}`;
+  }
   const response = await fetch(apiUrl);
 
   if (!response.ok) {
@@ -306,7 +310,11 @@ export async function fetchWaterLevelData(
 export async function fetchPumpStatusData(
   districtName?: string,
 ): Promise<PumpData[]> {
-  const apiUrl = `/api/pump-status-proxy${districtName ? `?districtName=${encodeURIComponent(districtName)}` : ''}`;
+  let apiUrl = '/api/pump-status-proxy';
+  const trimmedDistrictName = districtName?.trim();
+  if (trimmedDistrictName) {
+    apiUrl += `?districtName=${encodeURIComponent(trimmedDistrictName)}`;
+  }
   const response = await fetch(apiUrl);
 
   if (!response.ok) {

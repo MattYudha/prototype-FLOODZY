@@ -1,24 +1,19 @@
-import { useState, useCallback } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { fetchPumpStatusData, PumpData } from '@/lib/api';
 
-export const usePumpStatusData = () => {
-  const [pumpStatusData, setPumpStatusData] = useState<PumpData[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+export const usePumpStatusData = (districtName?: string) => {
+  const { data, isLoading, error, refetch } = useQuery<PumpData[], Error>({
+    queryKey: ['pumpStatusData', districtName],
+    queryFn: () => fetchPumpStatusData(districtName),
+    enabled: !!districtName, // Only fetch if districtName is provided
+    staleTime: 1000 * 60 * 5, // Data is considered fresh for 5 minutes
+    refetchOnWindowFocus: false, // Disable refetch on window focus
+  });
 
-  const fetchPumpStatus = useCallback(async (districtName?: string) => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const data = await fetchPumpStatusData(districtName);
-      setPumpStatusData(data);
-    } catch (err: any) {
-      setError(err.message);
-      setPumpStatusData([]);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
-  return { pumpStatusData, isLoading, error, fetchPumpStatus };
+  return {
+    pumpStatusData: data || [],
+    isLoading,
+    error: error ? error.message : null,
+    fetchPumpStatus: refetch,
+  };
 };

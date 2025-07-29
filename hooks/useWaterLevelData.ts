@@ -1,24 +1,21 @@
-import { useState, useCallback } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { fetchWaterLevelData, WaterLevelPost } from '@/lib/api';
 
-export const useWaterLevelData = () => {
-  const [waterLevelPosts, setWaterLevelPosts] = useState<WaterLevelPost[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+export const useWaterLevelData = (districtName?: string) => {
+  const { data, isLoading, error, refetch } = useQuery<WaterLevelPost[], Error>(
+    {
+      queryKey: ['waterLevelData', districtName],
+      queryFn: () => fetchWaterLevelData(districtName),
+      enabled: !!districtName, // Only fetch if districtName is provided
+      staleTime: 1000 * 60 * 5, // Data is considered fresh for 5 minutes
+      refetchOnWindowFocus: false, // Disable refetch on window focus
+    },
+  );
 
-  const fetchWaterLevels = useCallback(async (districtName?: string) => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const data = await fetchWaterLevelData(districtName);
-      setWaterLevelPosts(data);
-    } catch (err: any) {
-      setError(err.message);
-      setWaterLevelPosts([]);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
-  return { waterLevelPosts, isLoading, error, fetchWaterLevels };
+  return {
+    waterLevelPosts: data || [],
+    isLoading,
+    error: error ? error.message : null,
+    fetchWaterLevels: refetch,
+  };
 };

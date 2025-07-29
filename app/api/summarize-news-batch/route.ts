@@ -16,29 +16,26 @@ export async function POST(request: Request) {
     for (const report of newsReports) {
       try {
         // Make an internal call to the existing /api/gemini-alerts endpoint
-        const geminiAlertsResponse = await fetch(
-          'http://localhost:3000/api/gemini-alerts',
-          {
-            // Assuming localhost for internal call
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              alertData: {
-                level: 'info', // Default level for news summary context
-                location: report.source,
-                timestamp: report.timestamp,
-                reason: report.title,
-                severity: 5, // Default severity for news summary context
-                affectedAreas: [], // No specific affected areas from news
-                estimatedPopulation: 0, // No specific population from news
-                newsContent: report.content, // Pass the full news content
-                requestType: 'news_summary', // Indicate this is a news summary request
-              },
-            }),
+        const geminiAlertsResponse = await fetch('/api/gemini-alerts', {
+          // Assuming localhost for internal call
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
           },
-        );
+          body: JSON.stringify({
+            alertData: {
+              level: 'info', // Default level for news summary context
+              location: report.source,
+              timestamp: report.timestamp,
+              reason: report.title,
+              severity: 5, // Default severity for news summary context
+              affectedAreas: [], // No specific affected areas from news
+              estimatedPopulation: 0, // No specific population from news
+              newsContent: report.content, // Pass the full news content
+              requestType: 'news_summary', // Indicate this is a news summary request
+            },
+          }),
+        });
 
         if (!geminiAlertsResponse.ok) {
           const errorData = await geminiAlertsResponse.json();

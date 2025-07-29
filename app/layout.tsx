@@ -5,12 +5,14 @@ import './globals.css';
 import { Inter } from 'next/font/google';
 import { ThemeProvider } from '@/hooks/useTheme';
 import { Toaster } from 'react-hot-toast';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 import { useState, useEffect } from 'react'; // <-- Import useEffect
 import { useMediaQuery } from '@/hooks/useMediaQuery'; // <-- Import useMediaQuery
 
 import { Header } from '@/components/layout/Header';
 import { Sidebar } from '@/components/layout/Sidebar';
+const queryClient = new QueryClient();
 import { AlertCountProvider } from '@/components/contexts/AlertCountContext';
 import 'leaflet/dist/leaflet.css';
 
@@ -59,8 +61,9 @@ export default function RootLayout({
   return (
     <html lang="id" suppressHydrationWarning>
       <body className={inter.className}>
-        <ThemeProvider>
-          <AlertCountProvider>
+        <QueryClientProvider client={queryClient}>
+          <ThemeProvider>
+            <AlertCountProvider>
             <div className="flex min-h-screen bg-background">
               {/* Sidebar */}
               <Sidebar
@@ -90,19 +93,20 @@ export default function RootLayout({
                 <main className="flex-1 p-4">{children}</main>
               </div>
             </div>
+            <Toaster
+              position="top-right"
+              toastOptions={{
+                duration: 5000,
+                style: {
+                  background: 'hsl(var(--card))',
+                  color: 'hsl(var(--card-foreground))',
+                  border: '1px solid hsl(var(--border))',
+                },
+              }}
+            />
           </AlertCountProvider>
-          <Toaster
-            position="top-right"
-            toastOptions={{
-              duration: 5000,
-              style: {
-                background: 'hsl(var(--card))',
-                color: 'hsl(var(--card-foreground))',
-                border: '1px solid hsl(var(--border))',
-              },
-            }}
-          />
         </ThemeProvider>
+      </QueryClientProvider>
       </body>
     </html>
   );

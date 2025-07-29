@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
-import { Icon, LatLngExpression } from 'leaflet';
+import L, { Icon, LatLngExpression } from 'leaflet';
 import {
   RotateCcw,
   Maximize2,
@@ -89,6 +89,7 @@ interface WeatherMapProps {
   currentWeatherData: CombinedWeatherData | null; // Use CombinedWeatherData
   className?: string;
   apiKey: string; // Add apiKey prop
+  onToggleLayer: (layerType: keyof WeatherLayers) => void;
 }
 
 // Custom weather marker icon
@@ -423,6 +424,44 @@ export function WeatherMap({
           <Maximize2 size={16} className="text-white" />
         )}
       </Button>
+
+      {/* Weather layer toggles */}
+      <div className="absolute top-4 right-20 z-[1000] flex flex-col space-y-2">
+        {Object.entries(weatherLayers).map(([layerType, isActive]) => {
+          const IconComponent = {
+            clouds: Cloud,
+            precipitation: CloudRain,
+            temperature: Thermometer,
+            wind: Wind,
+            pressure: Gauge,
+          }[layerType as keyof WeatherLayers];
+          const label = {
+            clouds: 'Awan',
+            precipitation: 'Hujan',
+            temperature: 'Suhu',
+            wind: 'Angin',
+            pressure: 'Tekanan',
+          }[layerType as keyof WeatherLayers];
+
+          return (
+            <Button
+              key={layerType}
+              variant="ghost"
+              size="icon"
+              onClick={() => onToggleLayer(layerType as keyof WeatherLayers)}
+              className={cn(
+                'bg-slate-800/80 backdrop-blur-sm border border-slate-700/50 hover:bg-slate-700/80',
+                isActive ? 'bg-blue-500/20 border-blue-500/30' : '',
+              )}
+              title={`Toggle ${label} Layer`}
+            >
+              {IconComponent && (
+                <IconComponent size={16} className="text-white" />
+              )}
+            </Button>
+          );
+        })}
+      </div>
 
       {/* Active layers indicator */}
       <div className="absolute bottom-4 left-4 z-[1000]">
