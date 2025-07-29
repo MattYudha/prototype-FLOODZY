@@ -1,5 +1,5 @@
 // src/components/map/FloodMap.tsx
-'use client';
+"use client";
 
 // Impor React-Leaflet
 import {
@@ -10,12 +10,21 @@ import {
   Polygon,
   useMap,
   useMapEvents,
-} from 'react-leaflet';
-import { Icon, LatLngExpression } from 'leaflet';
+} from "react-leaflet";
+import L, { Icon, LatLngExpression } from "leaflet";
+
+// Konfigurasi ikon default Leaflet
+delete L.Icon.Default.prototype._getIconUrl;
+
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: '/leaflet/images/marker-icon-2x.png',
+  iconUrl: '/leaflet/images/marker-icon.png',
+  shadowUrl: '/leaflet/images/marker-shadow.png',
+});
 
 // Impor dari file proyek Anda
-import { useEffect, useRef, useState, useCallback } from 'react';
-import { motion } from 'framer-motion';
+import { useEffect, useRef, useState, useCallback } from "react";
+import { motion } from "framer-motion";
 import {
   Layers,
   Maximize2,
@@ -31,26 +40,29 @@ import {
   Info, // Icon untuk level info
   XCircle, // Icon untuk level danger/critical
   Search,
-} from 'lucide-react';
-import { Button } from '@/components/ui/Button';
-import { Card } from '@/components/ui/Card';
-import { Badge } from '@/components/ui/Badge';
-import { Input } from '@/components/ui/input';
-import { MapControls } from './MapControls';
-import { MapLegend } from './MapLegend';
+} from "lucide-react";
+import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
+import { Badge } from "@/components/ui/Badge";
+import { Input } from "@/components/ui/input";
+import { MapControls } from "./MapControls";
+import { MapLegend } from "./MapLegend";
 import {
   DEFAULT_MAP_CENTER,
   DEFAULT_MAP_ZOOM,
   FLOOD_RISK_COLORS, // Menggunakan konstanta ini untuk warna
   FLOOD_ZONES_MOCK,
   WEATHER_MOCK_DATA,
-} from '@/lib/constants';
-import { FloodZone, WeatherData, FloodAlert } from '@/types'; // Import FloodAlert
-import { cn } from '@/lib/utils';
-import { OverpassElement } from '@/lib/api';
-import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
-import { getCoordsByLocationName, getLocationNameByCoords } from '@/lib/geocodingService';
-import { GeocodingResponse } from '@/types/geocoding';
+} from "@/lib/constants";
+import { FloodZone, WeatherData, FloodAlert } from "@/types"; // Import FloodAlert
+import { cn } from "@/lib/utils";
+import { OverpassElement } from "@/lib/api";
+import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
+import {
+  getCoordsByLocationName,
+  getLocationNameByCoords,
+} from "@/lib/geocodingService";
+import { GeocodingResponse } from "@/types/geocoding";
 
 // Custom marker icons
 const createCustomIcon = (color: string, iconHtml: string) => {
@@ -72,8 +84,8 @@ const createCustomIcon = (color: string, iconHtml: string) => {
   });
 };
 
-const floodIcon = createCustomIcon(FLOOD_RISK_COLORS.high, '🌊');
-const weatherIcon = createCustomIcon('#3B82F6', '☀️');
+const floodIcon = createCustomIcon(FLOOD_RISK_COLORS.high, "🌊");
+const weatherIcon = createCustomIcon("#3B82F6", "☀️");
 
 // Komponen Helper untuk mengupdate view peta
 interface MapUpdaterProps {
@@ -102,7 +114,13 @@ function MapUpdater({ center, zoom }: MapUpdaterProps) {
 }
 
 // Map reset component (tetap sama)
-function MapReset({ center, zoom }: { center: LatLngExpression; zoom: number }) {
+function MapReset({
+  center,
+  zoom,
+}: {
+  center: LatLngExpression;
+  zoom: number;
+}) {
   const map = useMap();
 
   const resetView = () => {
@@ -168,7 +186,7 @@ export function FloodMap({
   apiKey, // Inisialisasi
 }: FloodMapProps) {
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [selectedLayer, setSelectedLayer] = useState('street');
+  const [selectedLayer, setSelectedLayer] = useState("street");
   const [showFloodZones, setShowFloodZones] = useState(true); // Untuk mock data FLOOD_ZONES_MOCK
   const [showWeatherStations, setShowWeatherStations] = useState(true);
   const [showRealtimeAlerts, setShowRealtimeAlerts] = useState(true); // State baru untuk toggle peringatan real-time
@@ -176,12 +194,16 @@ export function FloodMap({
   const [weatherData] = useState<WeatherData>(WEATHER_MOCK_DATA);
   const mapRef = useRef<L.Map | null>(null);
 
-  const [searchQuery, setSearchQuery] = useState('');
-  const [searchedLocation, setSearchedLocation] = useState<GeocodingResponse | null>(null);
-  const [clickedLocation, setClickedLocation] = useState<{ latlng: LatLngExpression, name: string } | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchedLocation, setSearchedLocation] =
+    useState<GeocodingResponse | null>(null);
+  const [clickedLocation, setClickedLocation] = useState<{
+    latlng: LatLngExpression;
+    name: string;
+  } | null>(null);
 
   const handleSearch = async () => {
-    if (searchQuery.trim() !== '') {
+    if (searchQuery.trim() !== "") {
       const result = await getCoordsByLocationName(searchQuery);
       if (result) {
         setSearchedLocation(result);
@@ -194,14 +216,17 @@ export function FloodMap({
   };
 
   const handleMapClick = (latlng, locationName) => {
-    setClickedLocation({ latlng, name: locationName?.name || 'Lokasi tidak diketahui' });
+    setClickedLocation({
+      latlng,
+      name: locationName?.name || "Lokasi tidak diketahui",
+    });
   };
 
   const toggleFullscreen = () => {
     setIsFullscreen(!isFullscreen);
   };
 
-  const getPolygonColor = (riskLevel: FloodZone['riskLevel']) => {
+  const getPolygonColor = (riskLevel: FloodZone["riskLevel"]) => {
     return FLOOD_RISK_COLORS[riskLevel];
   };
 
@@ -212,7 +237,7 @@ export function FloodMap({
     let color;
     let cardTitle;
     let cardTitleColor;
-    let riskLabel = 'Tidak Dikategorikan'; // Label risiko di Legenda
+    let riskLabel = "Tidak Dikategorikan"; // Label risiko di Legenda
     const detailText =
       element.tags.name ||
       element.tags.description ||
@@ -223,59 +248,59 @@ export function FloodMap({
 
     // Prioritas 1: Risiko Kritis
     if (
-      element.tags.flood_prone === 'critical' ||
-      element.tags.hazard === 'critical_flood' ||
-      element.tags.disaster_type === 'extreme_flood'
+      element.tags.flood_prone === "critical" ||
+      element.tags.hazard === "critical_flood" ||
+      element.tags.disaster_type === "extreme_flood"
     ) {
-      iconToUse = createCustomIcon(FLOOD_RISK_COLORS.critical, '💀'); // Cokelat gelap (sesuai constants.ts)
+      iconToUse = createCustomIcon(FLOOD_RISK_COLORS.critical, "💀"); // Cokelat gelap (sesuai constants.ts)
       color = FLOOD_RISK_COLORS.critical; // Cokelat gelap (sesuai constants.ts)
-      cardTitle = 'Risiko Kritis (Bencana Ekstrim)';
-      cardTitleColor = 'text-red-800';
-      riskLabel = 'Risiko Kritis';
+      cardTitle = "Risiko Kritis (Bencana Ekstrim)";
+      cardTitleColor = "text-red-800";
+      riskLabel = "Risiko Kritis";
     }
     // Prioritas 2: Risiko Tinggi (Banjir Konkret) - MERAH
     else if (
-      element.tags.hazard === 'flood' ||
-      element.tags.flood_prone === 'yes' ||
-      (element.tags.waterway === 'river' &&
-        element.tags.seasonal === 'yes' &&
-        element.tags.flood_risk === 'high')
+      element.tags.hazard === "flood" ||
+      element.tags.flood_prone === "yes" ||
+      (element.tags.waterway === "river" &&
+        element.tags.seasonal === "yes" &&
+        element.tags.flood_risk === "high")
     ) {
       // Tambahan tag river, seasonal, flood_risk
-      iconToUse = createCustomIcon(FLOOD_RISK_COLORS.high, '🚨'); // Merah (sesuai constants.ts)
+      iconToUse = createCustomIcon(FLOOD_RISK_COLORS.high, "🚨"); // Merah (sesuai constants.ts)
       color = FLOOD_RISK_COLORS.high; // Merah (sesuai constants.ts)
-      cardTitle = 'Risiko Tinggi Banjir';
-      cardTitleColor = 'text-red-500';
-      riskLabel = 'Risiko Tinggi';
+      cardTitle = "Risiko Tinggi Banjir";
+      cardTitleColor = "text-red-500";
+      riskLabel = "Risiko Tinggi";
     }
     // Prioritas 3: Risiko Sedang (Longsor atau Area Rawan Lain) - KUNING
     else if (
-      element.tags.natural === 'landslide' ||
-      element.tags.hazard === 'landslide' ||
-      element.tags.natural === 'mudflow' ||
-      element.tags.landuse === 'landslide_prone'
+      element.tags.natural === "landslide" ||
+      element.tags.hazard === "landslide" ||
+      element.tags.natural === "mudflow" ||
+      element.tags.landuse === "landslide_prone"
     ) {
       // Tambahan mudflow, landslide_prone
-      iconToUse = createCustomIcon('#FFFF00', '⛰️'); // KUNING (explicit hex code)
-      color = '#FFFF00'; // KUNING (explicit hex code)
-      cardTitle = 'Risiko Sedang Longsor';
-      cardTitleColor = 'text-yellow-500';
-      riskLabel = 'Risiko Sedang';
+      iconToUse = createCustomIcon("#FFFF00", "⛰️"); // KUNING (explicit hex code)
+      color = "#FFFF00"; // KUNING (explicit hex code)
+      cardTitle = "Risiko Sedang Longsor";
+      cardTitleColor = "text-yellow-500";
+      riskLabel = "Risiko Sedang";
     }
     // Prioritas 4: Risiko Rendah (Fitur Air Umum yang Berpotensi) - HIJAU
     // Hanya dirender jika tidak ada tag risiko yang lebih tinggi, dan tetap dengan warna hijau
     else if (
       element.tags.waterway ||
-      element.tags.natural === 'water' ||
-      element.tags.man_made === 'dyke' ||
-      element.tags.landuse === 'basin' ||
-      element.tags.natural === 'wetland'
+      element.tags.natural === "water" ||
+      element.tags.man_made === "dyke" ||
+      element.tags.landuse === "basin" ||
+      element.tags.natural === "wetland"
     ) {
-      iconToUse = createCustomIcon(FLOOD_RISK_COLORS.low, '💧'); // HIJAU (sesuai constants.ts)
+      iconToUse = createCustomIcon(FLOOD_RISK_COLORS.low, "💧"); // HIJAU (sesuai constants.ts)
       color = FLOOD_RISK_COLORS.low; // HIJAU (sesuai constants.ts)
-      cardTitle = 'Risiko Rendah (Fitur Air)';
-      cardTitleColor = 'text-green-500';
-      riskLabel = 'Risiko Rendah';
+      cardTitle = "Risiko Rendah (Fitur Air)";
+      cardTitleColor = "text-green-500";
+      riskLabel = "Risiko Rendah";
     }
     // Jika tidak ada tag bencana spesifik yang terdeteksi di atas, fungsi akan mengembalikan null
     else {
@@ -298,37 +323,37 @@ export function FloodMap({
     let color;
     let cardTitle;
     let cardTitleColor;
-    let badgeVariant: 'info' | 'warning' | 'danger' | 'success' = 'info';
+    let badgeVariant: "info" | "warning" | "danger" | "success" = "info";
 
     switch (alert.level) {
-      case 'critical':
-        iconToUse = createCustomIcon(FLOOD_RISK_COLORS.critical, '💀');
+      case "critical":
+        iconToUse = createCustomIcon(FLOOD_RISK_COLORS.critical, "💀");
         color = FLOOD_RISK_COLORS.critical;
-        cardTitle = 'Peringatan KRITIS!';
-        cardTitleColor = 'text-red-800';
-        badgeVariant = 'danger';
+        cardTitle = "Peringatan KRITIS!";
+        cardTitleColor = "text-red-800";
+        badgeVariant = "danger";
         break;
-      case 'danger':
-        iconToUse = createCustomIcon(FLOOD_RISK_COLORS.high, '🚨');
+      case "danger":
+        iconToUse = createCustomIcon(FLOOD_RISK_COLORS.high, "🚨");
         color = FLOOD_RISK_COLORS.high;
-        cardTitle = 'Peringatan BAHAYA!';
-        cardTitleColor = 'text-red-500';
-        badgeVariant = 'danger';
+        cardTitle = "Peringatan BAHAYA!";
+        cardTitleColor = "text-red-500";
+        badgeVariant = "danger";
         break;
-      case 'warning':
-        iconToUse = createCustomIcon(FLOOD_RISK_COLORS.medium, '⚠️');
+      case "warning":
+        iconToUse = createCustomIcon(FLOOD_RISK_COLORS.medium, "⚠️");
         color = FLOOD_RISK_COLORS.medium;
-        cardTitle = 'Peringatan!';
-        cardTitleColor = 'text-yellow-500';
-        badgeVariant = 'warning';
+        cardTitle = "Peringatan!";
+        cardTitleColor = "text-yellow-500";
+        badgeVariant = "warning";
         break;
-      case 'info':
+      case "info":
       default:
-        iconToUse = createCustomIcon(FLOOD_RISK_COLORS.low, 'ℹ️');
+        iconToUse = createCustomIcon(FLOOD_RISK_COLORS.low, "ℹ️");
         color = FLOOD_RISK_COLORS.low;
-        cardTitle = 'Informasi';
-        cardTitleColor = 'text-blue-500';
-        badgeVariant = 'info';
+        cardTitle = "Informasi";
+        cardTitleColor = "text-blue-500";
+        badgeVariant = "info";
         break;
     }
 
@@ -347,11 +372,11 @@ export function FloodMap({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
       className={cn(
-        'relative rounded-lg overflow-hidden shadow-lg',
-        isFullscreen && 'fixed inset-0 z-50 rounded-none',
-        className,
+        "relative rounded-lg overflow-hidden shadow-lg",
+        isFullscreen && "fixed inset-0 z-50 rounded-none",
+        className
       )}
-      style={{ height: isFullscreen ? '100vh' : height }}
+      style={{ height: isFullscreen ? "100vh" : height }}
     >
       <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[1000] w-full max-w-xs sm:max-w-sm md:max-w-md px-4">
         <div className="relative flex items-center">
@@ -361,7 +386,7 @@ export function FloodMap({
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             onKeyDown={(e) => {
-              if (e.key === 'Enter') {
+              if (e.key === "Enter") {
                 handleSearch();
               }
             }}
@@ -391,17 +416,21 @@ export function FloodMap({
 
         <MapUpdater center={center} zoom={zoom} />
         <MapReset center={DEFAULT_MAP_CENTER} zoom={DEFAULT_MAP_ZOOM} />
-        <MapEvents onLocationSelect={() => {}} onReverseGeocode={handleMapClick} />
+        <MapEvents
+          onLocationSelect={() => {}}
+          onReverseGeocode={handleMapClick}
+        />
 
         {Object.entries(weatherLayers).map(
           ([key, value]) =>
-            value && apiKey && (
+            value &&
+            apiKey && (
               <TileLayer
                 key={key}
                 url={`https://tile.openweathermap.org/map/${key}_new/{z}/{x}/{y}.png?appid=${apiKey}`}
                 opacity={0.7}
               />
-            ),
+            )
         )}
 
         {searchedLocation && (
@@ -421,7 +450,7 @@ export function FloodMap({
         center[1] !== DEFAULT_MAP_CENTER[1] ? (
           <Marker position={center} icon={floodIcon}>
             <Popup>
-              Lokasi Terpilih: <br /> Lat: {center[0].toFixed(6)}, Lng:{' '}
+              Lokasi Terpilih: <br /> Lat: {center[0].toFixed(6)}, Lng:{" "}
               {center[1].toFixed(6)}
             </Popup>
           </Marker>
@@ -448,11 +477,11 @@ export function FloodMap({
                       <h3 className="font-semibold">{zone.name}</h3>
                       <Badge
                         variant={
-                          zone.riskLevel === 'high'
-                            ? 'danger'
-                            : zone.riskLevel === 'medium'
-                              ? 'warning'
-                              : 'success'
+                          zone.riskLevel === "high"
+                            ? "danger"
+                            : zone.riskLevel === "medium"
+                            ? "warning"
+                            : "success"
                         }
                       >
                         {zone.riskLevel.toUpperCase()}
@@ -503,26 +532,26 @@ export function FloodMap({
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     <div className="space-y-1">
                       <p className="text-muted-foreground">Suhu</p>
-                      <p className="font-medium">{weatherData.temperature}°C</p>
+                      <p className="font-medium">{weatherData.temperature !== undefined ? `${weatherData.temperature}°C` : 'N/A'}</p>
                     </div>
                     <div className="space-y-1">
                       <p className="text-muted-foreground">Kelembaban</p>
-                      <p className="font-medium">{weatherData.humidity}%</p>
+                      <p className="font-medium">{weatherData.humidity !== undefined ? `${weatherData.humidity}%` : 'N/A'}</p>
                     </div>
                     <div className="space-y-1">
                       <p className="text-muted-foreground">Angin</p>
                       <p className="font-medium">
-                        {weatherData.windSpeed} km/h
+                        {weatherData.windSpeed !== undefined ? `${weatherData.windSpeed} km/h` : 'N/A'}
                       </p>
                     </div>
                     <div className="space-y-1">
                       <p className="text-muted-foreground">Tekanan</p>
-                      <p className="font-medium">{weatherData.pressure} hPa</p>
+                      <p className="font-medium">{weatherData.pressure !== undefined ? `${weatherData.pressure} hPa` : 'N/A'}</p>
                     </div>
                   </div>
                   <div className="flex items-center space-x-2 p-2 bg-muted rounded">
                     <Droplets size={16} className="text-secondary" />
-                    <span className="text-sm">{weatherData.description}</span>
+                    <span className="text-sm">{weatherData.description || 'N/A'}</span>
                   </div>
                 </div>
               </Card>
@@ -560,7 +589,7 @@ export function FloodMap({
             // RENDER POLYGON UNTUK ELEMENT DENGAN GEOMETRI (WAY/RELATION)
             if (element.geometry && element.geometry.length > 0) {
               const positions = element.geometry.map(
-                (coord) => [coord.lat, coord.lon] as LatLngExpression,
+                (coord) => [coord.lat, coord.lon] as LatLngExpression
               );
 
               return (
@@ -591,15 +620,15 @@ export function FloodMap({
                       {Object.keys(element.tags).length > 0 && (
                         <div className="mt-2 text-xs text-gray-400">
                           <strong>Tags:</strong>
-                          <ul className="list-disc list-inside">
+                          <div className="flex flex-wrap gap-1 mt-1">
                             {Object.entries(element.tags).map(
                               ([key, value]) => (
-                                <li key={key}>
+                                <Badge key={key} variant="outline" className="text-xs">
                                   {key}: {value}
-                                </li>
-                              ),
+                                </Badge>
+                              )
                             )}
-                          </ul>
+                          </div>
                         </div>
                       )}
                     </Card>
@@ -608,7 +637,7 @@ export function FloodMap({
               );
             }
             // RENDER MARKER UNTUK NODE
-            else if (element.type === 'node' && element.lat && element.lon) {
+            else if (element.type === "node" && element.lat && element.lon) {
               return (
                 <Marker
                   key={`overpass-node-${element.id}`}
@@ -629,15 +658,15 @@ export function FloodMap({
                       {Object.keys(element.tags).length > 0 && (
                         <div className="mt-2 text-xs text-gray-400">
                           <strong>Tags:</strong>
-                          <ul className="list-disc list-inside">
+                          <div className="flex flex-wrap gap-1 mt-1">
                             {Object.entries(element.tags).map(
                               ([key, value]) => (
-                                <li key={key}>
+                                <Badge key={key} variant="outline" className="text-xs">
                                   {key}: {value}
-                                </li>
-                              ),
+                                </Badge>
+                              )
                             )}
-                          </ul>
+                          </div>
                         </div>
                       )}
                     </Card>
@@ -704,29 +733,35 @@ export function FloodMap({
                           {alert.level.toUpperCase()}
                         </Badge>
                       </div>
-                      <p className="text-sm mt-2">{alert.title}</p>
+                      <p className="text-sm mt-2">{alert.title || 'Tidak ada judul'}</p>
                       <p className="text-xs text-muted-foreground">
-                        {alert.message}
+                        {alert.message || 'Tidak ada deskripsi'}
                       </p>
-                      <div className="mt-2 text-xs text-gray-400">
-                        <strong>Wilayah Terdampak:</strong>
-                        <ul className="list-disc list-inside">
-                          {alert.affectedAreas.map((area, index) => (
-                            <li key={index}>{area}</li>
-                          ))}
-                        </ul>
-                      </div>
-                      <div className="mt-2 text-xs text-gray-400">
-                        <strong>Tindakan Disarankan:</strong>
-                        <ul className="list-disc list-inside">
-                          {alert.actions.map((action, index) => (
-                            <li key={index}>{action}</li>
-                          ))}
-                        </ul>
-                      </div>
+                      {alert.affectedAreas && alert.affectedAreas.length > 0 && (
+                        <div className="mt-2 text-xs text-gray-400">
+                          <strong>Wilayah Terdampak:</strong>
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            {alert.affectedAreas.map((area, index) => (
+                              <Badge key={index} variant="outline" className="text-xs">
+                                {area}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      {alert.actions && alert.actions.length > 0 && (
+                        <div className="mt-2 text-xs text-gray-400">
+                          <strong>Tindakan Disarankan:</strong>
+                          <ul className="list-disc list-inside ml-2">
+                            {alert.actions.map((action, index) => (
+                              <li key={index}>{action}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
                       <p className="text-xs text-muted-foreground mt-2">
-                        Pembaruan terakhir:{' '}
-                        {new Date(alert.timestamp).toLocaleString()}
+                        Pembaruan terakhir:{" "}
+                        {alert.timestamp ? new Date(alert.timestamp).toLocaleString() : 'N/A'}
                       </p>
                     </Card>
                   </Popup>
@@ -751,21 +786,25 @@ export function FloodMap({
                           {alert.level.toUpperCase()}
                         </Badge>
                       </div>
-                      <p className="text-sm mt-2">{alert.title}</p>
+                      <p className="text-sm mt-2">{alert.title || 'Tidak ada judul'}</p>
                       <p className="text-xs text-muted-foreground">
-                        {alert.message}
+                        {alert.message || 'Tidak ada deskripsi'}
                       </p>
-                      <div className="mt-2 text-xs text-gray-400">
-                        <strong>Wilayah Terdampak:</strong>
-                        <ul className="list-disc list-inside">
-                          {alert.affectedAreas.map((area, index) => (
-                            <li key={index}>{area}</li>
-                          ))}
-                        </ul>
-                      </div>
+                      {alert.affectedAreas && alert.affectedAreas.length > 0 && (
+                        <div className="mt-2 text-xs text-gray-400">
+                          <strong>Wilayah Terdampak:</strong>
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            {alert.affectedAreas.map((area, index) => (
+                              <Badge key={index} variant="outline" className="text-xs">
+                                {area}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                       <p className="text-xs text-muted-foreground mt-2">
-                        Pembaruan terakhir:{' '}
-                        {new Date(alert.timestamp).toLocaleString()}
+                        Pembaruan terakhir:{" "}
+                        {alert.timestamp ? new Date(alert.timestamp).toLocaleString() : 'N/A'}
                       </p>
                     </Card>
                   </Popup>

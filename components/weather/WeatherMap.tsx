@@ -254,6 +254,7 @@ export function WeatherMap({
   currentWeatherData,
   className,
   apiKey,
+  onToggleLayer,
 }: WeatherMapProps) {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const mapRef = useRef<L.Map | null>(null);
@@ -302,7 +303,7 @@ export function WeatherMap({
           <Marker
             position={[selectedLocation.lat, selectedLocation.lon]}
             icon={createWeatherIcon(
-              currentWeatherData?.current?.weather[0]?.icon || '',
+              currentWeatherData?.current?.weather?.[0]?.icon || '',
             )}
           >
             <Popup>
@@ -310,7 +311,7 @@ export function WeatherMap({
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <h3 className="font-semibold text-slate-800">
-                      {selectedLocation.name}
+                      {selectedLocation?.name || 'Lokasi Tidak Diketahui'}
                     </h3>
                     <Badge variant="secondary">Live</Badge>
                   </div>
@@ -319,18 +320,18 @@ export function WeatherMap({
                     <div className="space-y-2">
                       <div className="flex items-center space-x-3">
                         <div className="text-2xl">
-                          {currentWeatherData.current.weather[0].icon.startsWith(
+                          {currentWeatherData.current.weather?.[0]?.icon?.startsWith(
                             '01',
                           )
                             ? '☀️'
-                            : currentWeatherData.current.weather[0].icon.startsWith(
+                            : currentWeatherData.current.weather?.[0]?.icon?.startsWith(
                                   '09',
                                 ) ||
-                                currentWeatherData.current.weather[0].icon.startsWith(
+                                currentWeatherData.current.weather?.[0]?.icon?.startsWith(
                                   '10',
                                 )
                               ? '🌧️'
-                              : currentWeatherData.current.weather[0].icon.startsWith(
+                              : currentWeatherData.current.weather?.[0]?.icon?.startsWith(
                                     '11',
                                   )
                                 ? '⛈️'
@@ -338,10 +339,10 @@ export function WeatherMap({
                         </div>
                         <div>
                           <div className="text-xl font-bold text-blue-600">
-                            {Math.round(currentWeatherData.current.main.temp)}°C
+                            {Math.round(currentWeatherData.current.main?.temp || 0)}°C
                           </div>
                           <div className="text-sm text-slate-600 capitalize">
-                            {currentWeatherData.current.weather[0].description}
+                            {currentWeatherData.current.weather?.[0]?.description || 'Tidak diketahui'}
                           </div>
                         </div>
                       </div>
@@ -352,7 +353,7 @@ export function WeatherMap({
                           <span>
                             Terasa:{' '}
                             {Math.round(
-                              currentWeatherData.current.main.feels_like,
+                              currentWeatherData.current.main?.feels_like || 0,
                             )}
                             °C
                           </span>
@@ -361,23 +362,21 @@ export function WeatherMap({
                           <Cloud className="w-4 h-4 text-gray-500" />
                           <span>
                             Kelembapan:{' '}
-                            {currentWeatherData.current.main.humidity}%
+                            {currentWeatherData.current.main?.humidity ?? 'N/A'}%
                           </span>
                         </div>
                         <div className="flex items-center space-x-2">
                           <Wind className="w-4 h-4 text-green-500" />
                           <span>
                             Angin:{' '}
-                            {Math.round(
-                              currentWeatherData.current.wind.speed * 3.6,
-                            )}{' '}
+                            {currentWeatherData.current.wind?.speed !== undefined ? `${Math.round(currentWeatherData.current.wind.speed * 3.6)}` : 'N/A'}{' '}
                             km/h
                           </span>
                         </div>
                         <div className="flex items-center space-x-2">
                           <Gauge className="w-4 h-4 text-purple-500" />
                           <span>
-                            Tekanan: {currentWeatherData.current.main.pressure}{' '}
+                            Tekanan: {currentWeatherData.current.main?.pressure ?? 'N/A'}{' '}
                             hPa
                           </span>
                         </div>
@@ -401,8 +400,8 @@ export function WeatherMap({
                   )}
 
                   <div className="text-xs text-slate-500 border-t pt-2">
-                    Lat: {selectedLocation.lat.toFixed(4)}, Lng:{' '}
-                    {selectedLocation.lon.toFixed(4)}
+                    Lat: {selectedLocation?.lat?.toFixed(4) || 'N/A'}, Lng:{' '}
+                    {selectedLocation?.lon?.toFixed(4) || 'N/A'}
                   </div>
                 </div>
               </Card>

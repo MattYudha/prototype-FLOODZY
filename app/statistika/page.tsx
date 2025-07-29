@@ -278,35 +278,41 @@ const mockHistoricalIncidents: HistoricalIncident[] = [
   },
 ];
 
-const generateChartData = (): ChartDataPoint[] => {
-  const months = [
-    'Jan',
-    'Feb',
-    'Mar',
-    'Apr',
-    'Mei',
-    'Jun',
-    'Jul',
-    'Agu',
-    'Sep',
-    'Okt',
-    'Nov',
-    'Des',
-  ];
-  const data = [];
+const generateChartData = (incidents: HistoricalIncident[]): ChartDataPoint[] => {
+  const monthlyData: { [key: string]: { incidents: number; severitySum: number; count: number; resolved: number; ongoing: number; losses: number } } = {};
 
-  for (let i = 0; i < 12; i++) {
-    data.push({
-      name: months[i],
-      incidents: Math.floor(Math.random() * 25) + 8,
-      severity: parseFloat((Math.random() * 4 + 4).toFixed(1)),
-      resolved: Math.floor(Math.random() * 20) + 5,
-      ongoing: Math.floor(Math.random() * 5) + 1,
-      losses: Math.floor(Math.random() * 10000000000) + 1000000000,
-    });
-  }
+  incidents.forEach(incident => {
+    const date = new Date(incident.date);
+    const monthYear = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}`;
 
-  return data;
+    if (!monthlyData[monthYear]) {
+      monthlyData[monthYear] = { incidents: 0, severitySum: 0, count: 0, resolved: 0, ongoing: 0, losses: 0 };
+    }
+
+    monthlyData[monthYear].incidents++;
+    monthlyData[monthYear].severitySum += incident.severity;
+    monthlyData[monthYear].count++;
+    if (incident.status === 'resolved') monthlyData[monthYear].resolved++;
+    if (incident.status === 'ongoing') monthlyData[monthYear].ongoing++;
+    monthlyData[monthYear].losses += incident.reportedLosses || 0;
+  });
+
+  const sortedMonths = Object.keys(monthlyData).sort();
+
+  return sortedMonths.map(monthYear => {
+    const data = monthlyData[monthYear];
+    const [year, month] = monthYear.split('-');
+    const monthName = new Date(parseInt(year), parseInt(month) - 1, 1).toLocaleString('id-ID', { month: 'short' });
+
+    return {
+      name: `${monthName} ${year.slice(2)}`,
+      incidents: data.incidents,
+      severity: parseFloat((data.severitySum / data.count).toFixed(1)),
+      resolved: data.resolved,
+      ongoing: data.ongoing,
+      losses: data.losses,
+    };
+  });
 };
 
 const radarData = [
@@ -331,6 +337,8 @@ export default function StatistikPage() {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [filterType, setFilterType] = useState<string>('all');
   const [timeRange, setTimeRange] = useState<string>('6m');
+  const [startDate, setStartDate] = useState<string>(''); // New state for start date
+  const [endDate, setEndDate] = useState<string>('');   // New state for end date
   const [geminiAnalysis, setGeminiAnalysis] = useState<string | null>(null);
   const [isLoadingAnalysis, setIsLoadingAnalysis] = useState(false);
   const [analysisError, setAnalysisError] = useState<string | null>(null);
@@ -346,8 +354,23 @@ export default function StatistikPage() {
 
   useEffect(() => {
     setHistoricalIncidents(mockHistoricalIncidents);
-    setChartData(generateChartData());
+    // Initial chart data generation based on all mock incidents
+    setChartData(generateChartData(mockHistoricalIncidents));
   }, []);
+
+  // Effect to update chart data when historicalIncidents or date filters change
+  useEffect(() => {
+    const filteredByDate = mockHistoricalIncidents.filter(incident => {
+      const incidentDate = new Date(incident.date);
+      const start = startDate ? new Date(startDate) : null;
+      const end = endDate ? new Date(endDate) : null;
+
+      if (start && incidentDate < start) return false;
+      if (end && incidentDate > end) return false;
+      return true;
+    });
+    setChartData(generateChartData(filteredByDate));
+  }, [startDate, endDate, mockHistoricalIncidents]);
 
   const statCards: StatCard[] = [
     {
@@ -962,34 +985,63 @@ Berdasarkan data historis, diproyeksikan peningkatan 15% insiden banjir pada 202
                   >
                     <div>
                       <label
-                        htmlFor="filterType"
+                        htmlFor="startDate"
                         className="block text-sm font-medium text-slate-300 mb-1"
                       >
-                        Jenis Bencana
+                        Dari Tanggal
                       </label>
-                      <select
-                        id="filterType"
+                      <input
+                        type="date"
+                        id="startDate"
                         className="w-full sm:w-auto bg-slate-700/50 border border-slate-600/50 rounded-lg px-3 py-1 text-sm text-white"
-                        value={filterType}
-                        onChange={(e) => setFilterType(e.target.value)}
+                        value={startDate}
+                        onChange={(e) => setStartDate(e.target.value)}
+                      />
+                    </div>
+                    <div>
+                      <label
+                        htmlFor="endDate"
+                        className="block text-sm font-medium text-slate-300 mb-1"
                       >
-                        <option value="all">Semua</option>
-                        <option value="Banjir">Banjir</option>
-                        <option value="Gempa Bumi">Gempa Bumi</option>
-                        <option value="Tanah Longsor">Tanah Longsor</option>
-                        <option value="Kekeringan">Kekeringan</option>
-                        <option value="Tsunami">Tsunami</option>
-                        <option value="Kebakaran Hutan">Kebakaran Hutan</option>
-                        <option value="Angin Puting Beliung">
-                          Angin Puting Beliung
-                        </option>
-                        <option value="Gelombang Tinggi">
-                          Gelombang Tinggi
-                        </option>
-                        <option value="Erupsi Gunung Berapi">
-                          Erupsi Gunung Berapi
-                        </option>
-                      </select>
+                        Sampai Tanggal
+                      </label>
+                      <input
+                        type="date"
+                        id="endDate"
+                        className="w-full sm:w-auto bg-slate-700/50 border border-slate-600/50 rounded-lg px-3 py-1 text-sm text-white"
+                        value={endDate}
+                        onChange={(e) => setEndDate(e.target.value)}
+                      />
+                    </div>
+                    <div>
+                      <label
+                        htmlFor="startDate"
+                        className="block text-sm font-medium text-slate-300 mb-1"
+                      >
+                        Dari Tanggal
+                      </label>
+                      <input
+                        type="date"
+                        id="startDate"
+                        className="w-full sm:w-auto bg-slate-700/50 border border-slate-600/50 rounded-lg px-3 py-1 text-sm text-white"
+                        value={startDate}
+                        onChange={(e) => setStartDate(e.target.value)}
+                      />
+                    </div>
+                    <div>
+                      <label
+                        htmlFor="endDate"
+                        className="block text-sm font-medium text-slate-300 mb-1"
+                      >
+                        Sampai Tanggal
+                      </label>
+                      <input
+                        type="date"
+                        id="endDate"
+                        className="w-full sm:w-auto bg-slate-700/50 border border-slate-600/50 rounded-lg px-3 py-1 text-sm text-white"
+                        value={endDate}
+                        onChange={(e) => setEndDate(e.target.value)}
+                      />
                     </div>
                     <div>
                       <label

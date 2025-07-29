@@ -68,70 +68,72 @@ export async function GET() {
           `Fetched ${petabencanaReports.length} PetaBencana.id ${hazardType} reports for ${timeframe}.`,
         );
 
-        petabencanaReports.forEach((report) => {
-          const baseId = `petabencana-${hazardType}-${report._id}`;
-          if (aggregatedAlerts.some((alert) => alert.id.includes(baseId))) {
-            return;
-          }
+        if (petabencanaReports && petabencanaReports.length > 0) {
+          petabencanaReports.forEach((report) => {
+            const baseId = `petabencana-${hazardType}-${report._id}`;
+            if (aggregatedAlerts.some((alert) => alert.id.includes(baseId))) {
+              return;
+            }
 
-          let reportLevel: Alert['level'] = 'Rendah';
-          let severityFromReport = report.severity || 0;
+            let reportLevel: Alert['level'] = 'Rendah';
+            let severityFromReport = report.severity || 0;
 
-          if (
-            report.status === 'Siaga' ||
-            report.status === 'Waspada' ||
-            report.cat === 'flood' ||
-            report.event_type.toLowerCase().includes('banjir')
-          )
-            reportLevel = 'Tinggi';
-          else if (report.status === 'Terpantau' || report.status === 'Aman')
-            reportLevel = 'Sedang';
-          else reportLevel = 'Rendah';
+            if (
+              report.status === 'Siaga' ||
+              report.status === 'Waspada' ||
+              report.cat === 'flood' ||
+              report.event_type?.toLowerCase().includes('banjir')
+            )
+              reportLevel = 'Tinggi';
+            else if (report.status === 'Terpantau' || report.status === 'Aman')
+              reportLevel = 'Sedang';
+            else reportLevel = 'Rendah';
 
-          if (severityFromReport === 0) {
-            const severityMatchText =
-              report.detail.id.match(/skala (\d+\.?\d*)/i);
-            if (severityMatchText && parseFloat(severityMatchText[1])) {
-              severityFromReport = parseFloat(severityMatchText[1]);
-            } else if (
-              report.event_type.toLowerCase().includes('ketinggian air')
-            ) {
-              severityFromReport =
-                reportLevel === 'Tinggi' ? 8 : reportLevel === 'Sedang' ? 5 : 3;
-            } else if (report.cat === 'earthquake') {
-              const eventTypeMatch = report.event_type.match(/M(\d+\.?\d*)/);
-              if (eventTypeMatch && eventTypeMatch[1]) {
-                severityFromReport = parseFloat(eventTypeMatch[1]);
+            if (severityFromReport === 0) {
+              const severityMatchText =
+                report.detail?.id?.match(/skala (\d+\.?\d*)/i);
+              if (severityMatchText && parseFloat(severityMatchText[1])) {
+                severityFromReport = parseFloat(severityMatchText[1]);
+              } else if (
+                report.event_type?.toLowerCase().includes('ketinggian air')
+              ) {
+                severityFromReport =
+                  reportLevel === 'Tinggi' ? 8 : reportLevel === 'Sedang' ? 5 : 3;
+              } else if (report.cat === 'earthquake') {
+                const eventTypeMatch = report.event_type?.match(/M(\d+\.?\d*)/);
+                if (eventTypeMatch && eventTypeMatch[1]) {
+                  severityFromReport = parseFloat(eventTypeMatch[1]);
+                }
               }
             }
-          }
 
-          const affectedAreasList = report.detail.id
-            .split(/[.,;]/)
-            .map((s) => s.trim())
-            .filter(
-              (s) =>
-                s.length > 2 &&
-                !s.toLowerCase().includes('skala') &&
-                !s.toLowerCase().includes('waktu'),
-            );
+            const affectedAreasList = report.detail?.id
+              ?.split(/[.,;]/)
+              .map((s) => s.trim())
+              .filter(
+                (s) =>
+                  s.length > 2 &&
+                  !s.toLowerCase().includes('skala') &&
+                  !s.toLowerCase().includes('waktu'),
+              );
 
-          aggregatedAlerts.push({
-            id: `${baseId}-${generateUniqueId()}`,
-            level: reportLevel,
-            location:
-              report.detail.id.split(',')[0].trim() || 'Tidak diketahui',
-            timestamp: new Date(report.timestamp).toLocaleString('id-ID'),
-            reason: report.event_type || report.cat || 'Laporan Bencana',
-            details: report.detail.id,
-            affectedAreas:
-              affectedAreasList.length > 0
-                ? affectedAreasList
-                : [report.detail.id.split(',')[0].trim()],
-            estimatedPopulation: undefined,
-            severity: severityFromReport > 0 ? severityFromReport : undefined,
+            aggregatedAlerts.push({
+              id: `${baseId}-${generateUniqueId()}`,
+              level: reportLevel,
+              location:
+                report.detail?.id?.split(',')[0]?.trim() || 'Tidak diketahui',
+              timestamp: new Date(report.timestamp || 0).toLocaleString('id-ID'),
+              reason: report.event_type || report.cat || 'Laporan Bencana',
+              details: report.detail?.id,
+              affectedAreas:
+                affectedAreasList && affectedAreasList.length > 0
+                  ? affectedAreasList
+                  : [report.detail?.id?.split(',')[0]?.trim() || 'Tidak diketahui'],
+              estimatedPopulation: null, // Set to null if no specific data
+              severity: severityFromReport > 0 ? severityFromReport : null,
+            });
           });
-        });
+        }
       } catch (error: any) {
         console.error(
           `Error fetching PetaBencana.id ${hazardType} reports for ${timeframe}:`,

@@ -247,9 +247,19 @@ export default function PeringatanPage() {
   };
 
   const totalAlerts = alerts.length;
-  const highAlerts = alerts.filter((a) => a.level === 'Tinggi').length;
-  const mediumAlerts = alerts.filter((a) => a.level === 'Sedang').length;
-  const lowAlerts = alerts.filter((a) => a.level === 'Rendah').length;
+
+  const highAlerts = React.useMemo(
+    () => alerts.filter((a) => a.level === 'Tinggi').length,
+    [alerts],
+  );
+  const mediumAlerts = React.useMemo(
+    () => alerts.filter((a) => a.level === 'Sedang').length,
+    [alerts],
+  );
+  const lowAlerts = React.useMemo(
+    () => alerts.filter((a) => a.level === 'Rendah').length,
+    [alerts],
+  );
 
   return (
     <div className="min-h-screen bg-gray-900 text-white">

@@ -182,7 +182,7 @@ export async function fetchRegions(
     headers: {
       'Content-Type': 'application/json',
     },
-    cache: 'no-cache',
+    next: { revalidate: 3600 }, // Revalidate every 1 hour
   });
   console.log(`Response status: ${response.status}`);
   if (!response.ok) {
@@ -242,6 +242,7 @@ out body geom;
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body: `data=${encodeURIComponent(query)}`,
+    next: { revalidate: 3600 }, // Revalidate every 1 hour
   });
 
   if (!response.ok) {
@@ -350,7 +351,8 @@ export async function fetchPetabencanaReports(
   hazardType: string = 'flood',
   timeframe: string = '1h',
 ): Promise<PetabencanaReport[]> {
-  const apiUrl = `/api/petabencana-proxy?hazardType=${hazardType}&timeframe=${timeframe}`;
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'; // Fallback for development
+  const apiUrl = `${baseUrl}/api/petabencana-proxy-new?hazardType=${hazardType}&timeframe=${timeframe}`;
   const response = await fetch(apiUrl, { cache: 'no-store' });
 
   if (!response.ok) {
@@ -362,6 +364,11 @@ export async function fetchPetabencanaReports(
   }
 
   const data = await response.json();
+  // Pastikan data adalah array, jika tidak, kembalikan array kosong
+  if (!Array.isArray(data)) {
+    console.warn('PetaBencana.id proxy returned non-array data:', data);
+    return [];
+  }
   return data;
 }
 

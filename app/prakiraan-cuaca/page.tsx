@@ -44,10 +44,9 @@ delete L.Icon.Default.prototype._getIconUrl;
 
 // Atur path ikon marker leaflet secara manual
 L.Icon.Default.mergeOptions({
-  iconRetinaUrl:
-    'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon-2x.png',
-  iconUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png',
-  shadowUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png',
+  iconRetinaUrl: '/leaflet/images/marker-icon-2x.png',
+  iconUrl: '/leaflet/images/marker-icon.png',
+  shadowUrl: '/leaflet/images/marker-shadow.png',
 });
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
@@ -220,19 +219,19 @@ const WeatherDisplay = ({
         <div className="text-center">
           <div className="flex items-center justify-center space-x-4 mb-4">
             <div className="w-20 h-20 bg-gradient-to-br from-blue-400 to-cyan-400 rounded-2xl flex items-center justify-center shadow-lg">
-              {getWeatherIcon(current.weather[0].icon, 10)}
+              {getWeatherIcon(current.weather?.[0]?.icon || '', 10)}
             </div>
             <div>
               <div className="text-5xl font-bold text-white mb-1">
-                {Math.round(current.main.temp)}°C
+                {Math.round(current.main?.temp || 0)}°C
               </div>
               <div className="text-slate-300 capitalize">
-                {current.weather[0].description}
+                {current.weather?.[0]?.description || 'Tidak diketahui'}
               </div>
             </div>
           </div>
           <div className="text-sm text-slate-400">
-            Terasa seperti {Math.round(current.main.feels_like)}°C
+            Terasa seperti {Math.round(current.main?.feels_like || 0)}°C
           </div>
         </div>
 
@@ -242,7 +241,7 @@ const WeatherDisplay = ({
             <div>
               <span className="text-xs text-slate-400">Kelembaban</span>
               <div className="font-semibold text-white">
-                {current.main.humidity}%
+                {current.main?.humidity ?? 'N/A'}%
               </div>
             </div>
           </div>
@@ -251,7 +250,7 @@ const WeatherDisplay = ({
             <div>
               <span className="text-xs text-slate-400">Angin</span>
               <div className="font-semibold text-white">
-                {current.wind.speed.toFixed(1)} m/s
+                {current.wind?.speed !== undefined ? `${current.wind.speed.toFixed(1)} m/s` : 'N/A'}
               </div>
             </div>
           </div>
@@ -260,7 +259,7 @@ const WeatherDisplay = ({
             <div>
               <span className="text-xs text-slate-400">Tekanan</span>
               <div className="font-semibold text-white">
-                {current.main.pressure} hPa
+                {current.main?.pressure ?? 'N/A'} hPa
               </div>
             </div>
           </div>
@@ -269,7 +268,7 @@ const WeatherDisplay = ({
             <div>
               <span className="text-xs text-slate-400">Visibilitas</span>
               <div className="font-semibold text-white">
-                {(current.visibility / 1000).toFixed(1)} km
+                {current.visibility !== undefined ? `${(current.visibility / 1000).toFixed(1)} km` : 'N/A'}
               </div>
             </div>
           </div>
@@ -281,10 +280,10 @@ const WeatherDisplay = ({
             <div>
               <div className="text-xs text-slate-400">Terbit</div>
               <div className="font-semibold text-white">
-                {new Date(current.sys.sunrise * 1000).toLocaleTimeString(
+                {current.sys?.sunrise ? new Date(current.sys.sunrise * 1000).toLocaleTimeString(
                   'id-ID',
                   { hour: '2-digit', minute: '2-digit' },
-                )}
+                ) : 'N/A'}
               </div>
             </div>
           </div>
@@ -293,10 +292,10 @@ const WeatherDisplay = ({
             <div>
               <div className="text-xs text-slate-400">Terbenam</div>
               <div className="font-semibold text-white">
-                {new Date(current.sys.sunset * 1000).toLocaleTimeString(
+                {current.sys?.sunset ? new Date(current.sys.sunset * 1000).toLocaleTimeString(
                   'id-ID',
                   { hour: '2-digit', minute: '2-digit' },
-                )}
+                ) : 'N/A'}
               </div>
             </div>
           </div>
@@ -336,14 +335,13 @@ const DailyForecast = ({
               {formatDay(day.dt)}
             </span>
             <div className="w-1/4 flex justify-center">
-              {getWeatherIcon(day.weather[0].icon, 6)}
+              {getWeatherIcon(day.weather?.[0]?.icon || '', 6)}
             </div>
             <span className="text-xs text-slate-400 w-1/4 text-center capitalize">
-              {day.weather[0].description}
+              {day.weather?.[0]?.description || 'N/A'}
             </span>
             <span className="font-mono text-sm text-white w-1/4 text-right">
-              {Math.round(day.main.temp_max)}° / {Math.round(day.main.temp_min)}
-              °
+              {day.main?.temp_max !== undefined ? `${Math.round(day.main.temp_max)}°` : 'N/A'} / {day.main?.temp_min !== undefined ? `${Math.round(day.main.temp_min)}°` : 'N/A'}
             </span>
           </div>
         ))}
@@ -457,7 +455,34 @@ export default function PrakiraanCuacaPage() {
   };
 
   const handleSearchLocation = async () => {
-    if (!searchQuery.trim() || !API_KEY) return;
+    const trimmedQuery = searchQuery.trim();
+
+    if (!trimmedQuery) {
+      setSearchLocationError('Input pencarian tidak boleh kosong.');
+      return;
+    }
+
+    if (trimmedQuery.length < 2) {
+      setSearchLocationError('Input pencarian terlalu pendek (minimal 2 karakter).');
+      return;
+    }
+
+    if (trimmedQuery.length > 100) {
+      setSearchLocationError('Input pencarian terlalu panjang (maksimal 100 karakter).');
+      return;
+    }
+
+    // Hanya izinkan huruf, angka, spasi, koma, titik, dan tanda hubung
+    const validCharactersRegex = /^[a-zA-Z0-9\s,.-]*$/;
+    if (!validCharactersRegex.test(trimmedQuery)) {
+      setSearchLocationError('Input pencarian mengandung karakter yang tidak valid.');
+      return;
+    }
+
+    if (!API_KEY) {
+      setSearchLocationError('API Key OpenWeatherMap tidak ditemukan.');
+      return;
+    }
 
     setIsSearchingLocation(true);
     setSearchLocationError(null);
@@ -465,7 +490,7 @@ export default function PrakiraanCuacaPage() {
       const response = await axios.get(
         'https://api.openweathermap.org/geo/1.0/direct',
         {
-          params: { q: searchQuery, limit: 1, appid: API_KEY },
+          params: { q: trimmedQuery, limit: 1, appid: API_KEY },
         },
       );
       if (response.data && response.data.length > 0) {
@@ -475,7 +500,7 @@ export default function PrakiraanCuacaPage() {
         console.log('Selected location via search:', newLocation);
         setSearchQuery('');
       } else {
-        setSearchLocationError(`Lokasi "${searchQuery}" tidak ditemukan.`);
+        setSearchLocationError(`Lokasi "${trimmedQuery}" tidak ditemukan.`);
       }
     } catch (error) {
       console.error('Error geocoding location:', error);
@@ -802,6 +827,7 @@ export default function PrakiraanCuacaPage() {
                         weatherLayers={weatherLayers}
                         selectedLocation={selectedLocation}
                         apiKey={API_KEY}
+                        onToggleLayer={toggleWeatherLayer}
                       />
                     </>
                   ) : (

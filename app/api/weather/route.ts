@@ -12,7 +12,7 @@ export async function GET(request: Request) {
     );
   }
 
-  const apiKey = process.env.OPEN_WEATHER_API_KEY;
+  const apiKey = process.env.NEXT_PUBLIC_OPENWEATHER_API_KEY;
   if (!apiKey) {
     return NextResponse.json(
       { message: 'API key is not configured' },

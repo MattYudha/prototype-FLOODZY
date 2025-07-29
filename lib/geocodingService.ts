@@ -1,7 +1,7 @@
 
 import { GeocodingResponse, ReverseGeocodingResponse } from '@/types/geocoding';
 
-const API_KEY = process.env.NEXT_PUBLIC_OPENWEATHERMAP_API_KEY;
+const API_KEY = process.env.NEXT_PUBLIC_OPENWEATHER_API_KEY;
 const BASE_URL = 'http://api.openweathermap.org/geo/1.0';
 
 export async function getCoordsByLocationName(locationName: string): Promise<GeocodingResponse | null> {

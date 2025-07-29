@@ -8,13 +8,16 @@ export async function GET(request: Request) {
 
   // Ambil API Key dari environment variable jika PetaBencana.id membutuhkannya
   // Pastikan Anda menambahkan PETABENCANA_API_KEY di file .env.local Anda
-  // const PETABENCANA_API_KEY = process.env.PETABENCANA_API_KEY;
+  const PETABENCANA_API_KEY = process.env.PETABENCANA_API_KEY;
 
   let apiUrl = `https://data.petabencana.id/reports/${hazardType}/${timeframe}.json`;
 
   try {
     const response = await fetch(apiUrl, {
       cache: 'no-store', // Pastikan data selalu terbaru
+      headers: {
+        'Authorization': `Bearer ${PETABENCANA_API_KEY}`,
+      },
     });
 
     if (!response.ok) {
