@@ -390,6 +390,88 @@ export default function Home() {
       }
 
       const data = await response.json();
+
+      // Handle notification payload from chatbot API
+      if (data.notification) {
+        const { message, type, duration } = data.notification;
+        switch (type) {
+          case 'success':
+            toast.success(message, { duration });
+            break;
+          case 'error':
+            toast.error(message, { duration });
+            break;
+          case 'warning':
+            toast.custom((t) => (
+              <div
+                className={`${
+                  t.visible ? 'animate-enter' : 'animate-leave'
+                } max-w-md w-full bg-yellow-500 shadow-lg rounded-lg pointer-events-auto flex ring-1 ring-black ring-opacity-5`}
+              >
+                <div className="flex-1 w-0 p-4">
+                  <div className="flex items-start">
+                    <div className="flex-shrink-0 pt-0.5">
+                      <AlertTriangle className="h-6 w-6 text-white" />
+                    </div>
+                    <div className="ml-3 flex-1">
+                      <p className="text-sm font-medium text-white">
+                        Peringatan
+                      </p>
+                      <p className="mt-1 text-sm text-white">
+                        {message}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex border-l border-yellow-600">
+                  <button
+                    onClick={() => toast.dismiss(t.id)}
+                    className="w-full border border-transparent rounded-none rounded-r-lg p-4 flex items-center justify-center text-sm font-medium text-white hover:text-yellow-100 focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                  >
+                    Tutup
+                  </button>
+                </div>
+              </div>
+            ), { duration });
+            break;
+          case 'info':
+            toast.custom((t) => (
+              <div
+                className={`${
+                  t.visible ? 'animate-enter' : 'animate-leave'
+                } max-w-md w-full bg-blue-500 shadow-lg rounded-lg pointer-events-auto flex ring-1 ring-black ring-opacity-5`}
+              >
+                <div className="flex-1 w-0 p-4">
+                  <div className="flex items-start">
+                    <div className="flex-shrink-0 pt-0.5">
+                      <Info className="h-6 w-6 text-white" />
+                    </div>
+                    <div className="ml-3 flex-1">
+                      <p className="text-sm font-medium text-white">
+                        Informasi
+                      </p>
+                      <p className="mt-1 text-sm text-white">
+                        {message}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex border-l border-blue-600">
+                  <button
+                    onClick={() => toast.dismiss(t.id)}
+                    className="w-full border border-transparent rounded-none rounded-r-lg p-4 flex items-center justify-center text-sm font-medium text-white hover:text-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    Tutup
+                  </button>
+                </div>
+              </div>
+            ), { duration });
+            break;
+          default:
+            toast(message, { duration });
+        }
+      }
+
       simulateTyping(data.answer, false, () => setIsChatLoading(false));
     } catch (err: any) {
       console.error('Error sending message to chatbot:', err);

@@ -140,6 +140,30 @@ const tools: Tool[] = [
           required: [] as string[], // Make all parameters optional for Gemini's initial call
         },
       },
+      {
+        name: 'displayNotification',
+        description: 'Menampilkan notifikasi popup kepada pengguna di antarmuka aplikasi.',
+        parameters: {
+          type: SchemaType.OBJECT,
+          properties: {
+            message: {
+              type: SchemaType.STRING,
+              description: 'Pesan yang akan ditampilkan dalam notifikasi.',
+            },
+            type: {
+              type: SchemaType.STRING,
+              description: "Jenis notifikasi (misal: 'success', 'error', 'warning', 'info', 'default').",
+              enum: ['success', 'error', 'warning', 'info', 'default'],
+              format: 'string',
+            },
+            duration: {
+              type: SchemaType.NUMBER,
+              description: 'Durasi notifikasi dalam milidetik sebelum menghilang secara otomatis. Default 5000ms.',
+            },
+          },
+          required: ['message'],
+        },
+      },
     ],
   },
 ];
@@ -172,7 +196,7 @@ export async function POST(request: Request) {
       tools: tools,
       // NEW: System Instruction to guide Gemini's behavior
       systemInstruction:
-        "Anda adalah asisten informasi Floodzy. Gunakan fungsi yang tersedia untuk mendapatkan data real-time tentang cuaca, banjir, tinggi muka air, dan status pompa. Selalu prioritaskan penggunaan 'locationName' saat mencari cuaca jika pengguna menyebutkan nama lokasi, dan sistem akan mencari koordinatnya secara otomatis. Berikan jawaban yang ringkas, informatif, dan relevan dengan pertanyaan pengguna. Contoh: Untuk 'cuaca di Tangerang', panggil 'fetchWeatherData' dengan 'locationName: \"Tangerang\"'.",
+        "Anda adalah asisten informasi Floodzy. Gunakan fungsi yang tersedia untuk mendapatkan data real-time tentang cuaca, banjir, tinggi muka air, dan status pompa. Selalu prioritaskan penggunaan 'locationName' saat mencari cuaca jika pengguna menyebutkan nama lokasi, dan sistem akan mencari koordinatnya secara otomatis. Berikan jawaban yang ringkas, informatif, dan relevan dengan pertanyaan pengguna. Contoh: Untuk 'cuaca di Tangerang', panggil 'fetchWeatherData' dengan 'locationName: \"Tangerang\"'. Gunakan fungsi 'displayNotification' untuk menampilkan pesan popup penting kepada pengguna, misalnya untuk konfirmasi sukses, peringatan, atau informasi yang perlu segera diketahui pengguna. Contoh: 'displayNotification(message: \"Data berhasil diperbarui!\")' atau 'displayNotification(message: \"Terjadi kesalahan saat mengambil data cuaca.\", type: \"error\")'."
     });
 
     const chat = model.startChat({
@@ -186,6 +210,7 @@ export async function POST(request: Request) {
     const directTextResponse = result.response.text();
 
     let finalAnswer = '';
+    let notificationPayload: { message: string; type?: string; duration?: number } | null = null;
 
     // Memeriksa apakah ada panggilan fungsi yang valid dan namanya tidak kosong
     if (
@@ -313,6 +338,15 @@ export async function POST(request: Request) {
               'Tidak dapat menentukan lokasi untuk mencari cuaca.',
             );
           }
+        } else if (call.name === 'displayNotification') {
+          // Handle displayNotification tool
+          notificationPayload = {
+            message: call.args.message,
+            type: call.args.type || 'default',
+            duration: call.args.duration || 5000,
+          };
+          toolResponseData = { status: 'Notification instruction sent.' };
+          console.log('[Chatbot API] Notification payload:', notificationPayload);
         } else {
           console.warn(
             `[Chatbot API] ⚠️ Fungsi '${call.name}' tidak dikenal oleh backend.`,
@@ -384,7 +418,7 @@ export async function POST(request: Request) {
       console.warn('[Chatbot API] 🚨 Fallback: Final answer was empty.');
     }
 
-    return NextResponse.json({ answer: finalAnswer }, { status: 200 });
+    return NextResponse.json({ answer: finalAnswer, notification: notificationPayload }, { status: 200 });
   } catch (error: any) {
     console.error(
       '[Chatbot API] Fatal Error in POST handler:',

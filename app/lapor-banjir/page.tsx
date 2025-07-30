@@ -5,6 +5,7 @@ import { createSupabaseBrowserClient } from '@/lib/supabase/client';
 import { MapPin, Camera, Send, AlertTriangle, Droplets, User, Phone, Clock, CheckCircle, XCircle, Search } from 'lucide-react';
 import type { SupabaseClient } from '@supabase/supabase-js'; // Import tipe data untuk Supabase
 import MapPicker from '@/components/map/MapPicker'; // Add this import
+import { motion } from 'framer-motion'; // Import motion
 
 export default function LaporBanjirPage() {
   // --- STATE MANAGEMENT ---
@@ -165,7 +166,12 @@ export default function LaporBanjirPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800 p-4 font-sans">
        {/* Header */}
-       <div className="max-w-4xl mx-auto mb-8">
+       <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="max-w-4xl mx-auto mb-8"
+      >
         <div className="flex items-center gap-3 mb-4">
           <div className="w-10 h-10 bg-cyan-500 rounded-lg flex items-center justify-center">
             <Droplets className="w-6 h-6 text-white" />
@@ -175,22 +181,32 @@ export default function LaporBanjirPage() {
             <p className="text-cyan-400 text-sm">Sistem Deteksi Banjir</p>
           </div>
         </div>
-        <div className="bg-slate-800/80 backdrop-blur-sm border border-slate-600/50 rounded-xl p-4">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+          className="bg-slate-800/80 backdrop-blur-sm border border-slate-600/50 rounded-xl p-4"
+        >
           <div className="flex items-center gap-2 mb-2">
             <AlertTriangle className="w-5 h-5 text-orange-400" />
             <h2 className="text-xl font-semibold text-white">Lapor Banjir</h2>
           </div>
           <p className="text-slate-400">Laporkan kondisi banjir di wilayah Anda untuk membantu monitoring real-time</p>
-        </div>
-      </div>
+        </motion.div>
+      </motion.div>
 
       <div className="max-w-4xl mx-auto grid lg:grid-cols-3 gap-6">
         {/* Main Form */}
-        <div className="lg:col-span-2">
+        <motion.div
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.5, delay: 0.4 }}
+          className="lg:col-span-2"
+        >
           <div className="bg-slate-800/80 backdrop-blur-sm border border-slate-600/50 rounded-xl p-6">
             <form onSubmit={handleSubmit} className="space-y-6">
               {/* Map Picker */}
-              <div className="space-y-2">
+              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.5 }} className="space-y-2">
                 <label className="flex items-center gap-2 text-sm font-medium text-slate-300">
                   <MapPin className="w-4 h-4 text-cyan-400" />
                   Lokasi Kejadian <span className="text-red-400">*</span>
@@ -228,10 +244,10 @@ export default function LaporBanjirPage() {
                   </button>
                 </div>
                 <p className="text-xs text-slate-500">Geser marker di peta, klik tombol GPS, atau cari lokasi secara manual.</p>
-              </div>
+              </motion.div>
 
               {/* Water Level */}
-              <div className="space-y-2">
+              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.6 }} className="space-y-2">
                 <label className="flex items-center gap-2 text-sm font-medium text-slate-300">
                   <Droplets className="w-4 h-4 text-blue-400" />
                   Tinggi Air <span className="text-red-400">*</span>
@@ -257,10 +273,10 @@ export default function LaporBanjirPage() {
                     </label>
                   ))}
                 </div>
-              </div>
+              </motion.div>
 
               {/* Photo Upload */}
-              <div className="space-y-2">
+              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.7 }} className="space-y-2">
                 <label className="flex items-center gap-2 text-sm font-medium text-slate-300">
                   <Camera className="w-4 h-4 text-green-400" />
                   Unggah Foto (Opsional)
@@ -285,10 +301,10 @@ export default function LaporBanjirPage() {
                     )}
                   </label>
                 </div>
-              </div>
+              </motion.div>
 
               {/* Description */}
-              <div className="space-y-2">
+              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.8 }} className="space-y-2">
                 <label className="text-sm font-medium text-slate-300">Deskripsi Singkat</label>
                 <textarea
                   placeholder="Berikan detail tambahan tentang kondisi banjir (arus air, penyebab, dll)..."
@@ -297,10 +313,10 @@ export default function LaporBanjirPage() {
                   rows={4}
                   className="w-full bg-slate-700/50 border border-slate-600 rounded-lg px-4 py-3 text-white placeholder-slate-400 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/20 transition-all resize-none"
                 />
-              </div>
+              </motion.div>
 
               {/* Reporter Info */}
-              <div className="grid sm:grid-cols-2 gap-4">
+              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.9 }} className="grid sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <label className="flex items-center gap-2 text-sm font-medium text-slate-300"><User className="w-4 h-4 text-purple-400" /> Nama Pelapor (Opsional)</label>
                   <input type="text" placeholder="Nama lengkap" value={reporterName} onChange={(e) => setReporterName(e.target.value)} className="w-full bg-slate-700/50 border border-slate-600 rounded-lg px-4 py-3 text-white placeholder-slate-400 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/20 transition-all" />
@@ -309,10 +325,13 @@ export default function LaporBanjirPage() {
                   <label className="flex items-center gap-2 text-sm font-medium text-slate-300"><Phone className="w-4 h-4 text-orange-400" /> Kontak (Opsional)</label>
                   <input type="text" placeholder="No. HP atau Email" value={reporterContact} onChange={(e) => setReporterContact(e.target.value)} className="w-full bg-slate-700/50 border border-slate-600 rounded-lg px-4 py-3 text-white placeholder-slate-400 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/20 transition-all" />
                 </div>
-              </div>
+              </motion.div>
 
               {/* Submit Button */}
-              <button
+              <motion.button
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 1.0 }}
                 type="submit" // Change type to submit
                 disabled={loading || !location || !waterLevel}
                 className="w-full bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 disabled:from-slate-600 disabled:to-slate-700 text-white font-medium py-3 px-6 rounded-lg transition-all duration-200 flex items-center justify-center gap-2 disabled:cursor-not-allowed"
@@ -322,37 +341,57 @@ export default function LaporBanjirPage() {
                 ) : (
                   <><Send className="w-5 h-5" /> Kirim Laporan</>
                 )}
-              </button>
+              </motion.button>
 
               {/* Message */}
               {message && (
-                <div className={`p-4 rounded-lg border ${messageType === 'success' ? 'bg-green-900/30 border-green-600 text-green-400' : 'bg-red-900/30 border-red-600 text-red-400'}`}>
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5 }}
+                  className={`p-4 rounded-lg border ${messageType === 'success' ? 'bg-green-900/30 border-green-600 text-green-400' : 'bg-red-900/30 border-red-600 text-red-400'}`}
+                >
                   <div className="flex items-center gap-2">
                     {messageType === 'success' ? <CheckCircle className="w-5 h-5" /> : <XCircle className="w-5 h-5" />}
                     <p className="font-medium">{message}</p>
                   </div>
-                </div>
+                </motion.div>
               )}
             </form>
           </div>
-        </div>
+        </motion.div>
 
         {/* Sidebar Info */}
         <div className="space-y-6">
-          <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700 rounded-xl p-4">
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.5, delay: 0.5 }}
+            className="bg-slate-800/50 backdrop-blur-sm border border-slate-700 rounded-xl p-4"
+          >
             <div className="flex items-center gap-2 mb-3"><Clock className="w-5 h-5 text-cyan-400" /><h3 className="font-medium text-white">Waktu Saat Ini</h3></div>
             <p className="text-2xl font-bold text-cyan-400">{getCurrentTime()}</p><p className="text-slate-400 text-sm mt-1">WIB - Zona Waktu Indonesia</p>
-          </div>
-          <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700 rounded-xl p-4">
+          </motion.div>
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.5, delay: 0.6 }}
+            className="bg-slate-800/50 backdrop-blur-sm border border-slate-700 rounded-xl p-4"
+          >
             <h3 className="font-medium text-white mb-3">Panduan Pelaporan</h3>
             <ul className="space-y-2 text-sm text-slate-400">
-              <li className="flex items-start gap-2"><div className="w-1.5 h-1.5 bg-cyan-400 rounded-full mt-2 flex-shrink-0" />Pastikan lokasi yang dilaporkan akurat</li>
-              <li className="flex items-start gap-2"><div className="w-1.5 h-1.5 bg-cyan-400 rounded-full mt-2 flex-shrink-0" />Pilih tinggi air sesuai kondisi sebenarnya</li>
-              <li className="flex items-start gap-2"><div className="w-1.5 h-1.5 bg-cyan-400 rounded-full mt-2 flex-shrink-0" />Sertakan foto untuk validasi data</li>
-              <li className="flex items-start gap-2"><div className="w-1.5 h-1.5 bg-cyan-400 rounded-full mt-2 flex-shrink-0" />Deskripsi detail membantu tim respons</li>
+              <motion.li initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.3, delay: 0.7 }} className="flex items-start gap-2"><div className="w-1.5 h-1.5 bg-cyan-400 rounded-full mt-2 flex-shrink-0" />Pastikan lokasi yang dilaporkan akurat</motion.li>
+              <motion.li initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.3, delay: 0.8 }} className="flex items-start gap-2"><div className="w-1.5 h-1.5 bg-cyan-400 rounded-full mt-2 flex-shrink-0" />Pilih tinggi air sesuai kondisi sebenarnya</motion.li>
+              <motion.li initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.3, delay: 0.9 }} className="flex items-start gap-2"><div className="w-1.5 h-1.5 bg-cyan-400 rounded-full mt-2 flex-shrink-0" />Sertakan foto untuk validasi data</motion.li>
+              <motion.li initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.3, delay: 1.0 }} className="flex items-start gap-2"><div className="w-1.5 h-1.5 bg-cyan-400 rounded-full mt-2 flex-shrink-0" />Deskripsi detail membantu tim respons</motion.li>
             </ul>
-          </div>
-         <div className="bg-gradient-to-r from-green-900/20 to-green-600/20 border border-green-600/30 rounded-xl p-4">
+          </motion.div>
+         <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.5, delay: 0.7 }}
+            className="bg-gradient-to-r from-green-900/20 to-green-600/20 border border-green-600/30 rounded-xl p-4"
+          >
   <h3 className="font-medium text-white mb-3 flex items-center gap-2">
     <AlertTriangle className="w-5 h-5 text-green-400" />Kontak Darurat
   </h3>
@@ -362,7 +401,7 @@ export default function LaporBanjirPage() {
               <div className="flex justify-between"><span className="text-slate-400">Damkar:</span><span className="text-white font-medium">113 / (021) 386 5555</span></div>
               <div className="flex justify-between"><span className="text-slate-400">Polri:</span><span className="text-white font-medium"> 110 /  (021) 721 8741 </span></div>
             </div>
-          </div>
+          </motion.div>
         </div>
       </div>
     </div>
