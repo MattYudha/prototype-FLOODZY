@@ -74,6 +74,27 @@ const navigationItems: NavItem[] = [
     // badge akan diisi secara dinamis dari context
   },
   {
+    id: 'report-flood',
+    label: 'Lapor Banjir',
+    href: '/lapor-banjir',
+    icon: AlertTriangle,
+    color: 'text-red-500',
+  },
+  {
+    id: 'evacuation-info',
+    label: 'Info Evakuasi',
+    href: '/info-evakuasi',
+    icon: Users,
+    color: 'text-purple-500',
+  },
+  {
+    id: 'sensor-data',
+    label: 'Data Sensor',
+    href: '/data-sensor',
+    icon: TrendingUp,
+    color: 'text-green-500',
+  },
+  {
     id: 'stats',
     label: 'Statistik Data',
     href: '/statistika',
@@ -84,32 +105,11 @@ const navigationItems: NavItem[] = [
 
 const quickActions: QuickActionItem[] = [
   {
-    id: 'report-flood',
-    label: 'Lapor Banjir',
-    icon: AlertTriangle,
-    color: 'text-red-500',
-    onClick: () => console.log('Lapor Banjir clicked'),
-  },
-  {
-    id: 'evacuation-info',
-    label: 'Info Evakuasi',
-    icon: Users,
-    color: 'text-purple-500',
-    onClick: () => console.log('Evakuasi clicked'),
-  },
-  {
     id: 'current-weather',
     label: 'Cuaca Sekarang',
     icon: Cloud,
     color: 'text-sky-500',
     onClick: () => console.log('Cuaca clicked'),
-  },
-  {
-    id: 'sensor-data',
-    label: 'Data Sensor',
-    icon: TrendingUp,
-    color: 'text-green-500',
-    onClick: () => console.log('Sensor clicked'),
   },
 ];
 
