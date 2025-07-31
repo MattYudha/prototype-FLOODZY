@@ -188,19 +188,6 @@ export default function Home() {
   const [isChatbotOpen, setIsChatbotOpen] = useState(false);
   const chatScrollRef = useRef<HTMLDivElement>(null);
 
-  // --- Effects ---
-  useEffect(() => {
-    if (mapBounds) {
-      fetchDisasterAreas(mapBounds);
-    }
-  }, [mapBounds, fetchDisasterAreas]);
-
-  useEffect(() => {
-    if (chatScrollRef.current) {
-      chatScrollRef.current.scrollTop = chatScrollRef.current.scrollHeight;
-    }
-  }, [chatHistory, isTyping]);
-
   // --- Handlers ---
   const handleRegionSelect = useCallback(
     (location: SelectedLocation) => {
@@ -226,6 +213,33 @@ export default function Home() {
     },
     [fetchWeather, fetchWaterLevels, fetchPumpStatus],
   );
+
+  // --- Effects ---
+  useEffect(() => {
+    if (mapBounds) {
+      fetchDisasterAreas(mapBounds);
+    }
+  }, [mapBounds, fetchDisasterAreas]);
+
+  useEffect(() => {
+    if (chatScrollRef.current) {
+      chatScrollRef.current.scrollTop = chatScrollRef.current.scrollHeight;
+    }
+  }, [chatHistory, isTyping]);
+
+  useEffect(() => {
+    const storedLocation = localStorage.getItem('floodzy-default-location');
+    if (storedLocation) {
+      try {
+        const location = JSON.parse(storedLocation);
+        if (location) {
+          handleRegionSelect(location);
+        }
+      } catch (error) {
+        console.error("Failed to parse stored location:", error);
+      }
+    }
+  }, [handleRegionSelect]);
 
   const handleMapBoundsChange = useCallback((bounds: MapBounds) => {
     dispatch({ type: 'SET_MAP_BOUNDS', payload: bounds });
