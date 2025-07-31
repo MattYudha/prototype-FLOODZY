@@ -159,6 +159,27 @@ export interface NominatimResult {
   icon?: string;
 }
 
+export interface FetchPetabencanaReportsArgs {
+  hazardType: string;
+  timeframe: string;
+}
+
+export interface FetchWeatherDataArgs {
+  lat?: number;
+  lon?: number;
+  locationName?: string;
+}
+
+export interface GeocodeLocationArgs {
+  query: string;
+}
+
+export interface DisplayNotificationArgs {
+  message: string;
+  type?: string;
+  duration?: number;
+}
+
 // ===============================================
 // KUMPULAN FUNGSI API
 // ===============================================

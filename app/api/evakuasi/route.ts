@@ -7,7 +7,9 @@ export async function GET(request: Request) {
   console.log('[API Evakuasi] Supabase client created.');
 
   try {
-    console.log('[API Evakuasi] Attempting to fetch from evacuation_locations...');
+    console.log(
+      '[API Evakuasi] Attempting to fetch from evacuation_locations...',
+    );
     const { data, error } = await supabase
       .from('evacuation_locations')
       .select('*');
@@ -17,7 +19,11 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    console.log('[API Evakuasi] Data fetched successfully:', data ? data.length : 0, 'items.');
+    console.log(
+      '[API Evakuasi] Data fetched successfully:',
+      data ? data.length : 0,
+      'items.',
+    );
     return NextResponse.json(data, { status: 200 });
   } catch (error: any) {
     console.error('[API Evakuasi] Unexpected error in GET handler:', error);

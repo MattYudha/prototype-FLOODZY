@@ -308,16 +308,18 @@ export function Sidebar({
 
         {/* Footer */}
         <div className="p-4 border-t">
-          <Button
-            variant="ghost"
-            className={cn(
-              'w-full justify-start h-10',
-              isCollapsed && 'justify-center',
-            )}
-          >
-            <Settings className="h-4 w-4 text-muted-foreground" />
-            {!isCollapsed && <span className="ml-3">Pengaturan</span>}{' '}
-          </Button>
+          <Link href="/settings" passHref>
+            <Button
+              variant="ghost"
+              className={cn(
+                'w-full justify-start h-10',
+                isCollapsed && 'justify-center',
+              )}
+            >
+              <Settings className="h-4 w-4 text-muted-foreground" />
+              {!isCollapsed && <span className="ml-3">Pengaturan</span>}{' '}
+            </Button>
+          </Link>
         </div>
       </motion.aside>
     </>

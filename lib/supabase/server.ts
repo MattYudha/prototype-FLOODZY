@@ -27,7 +27,10 @@ export const createClient = () => {
           } catch (error) {
             // The `cookies()` helper can only be called from a Server Component or Route Handler
             // This error is typically caught and handled by Next.js
-            console.warn('Could not remove cookie from server component:', error);
+            console.warn(
+              'Could not remove cookie from server component:',
+              error,
+            );
           }
         },
       },

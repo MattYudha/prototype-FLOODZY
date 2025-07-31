@@ -20,6 +20,10 @@ import {
   PetabencanaReport,
   WeatherData,
   NominatimResult,
+  FetchPetabencanaReportsArgs,
+  FetchWeatherDataArgs,
+  GeocodeLocationArgs,
+  DisplayNotificationArgs,
 } from '@/lib/api'; // Pastikan path ini benar
 
 // Inisialisasi Gemini API
@@ -84,14 +88,14 @@ const tools: Tool[] = [
                 'fire',
                 'landslide',
               ],
-              format: 'string',
+              format: 'enum',
             },
             timeframe: {
               type: SchemaType.STRING,
               description:
                 "Rentang waktu laporan (misal: '1h', '6h', '24h', '3d', '7d'). Default '24h'.",
               enum: ['1h', '6h', '24h', '3d', '7d'],
-              format: 'string',
+              format: 'enum',
             },
           }, // This closes the properties object
           required: [] as string[], // This is now at the correct level
@@ -142,7 +146,8 @@ const tools: Tool[] = [
       },
       {
         name: 'displayNotification',
-        description: 'Menampilkan notifikasi popup kepada pengguna di antarmuka aplikasi.',
+        description:
+          'Menampilkan notifikasi popup kepada pengguna di antarmuka aplikasi.',
         parameters: {
           type: SchemaType.OBJECT,
           properties: {
@@ -152,13 +157,15 @@ const tools: Tool[] = [
             },
             type: {
               type: SchemaType.STRING,
-              description: "Jenis notifikasi (misal: 'success', 'error', 'warning', 'info', 'default').",
+              description:
+                "Jenis notifikasi (misal: 'success', 'error', 'warning', 'info', 'default').",
               enum: ['success', 'error', 'warning', 'info', 'default'],
-              format: 'string',
+              format: 'enum',
             },
             duration: {
               type: SchemaType.NUMBER,
-              description: 'Durasi notifikasi dalam milidetik sebelum menghilang secara otomatis. Default 5000ms.',
+              description:
+                'Durasi notifikasi dalam milidetik sebelum menghilang secara otomatis. Default 5000ms.',
             },
           },
           required: ['message'],
@@ -196,7 +203,7 @@ export async function POST(request: Request) {
       tools: tools,
       // NEW: System Instruction to guide Gemini's behavior
       systemInstruction:
-        "Anda adalah asisten informasi Floodzy. Gunakan fungsi yang tersedia untuk mendapatkan data real-time tentang cuaca, banjir, tinggi muka air, dan status pompa. Selalu prioritaskan penggunaan 'locationName' saat mencari cuaca jika pengguna menyebutkan nama lokasi, dan sistem akan mencari koordinatnya secara otomatis. Berikan jawaban yang ringkas, informatif, dan relevan dengan pertanyaan pengguna. Contoh: Untuk 'cuaca di Tangerang', panggil 'fetchWeatherData' dengan 'locationName: \"Tangerang\"'. Gunakan fungsi 'displayNotification' untuk menampilkan pesan popup penting kepada pengguna, misalnya untuk konfirmasi sukses, peringatan, atau informasi yang perlu segera diketahui pengguna. Contoh: 'displayNotification(message: \"Data berhasil diperbarui!\")' atau 'displayNotification(message: \"Terjadi kesalahan saat mengambil data cuaca.\", type: \"error\")'."
+        "Anda adalah asisten informasi Floodzy. Gunakan fungsi yang tersedia untuk mendapatkan data real-time tentang cuaca, banjir, tinggi muka air, dan status pompa. Selalu prioritaskan penggunaan 'locationName' saat mencari cuaca jika pengguna menyebutkan nama lokasi, dan sistem akan mencari koordinatnya secara otomatis. Berikan jawaban yang ringkas, informatif, dan relevan dengan pertanyaan pengguna. Contoh: Untuk 'cuaca di Tangerang', panggil 'fetchWeatherData' dengan 'locationName: \"Tangerang\"'. Gunakan fungsi 'displayNotification' untuk menampilkan pesan popup penting kepada pengguna, misalnya untuk konfirmasi sukses, peringatan, atau informasi yang perlu segera diketahui pengguna. Contoh: 'displayNotification(message: \"Data berhasil diperbarui!\")' atau 'displayNotification(message: \"Terjadi kesalahan saat mengambil data cuaca.\", type: \"error\")'.",
     });
 
     const chat = model.startChat({
@@ -206,11 +213,15 @@ export async function POST(request: Request) {
     console.log('[Chatbot API] User Question:', question);
 
     const result = await chat.sendMessage(question);
-    const call = result.response.functionCall;
+    const call = result.response.functionCall();
     const directTextResponse = result.response.text();
 
     let finalAnswer = '';
-    let notificationPayload: { message: string; type?: string; duration?: number } | null = null;
+    let notificationPayload: {
+      message: string;
+      type?: string;
+      duration?: number;
+    } | null = null;
 
     // Memeriksa apakah ada panggilan fungsi yang valid dan namanya tidak kosong
     if (
@@ -235,17 +246,19 @@ export async function POST(request: Request) {
         } else if (call.name === 'fetchBmkgLatestQuake') {
           toolResponseData = await fetchBmkgLatestQuake();
         } else if (call.name === 'fetchPetabencanaReports') {
+          const args = call.args as FetchPetabencanaReportsArgs;
           toolResponseData = await fetchPetabencanaReports(
-            call.args.hazardType,
-            call.args.timeframe,
+            args.hazardType,
+            args.timeframe,
           );
         } else if (call.name === 'geocodeLocation') {
           // Handle geocoding tool
+          const args = call.args as GeocodeLocationArgs;
           console.log(
-            `[Chatbot API] Executing geocodeLocation for query: ${call.args.query}`,
+            `[Chatbot API] Executing geocodeLocation for query: ${args.query}`,
           );
           const geocodeResults: NominatimResult[] = await geocodeLocation(
-            call.args.query,
+            args.query,
           );
           if (geocodeResults && geocodeResults.length > 0) {
             toolResponseData = geocodeResults[0]; // Ambil hasil pertama
@@ -255,17 +268,18 @@ export async function POST(request: Request) {
             );
           } else {
             toolResponseData = {
-              error: `Tidak dapat menemukan koordinat untuk '${call.args.query}'.`,
+              error: `Tidak dapat menemukan koordinat untuk '${args.query}'.`,
             };
             console.warn(
-              `[Chatbot API] geocodeLocation failed for query: '${call.args.query}'.`,
+              `[Chatbot API] geocodeLocation failed for query: '${args.query}'.`,
             );
           }
         } else if (call.name === 'fetchWeatherData') {
           // Handle weather tool
-          let lat = call.args.lat;
-          let lon = call.args.lon;
-          const locationName = call.args.locationName; // Dapatkan nama lokasi jika ada
+          const args = call.args as FetchWeatherDataArgs;
+          let lat = args.lat;
+          let lon = args.lon;
+          const locationName = args.locationName; // Dapatkan nama lokasi jika ada
 
           console.log(
             `[Chatbot API] fetchWeatherData called with lat: ${lat}, lon: ${lon}, locationName: ${locationName}`,
@@ -340,13 +354,17 @@ export async function POST(request: Request) {
           }
         } else if (call.name === 'displayNotification') {
           // Handle displayNotification tool
+          const args = call.args as DisplayNotificationArgs;
           notificationPayload = {
-            message: call.args.message,
-            type: call.args.type || 'default',
-            duration: call.args.duration || 5000,
+            message: args.message,
+            type: args.type || 'default',
+            duration: args.duration || 5000,
           };
           toolResponseData = { status: 'Notification instruction sent.' };
-          console.log('[Chatbot API] Notification payload:', notificationPayload);
+          console.log(
+            '[Chatbot API] Notification payload:',
+            notificationPayload,
+          );
         } else {
           console.warn(
             `[Chatbot API] ⚠️ Fungsi '${call.name}' tidak dikenal oleh backend.`,
@@ -418,7 +436,10 @@ export async function POST(request: Request) {
       console.warn('[Chatbot API] 🚨 Fallback: Final answer was empty.');
     }
 
-    return NextResponse.json({ answer: finalAnswer, notification: notificationPayload }, { status: 200 });
+    return NextResponse.json(
+      { answer: finalAnswer, notification: notificationPayload },
+      { status: 200 },
+    );
   } catch (error: any) {
     console.error(
       '[Chatbot API] Fatal Error in POST handler:',

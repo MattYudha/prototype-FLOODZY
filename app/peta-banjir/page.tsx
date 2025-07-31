@@ -1,7 +1,7 @@
 'use client';
 import React, { useState } from 'react';
 // 1. Impor motion dan AnimatePresence dari framer-motion
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, Variants, Transition } from 'framer-motion';
 import {
   MapPin,
   Bell,
@@ -28,7 +28,7 @@ import {
 } from 'lucide-react';
 
 // 2. Varian animasi (tidak ada perubahan)
-const containerVariants = {
+const containerVariants: Variants = {
   hidden: { opacity: 0 },
   visible: {
     opacity: 1,
@@ -38,7 +38,7 @@ const containerVariants = {
   },
 };
 
-const itemVariants = {
+const itemVariants: Variants = {
   hidden: { opacity: 0, y: 20 },
   visible: {
     opacity: 1,
@@ -54,7 +54,16 @@ const FloodMapInterface = () => {
   const [activeLayer, setActiveLayer] = useState('street');
   const [isLoading, setIsLoading] = useState(false);
 
-  const [layers, setLayers] = useState({
+  interface MapLayers {
+    floodZones: boolean;
+    waterLevel: boolean;
+    pumpStatus: boolean;
+    reports: boolean;
+    weather: boolean;
+    sensors: boolean;
+  }
+
+  const [layers, setLayers] = useState<MapLayers>({
     floodZones: true,
     waterLevel: true,
     pumpStatus: true,
@@ -63,10 +72,10 @@ const FloodMapInterface = () => {
     sensors: true,
   });
 
-  const toggleLayer = (layerName) => {
+  const toggleLayer = (layerName: string) => {
     setLayers((prev) => ({
       ...prev,
-      [layerName]: !prev[layerName],
+      [layerName]: !prev[layerName as keyof MapLayers],
     }));
   };
 
@@ -351,7 +360,7 @@ const FloodMapInterface = () => {
                               layout
                               onClick={() => toggleLayer(layer.key)}
                               className={`relative w-10 h-5 rounded-full transition-colors duration-300 ${
-                                layers[layer.key]
+                                layers[layer.key as keyof MapLayers]
                                   ? 'bg-cyan-500'
                                   : 'bg-slate-600'
                               }`}
@@ -364,7 +373,7 @@ const FloodMapInterface = () => {
                                   stiffness: 700,
                                   damping: 30,
                                 }}
-                                style={{ x: layers[layer.key] ? 20 : 0 }}
+                                style={{ x: layers[layer.key as keyof MapLayers] ? 20 : 0 }}
                               ></motion.div>
                             </motion.button>
                           </motion.div>

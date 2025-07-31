@@ -39,9 +39,6 @@ import {
   RefreshCw,
 } from 'lucide-react';
 
-// Hapus 'icon' dari leaflet default agar bisa di-override
-delete L.Icon.Default.prototype._getIconUrl;
-
 // Atur path ikon marker leaflet secara manual
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: '/leaflet/images/marker-icon-2x.png',
@@ -107,12 +104,18 @@ const regionData = [
   { name: 'Yogyakarta', lat: -7.7956, lon: 110.3695 },
   { name: 'Medan', lat: 3.5952, lon: 98.6722 },
 ];
+interface Region {
+  name: string;
+  lat: number;
+  lon: number;
+}
+
 const RegionDropdown = ({
   onSelectRegion,
   selectedLocation,
 }: {
-  onSelectRegion: (region: unknown) => void;
-  selectedLocation: unknown;
+  onSelectRegion: (region: Region) => void;
+  selectedLocation: Region | null;
 }) => {
   return (
     <div className="space-y-2">
@@ -133,7 +136,7 @@ const RegionDropdown = ({
     </div>
   );
 };
-const MapUpdater = ({ center, zoom }: { center: unknown; zoom: unknown }) => {
+const MapUpdater = ({ center, zoom }: { center: L.LatLngExpression; zoom: number }) => {
   const map = useMap();
   useEffect(() => {
     if (center) {
@@ -143,17 +146,21 @@ const MapUpdater = ({ center, zoom }: { center: unknown; zoom: unknown }) => {
   return null;
 };
 
-
 // --- Komponen Display (Ada Perubahan) ---
+interface WeatherDisplayProps {
+  data: {
+    current: any;
+    daily: any[];
+  } | null;
+  loading: boolean;
+  error: string | null;
+}
+
 const WeatherDisplay = ({
   data,
   loading,
   error,
-}: {
-  data: unknown;
-  loading: unknown;
-  error: unknown;
-}) => {
+}: WeatherDisplayProps) => {
   if (loading) {
     return (
       <Card className="h-full flex items-center justify-center bg-slate-800/60 backdrop-blur-xl border border-slate-700/50 rounded-2xl shadow-2xl">
@@ -250,7 +257,9 @@ const WeatherDisplay = ({
             <div>
               <span className="text-xs text-slate-400">Angin</span>
               <div className="font-semibold text-white">
-                {current.wind?.speed !== undefined ? `${current.wind.speed.toFixed(1)} m/s` : 'N/A'}
+                {current.wind?.speed !== undefined
+                  ? `${current.wind.speed.toFixed(1)} m/s`
+                  : 'N/A'}
               </div>
             </div>
           </div>
@@ -268,7 +277,9 @@ const WeatherDisplay = ({
             <div>
               <span className="text-xs text-slate-400">Visibilitas</span>
               <div className="font-semibold text-white">
-                {current.visibility !== undefined ? `${(current.visibility / 1000).toFixed(1)} km` : 'N/A'}
+                {current.visibility !== undefined
+                  ? `${(current.visibility / 1000).toFixed(1)} km`
+                  : 'N/A'}
               </div>
             </div>
           </div>
@@ -280,10 +291,12 @@ const WeatherDisplay = ({
             <div>
               <div className="text-xs text-slate-400">Terbit</div>
               <div className="font-semibold text-white">
-                {current.sys?.sunrise ? new Date(current.sys.sunrise * 1000).toLocaleTimeString(
-                  'id-ID',
-                  { hour: '2-digit', minute: '2-digit' },
-                ) : 'N/A'}
+                {current.sys?.sunrise
+                  ? new Date(current.sys.sunrise * 1000).toLocaleTimeString(
+                      'id-ID',
+                      { hour: '2-digit', minute: '2-digit' },
+                    )
+                  : 'N/A'}
               </div>
             </div>
           </div>
@@ -292,10 +305,12 @@ const WeatherDisplay = ({
             <div>
               <div className="text-xs text-slate-400">Terbenam</div>
               <div className="font-semibold text-white">
-                {current.sys?.sunset ? new Date(current.sys.sunset * 1000).toLocaleTimeString(
-                  'id-ID',
-                  { hour: '2-digit', minute: '2-digit' },
-                ) : 'N/A'}
+                {current.sys?.sunset
+                  ? new Date(current.sys.sunset * 1000).toLocaleTimeString(
+                      'id-ID',
+                      { hour: '2-digit', minute: '2-digit' },
+                    )
+                  : 'N/A'}
               </div>
             </div>
           </div>
@@ -305,13 +320,18 @@ const WeatherDisplay = ({
   );
 };
 
+interface DailyForecastProps {
+  data: {
+    current: any;
+    daily: any[];
+  } | null;
+  loading: boolean;
+}
+
 const DailyForecast = ({
   data,
   loading,
-}: {
-  data: unknown;
-  loading: unknown;
-}) => {
+}: DailyForecastProps) => {
   // ✅ PERBAIKAN: Cek data.daily yang sekarang berasal dari endpoint 2.5/forecast
   if (loading || !data || !data.daily) return null;
 
@@ -341,7 +361,13 @@ const DailyForecast = ({
               {day.weather?.[0]?.description || 'N/A'}
             </span>
             <span className="font-mono text-sm text-white w-1/4 text-right">
-              {day.main?.temp_max !== undefined ? `${Math.round(day.main.temp_max)}°` : 'N/A'} / {day.main?.temp_min !== undefined ? `${Math.round(day.main.temp_min)}°` : 'N/A'}
+              {day.main?.temp_max !== undefined
+                ? `${Math.round(day.main.temp_max)}°`
+                : 'N/A'}{' '}
+              /{' '}
+              {day.main?.temp_min !== undefined
+                ? `${Math.round(day.main.temp_min)}°`
+                : 'N/A'}
             </span>
           </div>
         ))}
@@ -358,7 +384,7 @@ export default function PrakiraanCuacaPage() {
     lat: number;
     lon: number;
   }>(null);
-  const [currentMapCenter, setCurrentMapCenter] = useState([-6.1751, 106.865]);
+  const [currentMapCenter, setCurrentMapCenter] = useState<[number, number]>([-6.1751, 106.865]);
   const [currentMapZoom, setCurrentMapZoom] = useState(10);
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchingLocation, setIsSearchingLocation] = useState(false);
@@ -374,7 +400,15 @@ export default function PrakiraanCuacaPage() {
   const [weatherError, setWeatherError] = useState<string | null>(null);
 
   const [showFilters, setShowFilters] = useState(true);
-  const [weatherLayers, setWeatherLayers] = useState({
+  interface WeatherLayers {
+    clouds: boolean;
+    precipitation: boolean;
+    temperature: boolean;
+    wind: boolean;
+    pressure: boolean;
+  }
+
+  const [weatherLayers, setWeatherLayers] = useState<WeatherLayers>({
     clouds: true,
     precipitation: false,
     temperature: false,
@@ -463,19 +497,25 @@ export default function PrakiraanCuacaPage() {
     }
 
     if (trimmedQuery.length < 2) {
-      setSearchLocationError('Input pencarian terlalu pendek (minimal 2 karakter).');
+      setSearchLocationError(
+        'Input pencarian terlalu pendek (minimal 2 karakter).',
+      );
       return;
     }
 
     if (trimmedQuery.length > 100) {
-      setSearchLocationError('Input pencarian terlalu panjang (maksimal 100 karakter).');
+      setSearchLocationError(
+        'Input pencarian terlalu panjang (maksimal 100 karakter).',
+      );
       return;
     }
 
     // Hanya izinkan huruf, angka, spasi, koma, titik, dan tanda hubung
     const validCharactersRegex = /^[a-zA-Z0-9\s,.-]*$/;
     if (!validCharactersRegex.test(trimmedQuery)) {
-      setSearchLocationError('Input pencarian mengandung karakter yang tidak valid.');
+      setSearchLocationError(
+        'Input pencarian mengandung karakter yang tidak valid.',
+      );
       return;
     }
 
@@ -566,7 +606,7 @@ export default function PrakiraanCuacaPage() {
   };
 
   const toggleWeatherLayer = (layerName: string) => {
-    setWeatherLayers((prev) => ({ ...prev, [layerName]: !prev[layerName] }));
+    setWeatherLayers((prev) => ({ ...prev, [layerName]: !prev[layerName as keyof WeatherLayers] }));
   };
 
   const weatherLayerConfigs = [
@@ -731,8 +771,6 @@ export default function PrakiraanCuacaPage() {
                 <RegionDropdown
                   onSelectRegion={handleRegionSelect}
                   selectedLocation={selectedLocation}
-                  weatherLayers={weatherLayers}
-                  apiKey={API_KEY}
                 />
               </CardContent>
             </Card>
@@ -779,7 +817,7 @@ export default function PrakiraanCuacaPage() {
                             </div>
                           </div>
                           <Switch
-                            checked={weatherLayers[layer.key]}
+                            checked={weatherLayers[layer.key as keyof WeatherLayers]}
                             onCheckedChange={() =>
                               toggleWeatherLayer(layer.key)
                             }
@@ -828,6 +866,7 @@ export default function PrakiraanCuacaPage() {
                         selectedLocation={selectedLocation}
                         apiKey={API_KEY}
                         onToggleLayer={toggleWeatherLayer}
+                        currentWeatherData={currentWeatherData}
                       />
                     </>
                   ) : (

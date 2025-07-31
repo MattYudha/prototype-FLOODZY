@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { AirPollutionData } from '@/types/airPollution';
 import { Wind } from 'lucide-react';
@@ -9,7 +8,11 @@ interface AirQualityDisplayProps {
   error: string | null;
 }
 
-export function AirQualityDisplay({ data, loading, error }: AirQualityDisplayProps) {
+export function AirQualityDisplay({
+  data,
+  loading,
+  error,
+}: AirQualityDisplayProps) {
   if (loading) {
     return <div>Loading air quality data...</div>;
   }

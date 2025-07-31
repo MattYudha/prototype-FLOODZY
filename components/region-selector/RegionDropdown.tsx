@@ -31,7 +31,7 @@ import { SelectedLocation } from '@/app/state';
 
 interface RegionDropdownProps {
   onSelectDistrict?: (location: SelectedLocation) => void;
-  selectedLocationCoords?: { lat: number; lng: number; name: string } | null;
+  selectedLocationCoords?: { lat?: number; lng?: number; name: string } | null;
   currentWeatherData?: WeatherData | null;
   loadingWeather?: boolean;
   weatherError?: string | null;
@@ -150,7 +150,9 @@ export function RegionDropdown({
         geometry: selectedDistrict.sub_district_geometry,
       };
 
-      onSelectDistrict(locationData);
+      if (onSelectDistrict) {
+        onSelectDistrict(locationData);
+      }
     } else {
       setDisplayDistrictName(null);
     }

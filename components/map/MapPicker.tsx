@@ -7,9 +7,10 @@ import L from 'leaflet';
 import { MapPin, LocateFixed } from 'lucide-react';
 
 // Fix for default marker icon issue with Leaflet
-delete L.Icon.Default.prototype._getIconUrl;
+delete (L.Icon.Default.prototype as any)._getIconUrl;
 L.Icon.Default.mergeOptions({
-  iconRetinaUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon-2x.png',
+  iconRetinaUrl:
+    'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon-2x.png',
   iconUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png',
   shadowUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png',
 });
@@ -39,7 +40,9 @@ const MapEvents: React.FC<MapEventsHandlerProps> = ({
     click: (e) => {
       setPosition([e.latlng.lat, e.latlng.lng]);
       onPositionChange({ lat: e.latlng.lat, lng: e.latlng.lng });
-      onLocationNameChange(`Lat: ${e.latlng.lat.toFixed(4)}, Lng: ${e.latlng.lng.toFixed(4)}`);
+      onLocationNameChange(
+        `Lat: ${e.latlng.lat.toFixed(4)}, Lng: ${e.latlng.lng.toFixed(4)}`,
+      );
     },
     locationfound: (e) => {
       setPosition([e.latlng.lat, e.latlng.lng]);
@@ -49,7 +52,9 @@ const MapEvents: React.FC<MapEventsHandlerProps> = ({
     },
     locationerror: (e) => {
       console.error('Location access denied or error:', e.message);
-      alert('Gagal mendapatkan lokasi saat ini. Pastikan izin lokasi diberikan dan coba lagi.');
+      alert(
+        'Gagal mendapatkan lokasi saat ini. Pastikan izin lokasi diberikan dan coba lagi.',
+      );
     },
   });
 
@@ -60,13 +65,15 @@ const MapEvents: React.FC<MapEventsHandlerProps> = ({
   const markerRef = useRef<L.Marker>(null);
 
   const eventHandlers = useCallback(
-    (e) => {
+    (e: L.DragEndEvent) => {
       const newPos = e.target.getLatLng();
       setPosition([newPos.lat, newPos.lng]);
       onPositionChange({ lat: newPos.lat, lng: newPos.lng });
-      onLocationNameChange(`Lat: ${newPos.lat.toFixed(4)}, Lng: ${newPos.lng.toFixed(4)}`);
+      onLocationNameChange(
+        `Lat: ${newPos.lat.toFixed(4)}, Lng: ${newPos.lng.toFixed(4)}`,
+      );
     },
-    [onPositionChange, onLocationNameChange, setPosition]
+    [onPositionChange, onLocationNameChange, setPosition],
   );
 
   useEffect(() => {
@@ -80,13 +87,7 @@ const MapEvents: React.FC<MapEventsHandlerProps> = ({
     };
   }, [eventHandlers]);
 
-  return (
-    <Marker
-      position={position}
-      draggable={true}
-      ref={markerRef}
-    />
-  );
+  return <Marker position={position} draggable={true} ref={markerRef} />;
 };
 
 const MapPicker: React.FC<MapPickerProps> = ({
@@ -99,7 +100,10 @@ const MapPicker: React.FC<MapPickerProps> = ({
 
   // Update internal position state and map view when currentPosition prop changes
   useEffect(() => {
-    if (mapInstance && (position[0] !== currentPosition[0] || position[1] !== currentPosition[1])) {
+    if (
+      mapInstance &&
+      (position[0] !== currentPosition[0] || position[1] !== currentPosition[1])
+    ) {
       setPosition(currentPosition);
       mapInstance.flyTo(currentPosition, mapInstance.getZoom());
     }
@@ -122,9 +126,11 @@ const MapPicker: React.FC<MapPickerProps> = ({
         },
         (err) => {
           console.error('Geolocation error:', err);
-          alert('Gagal mendapatkan lokasi saat ini. Pastikan izin lokasi diberikan dan coba lagi.');
+          alert(
+            'Gagal mendapatkan lokasi saat ini. Pastikan izin lokasi diberikan dan coba lagi.',
+          );
         },
-        { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+        { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 },
       );
     } else {
       alert('Geolocation tidak didukung oleh browser Anda.');

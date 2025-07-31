@@ -152,6 +152,8 @@ export const INDONESIA_REGIONS = [
 ];
 
 export const WEATHER_MOCK_DATA = {
+  id: 'weather-jakarta',
+  regionId: 'jakarta',
   temperature: 28,
   humidity: 75,
   windSpeed: 12,

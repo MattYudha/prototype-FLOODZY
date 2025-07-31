@@ -16,8 +16,8 @@ interface Alert {
   reason: string;
   details?: string;
   affectedAreas?: string[];
-  estimatedPopulation?: number;
-  severity?: number;
+  estimatedPopulation?: number | null;
+  severity?: number | null;
 }
 
 const generateUniqueId = () => Math.random().toString(36).substr(2, 9);
@@ -98,7 +98,11 @@ export async function GET() {
                 report.event_type?.toLowerCase().includes('ketinggian air')
               ) {
                 severityFromReport =
-                  reportLevel === 'Tinggi' ? 8 : reportLevel === 'Sedang' ? 5 : 3;
+                  reportLevel === 'Tinggi'
+                    ? 8
+                    : reportLevel === 'Sedang'
+                      ? 5
+                      : 3;
               } else if (report.cat === 'earthquake') {
                 const eventTypeMatch = report.event_type?.match(/M(\d+\.?\d*)/);
                 if (eventTypeMatch && eventTypeMatch[1]) {
@@ -122,13 +126,18 @@ export async function GET() {
               level: reportLevel,
               location:
                 report.detail?.id?.split(',')[0]?.trim() || 'Tidak diketahui',
-              timestamp: new Date(report.timestamp || 0).toLocaleString('id-ID'),
+              timestamp: new Date(report.timestamp || 0).toLocaleString(
+                'id-ID',
+              ),
               reason: report.event_type || report.cat || 'Laporan Bencana',
               details: report.detail?.id,
               affectedAreas:
                 affectedAreasList && affectedAreasList.length > 0
                   ? affectedAreasList
-                  : [report.detail?.id?.split(',')[0]?.trim() || 'Tidak diketahui'],
+                  : [
+                      report.detail?.id?.split(',')[0]?.trim() ||
+                        'Tidak diketahui',
+                    ],
               estimatedPopulation: null, // Set to null if no specific data
               severity: severityFromReport > 0 ? severityFromReport : null,
             });

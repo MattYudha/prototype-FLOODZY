@@ -1,4 +1,3 @@
-
 export interface GeocodingResponse {
   name: string;
   lat: number;

@@ -1,4 +1,3 @@
-
 import { NextResponse } from 'next/server';
 import { supabaseServiceRole } from '@/lib/supabase';
 
@@ -8,7 +7,10 @@ export async function POST(request: Request) {
 
     // Validasi data dasar
     if (!data.location || !data.water_level) {
-      return NextResponse.json({ error: 'Lokasi dan tinggi air wajib diisi.' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'Lokasi dan tinggi air wajib diisi.' },
+        { status: 400 },
+      );
     }
 
     const { error } = await supabaseServiceRole.from('laporan_banjir').insert([
@@ -29,9 +31,15 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    return NextResponse.json({ message: 'Laporan berhasil disimpan.' }, { status: 201 });
+    return NextResponse.json(
+      { message: 'Laporan berhasil disimpan.' },
+      { status: 201 },
+    );
   } catch (error: any) {
     console.error('Error processing request:', error);
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Internal Server Error' },
+      { status: 500 },
+    );
   }
 }

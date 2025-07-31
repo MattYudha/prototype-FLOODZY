@@ -29,12 +29,13 @@ export const supabaseClient = createClient(
 console.log('DEBUG: supabaseClient initialized.');
 
 // Inisialisasi Supabase Client untuk Sisi Server (API Routes)
-export const supabaseServiceRole = typeof window === 'undefined'
-  ? createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!, // URL tetap sama
-      process.env.SUPABASE_SERVICE_ROLE_KEY!, // Gunakan Service Role Key
-    )
-  : ({} as any); // Placeholder kosong jika di sisi klien
+export const supabaseServiceRole =
+  typeof window === 'undefined'
+    ? createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!, // URL tetap sama
+        process.env.SUPABASE_SERVICE_ROLE_KEY!, // Gunakan Service Role Key
+      )
+    : ({} as any); // Placeholder kosong jika di sisi klien
 if (typeof window === 'undefined') {
   console.log('DEBUG: supabaseServiceRole initialized on server.');
 } else {

@@ -278,15 +278,33 @@ const mockHistoricalIncidents: HistoricalIncident[] = [
   },
 ];
 
-const generateChartData = (incidents: HistoricalIncident[]): ChartDataPoint[] => {
-  const monthlyData: { [key: string]: { incidents: number; severitySum: number; count: number; resolved: number; ongoing: number; losses: number } } = {};
+const generateChartData = (
+  incidents: HistoricalIncident[],
+): ChartDataPoint[] => {
+  const monthlyData: {
+    [key: string]: {
+      incidents: number;
+      severitySum: number;
+      count: number;
+      resolved: number;
+      ongoing: number;
+      losses: number;
+    };
+  } = {};
 
-  incidents.forEach(incident => {
+  incidents.forEach((incident) => {
     const date = new Date(incident.date);
     const monthYear = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}`;
 
     if (!monthlyData[monthYear]) {
-      monthlyData[monthYear] = { incidents: 0, severitySum: 0, count: 0, resolved: 0, ongoing: 0, losses: 0 };
+      monthlyData[monthYear] = {
+        incidents: 0,
+        severitySum: 0,
+        count: 0,
+        resolved: 0,
+        ongoing: 0,
+        losses: 0,
+      };
     }
 
     monthlyData[monthYear].incidents++;
@@ -299,10 +317,14 @@ const generateChartData = (incidents: HistoricalIncident[]): ChartDataPoint[] =>
 
   const sortedMonths = Object.keys(monthlyData).sort();
 
-  return sortedMonths.map(monthYear => {
+  return sortedMonths.map((monthYear) => {
     const data = monthlyData[monthYear];
     const [year, month] = monthYear.split('-');
-    const monthName = new Date(parseInt(year), parseInt(month) - 1, 1).toLocaleString('id-ID', { month: 'short' });
+    const monthName = new Date(
+      parseInt(year),
+      parseInt(month) - 1,
+      1,
+    ).toLocaleString('id-ID', { month: 'short' });
 
     return {
       name: `${monthName} ${year.slice(2)}`,
@@ -338,7 +360,7 @@ export default function StatistikPage() {
   const [filterType, setFilterType] = useState<string>('all');
   const [timeRange, setTimeRange] = useState<string>('6m');
   const [startDate, setStartDate] = useState<string>(''); // New state for start date
-  const [endDate, setEndDate] = useState<string>('');   // New state for end date
+  const [endDate, setEndDate] = useState<string>(''); // New state for end date
   const [geminiAnalysis, setGeminiAnalysis] = useState<string | null>(null);
   const [isLoadingAnalysis, setIsLoadingAnalysis] = useState(false);
   const [analysisError, setAnalysisError] = useState<string | null>(null);
@@ -360,7 +382,7 @@ export default function StatistikPage() {
 
   // Effect to update chart data when historicalIncidents or date filters change
   useEffect(() => {
-    const filteredByDate = mockHistoricalIncidents.filter(incident => {
+    const filteredByDate = mockHistoricalIncidents.filter((incident) => {
       const incidentDate = new Date(incident.date);
       const start = startDate ? new Date(startDate) : null;
       const end = endDate ? new Date(endDate) : null;

@@ -1,10 +1,11 @@
-
 import { GeocodingResponse, ReverseGeocodingResponse } from '@/types/geocoding';
 
 const API_KEY = process.env.NEXT_PUBLIC_OPENWEATHER_API_KEY;
 const BASE_URL = 'http://api.openweathermap.org/geo/1.0';
 
-export async function getCoordsByLocationName(locationName: string): Promise<GeocodingResponse | null> {
+export async function getCoordsByLocationName(
+  locationName: string,
+): Promise<GeocodingResponse | null> {
   if (!API_KEY) {
     throw new Error('OpenWeatherMap API key is not configured.');
   }
@@ -14,7 +15,9 @@ export async function getCoordsByLocationName(locationName: string): Promise<Geo
   try {
     const response = await fetch(url);
     if (!response.ok) {
-      throw new Error(`Geocoding API request failed with status ${response.status}`);
+      throw new Error(
+        `Geocoding API request failed with status ${response.status}`,
+      );
     }
     const data = await response.json();
     return data.length > 0 ? data[0] : null;
@@ -24,7 +27,10 @@ export async function getCoordsByLocationName(locationName: string): Promise<Geo
   }
 }
 
-export async function getLocationNameByCoords(lat: number, lon: number): Promise<ReverseGeocodingResponse | null> {
+export async function getLocationNameByCoords(
+  lat: number,
+  lon: number,
+): Promise<ReverseGeocodingResponse | null> {
   if (!API_KEY) {
     throw new Error('OpenWeatherMap API key is not configured.');
   }
@@ -34,7 +40,9 @@ export async function getLocationNameByCoords(lat: number, lon: number): Promise
   try {
     const response = await fetch(url);
     if (!response.ok) {
-      throw new Error(`Reverse geocoding API request failed with status ${response.status}`);
+      throw new Error(
+        `Reverse geocoding API request failed with status ${response.status}`,
+      );
     }
     const data = await response.json();
     return data.length > 0 ? data[0] : null;
@@ -44,9 +52,10 @@ export async function getLocationNameByCoords(lat: number, lon: number): Promise
   }
 }
 
-
-
-export async function getAirPollutionData(lat: number, lon: number): Promise<any | null> {
+export async function getAirPollutionData(
+  lat: number,
+  lon: number,
+): Promise<any | null> {
   if (!API_KEY) {
     throw new Error('OpenWeatherMap API key is not configured.');
   }
@@ -56,7 +65,9 @@ export async function getAirPollutionData(lat: number, lon: number): Promise<any
   try {
     const response = await fetch(url);
     if (!response.ok) {
-      throw new Error(`Air Pollution API request failed with status ${response.status}`);
+      throw new Error(
+        `Air Pollution API request failed with status ${response.status}`,
+      );
     }
     const data = await response.json();
     return data.list && data.list.length > 0 ? data.list[0] : null;

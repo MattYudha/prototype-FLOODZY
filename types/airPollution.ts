@@ -1,4 +1,3 @@
-
 export interface AirPollutionData {
   dt: number;
   main: {

@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useEffect, useState } from 'react';
 
-type Theme = 'light' | 'dark' | 'system';
+type Theme = 'light' | 'dark' | 'system' | 'high-contrast';
 
 interface ThemeContextType {
   theme: Theme;
@@ -35,7 +35,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem('theme', theme);
 
     const root = window.document.documentElement;
-    root.classList.remove('light', 'dark');
+    root.classList.remove('light', 'dark', 'high-contrast');
 
     if (theme === 'system') {
       const systemTheme = window.matchMedia('(prefers-color-scheme: dark)')
@@ -44,6 +44,9 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
         : 'light';
       root.classList.add(systemTheme);
       setIsDark(systemTheme === 'dark');
+    } else if (theme === 'high-contrast') {
+      root.classList.add('high-contrast');
+      setIsDark(true); // Anggap kontras tinggi sebagai mode gelap
     } else {
       root.classList.add(theme);
       setIsDark(theme === 'dark');

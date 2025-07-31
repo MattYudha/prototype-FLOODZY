@@ -64,17 +64,17 @@ export default function RootLayout({
         <QueryClientProvider client={queryClient}>
           <ThemeProvider>
             <AlertCountProvider>
-            <div className="flex min-h-screen bg-background">
-              {/* Sidebar */}
-              <Sidebar
-                isOpen={isSidebarOpen} // Mengontrol visibilitas sidebar secara keseluruhan (terutama mobile)
-                onClose={() => setIsSidebarOpen(false)} // Fungsi untuk menutup sidebar mobile
-                isCollapsed={isCollapsed} // Meneruskan state collapsed
-                setIsCollapsed={toggleCollapsedState} // Meneruskan fungsi setter untuk collapsed
-              />
+              <div className="flex min-h-screen bg-background">
+                {/* Sidebar */}
+                <Sidebar
+                  isOpen={isSidebarOpen} // Mengontrol visibilitas sidebar secara keseluruhan (terutama mobile)
+                  onClose={() => setIsSidebarOpen(false)} // Fungsi untuk menutup sidebar mobile
+                  isCollapsed={isCollapsed} // Meneruskan state collapsed
+                  setIsCollapsed={toggleCollapsedState} // Meneruskan fungsi setter untuk collapsed
+                />
 
-              <div
-                className={`flex flex-col flex-1 transition-all duration-300
+                <div
+                  className={`flex flex-col flex-1 transition-all duration-300
                   ${
                     isDesktop
                       ? isCollapsed
@@ -83,30 +83,30 @@ export default function RootLayout({
                       : 'ml-0' // Jika mobile, margin-left 0 (sidebar akan overlay)
                   }
                 `}
-              >
-                {/* Header */}
-                <Header
-                  onMenuToggle={toggleMobileSidebar} // Tombol menu di header untuk mobile sidebar
-                  isMenuOpen={isSidebarOpen} // Menunjukkan status menu di header
-                />
-                {/* Main Content */}
-                <main className="flex-1 p-4">{children}</main>
+                >
+                  {/* Header */}
+                  <Header
+                    onMenuToggle={toggleMobileSidebar} // Tombol menu di header untuk mobile sidebar
+                    isMenuOpen={isSidebarOpen} // Menunjukkan status menu di header
+                  />
+                  {/* Main Content */}
+                  <main className="flex-1 p-4">{children}</main>
+                </div>
               </div>
-            </div>
-            <Toaster
-              position="top-right"
-              toastOptions={{
-                duration: 5000,
-                style: {
-                  background: 'hsl(var(--card))',
-                  color: 'hsl(var(--card-foreground))',
-                  border: '1px solid hsl(var(--border))',
-                },
-              }}
-            />
-          </AlertCountProvider>
-        </ThemeProvider>
-      </QueryClientProvider>
+              <Toaster
+                position="top-right"
+                toastOptions={{
+                  duration: 5000,
+                  style: {
+                    background: 'hsl(var(--card))',
+                    color: 'hsl(var(--card-foreground))',
+                    border: '1px solid hsl(var(--border))',
+                  },
+                }}
+              />
+            </AlertCountProvider>
+          </ThemeProvider>
+        </QueryClientProvider>
       </body>
     </html>
   );

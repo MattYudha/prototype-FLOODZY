@@ -72,6 +72,8 @@ export interface FloodAlert {
   affectedAreas: string[];
   actions: string[];
   estimatedDuration?: number;
+  coordinates?: [number, number];
+  polygonCoordinates?: [number, number][][];
 }
 
 export interface FloodStatistics {
@@ -163,6 +165,23 @@ export interface MapMarker {
   severity?: 'low' | 'medium' | 'high' | 'critical';
   icon?: string;
   popup?: React.ReactNode;
+}
+
+export interface EvacuationLocation {
+  id: string;
+  name: string;
+  latitude: number;
+  longitude: number;
+  address: string;
+  capacity_current: number;
+  capacity_total: number;
+  status: 'open' | 'closed' | 'full';
+  facilities?: string[];
+  contact_person?: string;
+  contact_phone?: string;
+  operational_hours?: string;
+  notes?: string;
+  last_updated?: string;
 }
 
 export interface NavigationItem {

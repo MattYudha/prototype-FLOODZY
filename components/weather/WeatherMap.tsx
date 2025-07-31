@@ -339,10 +339,14 @@ export function WeatherMap({
                         </div>
                         <div>
                           <div className="text-xl font-bold text-blue-600">
-                            {Math.round(currentWeatherData.current.main?.temp || 0)}°C
+                            {Math.round(
+                              currentWeatherData.current.main?.temp || 0,
+                            )}
+                            °C
                           </div>
                           <div className="text-sm text-slate-600 capitalize">
-                            {currentWeatherData.current.weather?.[0]?.description || 'Tidak diketahui'}
+                            {currentWeatherData.current.weather?.[0]
+                              ?.description || 'Tidak diketahui'}
                           </div>
                         </div>
                       </div>
@@ -362,21 +366,26 @@ export function WeatherMap({
                           <Cloud className="w-4 h-4 text-gray-500" />
                           <span>
                             Kelembapan:{' '}
-                            {currentWeatherData.current.main?.humidity ?? 'N/A'}%
+                            {currentWeatherData.current.main?.humidity ?? 'N/A'}
+                            %
                           </span>
                         </div>
                         <div className="flex items-center space-x-2">
                           <Wind className="w-4 h-4 text-green-500" />
                           <span>
                             Angin:{' '}
-                            {currentWeatherData.current.wind?.speed !== undefined ? `${Math.round(currentWeatherData.current.wind.speed * 3.6)}` : 'N/A'}{' '}
+                            {currentWeatherData.current.wind?.speed !==
+                            undefined
+                              ? `${Math.round(currentWeatherData.current.wind.speed * 3.6)}`
+                              : 'N/A'}{' '}
                             km/h
                           </span>
                         </div>
                         <div className="flex items-center space-x-2">
                           <Gauge className="w-4 h-4 text-purple-500" />
                           <span>
-                            Tekanan: {currentWeatherData.current.main?.pressure ?? 'N/A'}{' '}
+                            Tekanan:{' '}
+                            {currentWeatherData.current.main?.pressure ?? 'N/A'}{' '}
                             hPa
                           </span>
                         </div>

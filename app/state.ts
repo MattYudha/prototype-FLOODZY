@@ -8,6 +8,7 @@ export interface SelectedLocation {
   latitude?: number;
   longitude?: number;
   geometry?: string;
+  name?: string; // Add optional name for favorite locations
 }
 
 export interface MapBounds {
