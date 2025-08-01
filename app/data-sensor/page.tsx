@@ -341,17 +341,7 @@ const DataSensorPage: React.FC = () => {
         <div className="bg-gray-800 rounded-xl p-6 border border-gray-700 shadow-lg mt-8">
           <DataSensorAnalysis />
         </div>
-        <Card className="bg-slate-900/80 border-slate-800/50 backdrop-blur-lg rounded-xl shadow-xl mt-8">
-          <CardHeader>
-            <CardTitle>Aksi Cepat</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            <ExportDataModal />
-            <ScheduleReportModal />
-            <AlertSettingsModal />
-            <ReportEmergencyModal />
-          </CardContent>
-        </Card>
+        
       </main>
     </div>
   );

@@ -25,13 +25,33 @@ const classifyWaterLevel = (waterLevel: number): string => {
   }
 };
 
+import { createSupabaseBrowserClient } from '@/lib/supabase/client';
+
+const classifyWaterLevelString = (waterLevelString: string): string => {
+  switch (waterLevelString) {
+    case 'semata_kaki':
+      return 'Semata kaki';
+    case 'selutut':
+      return 'Selutut';
+    case 'sepaha':
+      return 'Sepaha';
+    case 'sepusar':
+      return 'Sepusar';
+    case 'lebih_dari_sepusar':
+      return 'Lebih dari sepusar';
+    default:
+      return 'Tidak diketahui';
+  }
+};
+
 interface FloodReport {
   id: string;
-  reporterName: string;
+  reporter_name: string | null;
   location: string;
-  waterLevel: number;
-  timestamp: string;
-  status: string;
+  water_level: string;
+  created_at: string;
+  description: string | null;
+  photo_url: string | null;
 }
 
 const FloodReportList: React.FC = () => {
@@ -43,12 +63,18 @@ const FloodReportList: React.FC = () => {
   useEffect(() => {
     const fetchReports = async () => {
       try {
-        const response = await fetch('/api/laporan');
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
+        const supabase = createSupabaseBrowserClient();
+        const { data, error } = await supabase
+          .from('laporan_banjir')
+          .select('*')
+          .order('created_at', { ascending: false })
+          .limit(10); // Ambil 10 laporan terbaru
+
+        if (error) {
+          throw error;
         }
-        const data: FloodReport[] = await response.json();
-        setReports(data);
+
+        setReports(data as FloodReport[]);
       } catch (err) {
         setError((err as Error).message);
       } finally {
@@ -60,7 +86,7 @@ const FloodReportList: React.FC = () => {
   }, []);
 
   if (loading) {
-    return <Card className="bg-gray-800 rounded-xl p-6 border border-gray-700 shadow-lg mt-8"><CardContent>Loading reports...</CardContent></Card>;
+    return <Card className="bg-gray-800 rounded-xl p-6 border border-gray-700 shadow-lg mt-8"><CardContent>Memuat laporan...</CardContent></Card>;
   }
 
   if (error) {
@@ -71,7 +97,7 @@ const FloodReportList: React.FC = () => {
     if (filter === 'all') {
       return true;
     }
-    return classifyWaterLevel(report.waterLevel) === filter;
+    return classifyWaterLevelString(report.water_level) === filter;
   });
 
   return (
@@ -100,10 +126,13 @@ const FloodReportList: React.FC = () => {
             {filteredReports.map((report) => (
               <div key={report.id} className="border-b border-gray-700 pb-4 last:border-b-0">
                 <p className="text-lg font-semibold">Lokasi: {report.location}</p>
-                <p>Pelapor: {report.reporterName}</p>
-                <p>Deskripsi Singkat: {report.status}</p>
-                <p>Tinggi Air: {report.waterLevel} cm ({classifyWaterLevel(report.waterLevel)})</p>
-                <p>Waktu Laporan: {format(new Date(report.timestamp), 'dd/MM/yyyy HH:mm')}</p>
+                <p>Pelapor: {report.reporter_name || 'Anonim'}</p>
+                <p>Deskripsi Singkat: {report.description || 'Tidak ada deskripsi'}</p>
+                <p>Tinggi Air: {classifyWaterLevelString(report.water_level)}</p>
+                <p>Waktu Laporan: {format(new Date(report.created_at), 'dd/MM/yyyy HH:mm')}</p>
+                {report.photo_url && (
+                  <img src={report.photo_url} alt="Foto Laporan" className="mt-2 max-h-48 object-cover rounded-md" />
+                )}
               </div>
             ))}
           </div>

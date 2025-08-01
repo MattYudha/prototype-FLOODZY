@@ -1,15 +1,49 @@
 import React, { useState, useEffect } from 'react';
 import { format, parseISO, subDays } from 'date-fns';
 import { id } from 'date-fns/locale';
-import { ArrowLeft, TrendingUp, Activity, AlertTriangle, CheckCircle, Users, MapPin, Thermometer, Droplets, Wind, Eye, BarChart3, Calendar, Filter } from 'lucide-react';
-import { 
-  ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, LineChart, Line, PieChart, Pie, Cell 
+import {
+  ArrowLeft,
+  TrendingUp,
+  Activity,
+  AlertTriangle,
+  CheckCircle,
+  Users,
+  MapPin,
+  Thermometer,
+  Droplets,
+  Wind,
+  Eye,
+  BarChart3,
+  Calendar,
+  Filter,
+} from 'lucide-react';
+import {
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  LineChart,
+  Line,
+  PieChart,
+  Pie,
+  Cell,
 } from 'recharts';
 
 // Helper to generate random data
 const generateRandomData = (days: number) => {
   const data = [];
-  const regions = ['Jakarta', 'Bandung', 'Surabaya', 'Medan', 'Yogyakarta', 'Lainnya'];
+  const regions = [
+    'Jakarta',
+    'Bandung',
+    'Surabaya',
+    'Medan',
+    'Yogyakarta',
+    'Lainnya',
+  ];
   for (let i = 0; i < days; i++) {
     const date = subDays(new Date(), i);
     for (const region of regions) {
@@ -32,10 +66,13 @@ const StatisticsDashboard = () => {
 
   // Effect to regenerate masterData every 24 hours
   useEffect(() => {
-    const refreshInterval = setInterval(() => {
-      setMasterData(generateRandomData(90));
-      console.log("Master data refreshed!");
-    }, 24 * 60 * 60 * 1000); // 24 hours in milliseconds
+    const refreshInterval = setInterval(
+      () => {
+        setMasterData(generateRandomData(90));
+        console.log('Master data refreshed!');
+      },
+      24 * 60 * 60 * 1000,
+    ); // 24 hours in milliseconds
 
     return () => clearInterval(refreshInterval);
   }, []);
@@ -43,28 +80,39 @@ const StatisticsDashboard = () => {
   useEffect(() => {
     const fetchData = () => {
       setIsLoading(true);
-      const days = parseInt(selectedTimeRange.replace('d', '').replace('h', ''));
+      const days = parseInt(
+        selectedTimeRange.replace('d', '').replace('h', ''),
+      );
       const isHours = selectedTimeRange.includes('h');
       const now = new Date();
       const cutoff = isHours ? subDays(now, days / 24) : subDays(now, days);
 
-      const filteredData = masterData.filter(d => new Date(d.date) >= cutoff);
+      const filteredData = masterData.filter((d) => new Date(d.date) >= cutoff);
 
       // Process data for charts
-      const line = filteredData.reduce((acc, curr) => {
-        const day = format(parseISO(curr.date), 'yyyy-MM-dd');
-        const existing = acc.find(item => item.date === day);
-        if (existing) {
-          existing.jumlah += curr.laporan;
-          existing.resolved += curr.resolved;
-        } else {
-          acc.push({ date: day, day: format(parseISO(curr.date), 'eee'), jumlah: curr.laporan, resolved: curr.resolved });
-        }
-        return acc;
-      }, [] as any[]).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+      const line = filteredData
+        .reduce((acc, curr) => {
+          const day = format(parseISO(curr.date), 'yyyy-MM-dd');
+          const existing = acc.find((item) => item.date === day);
+          if (existing) {
+            existing.jumlah += curr.laporan;
+            existing.resolved += curr.resolved;
+          } else {
+            acc.push({
+              date: day,
+              day: format(parseISO(curr.date), 'eee'),
+              jumlah: curr.laporan,
+              resolved: curr.resolved,
+            });
+          }
+          return acc;
+        }, [] as any[])
+        .sort(
+          (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
+        );
 
       const bar = filteredData.reduce((acc, curr) => {
-        const existing = acc.find(item => item.name === curr.region);
+        const existing = acc.find((item) => item.name === curr.region);
         if (existing) {
           existing.jumlah += curr.laporan;
         } else {
@@ -82,7 +130,14 @@ const StatisticsDashboard = () => {
     fetchData();
   }, [selectedTimeRange, masterData]); // Add masterData to dependency array
 
-  const COLORS = ['#06b6d4', '#3b82f6', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981'];
+  const COLORS = [
+    '#06b6d4',
+    '#3b82f6',
+    '#8b5cf6',
+    '#ec4899',
+    '#f59e0b',
+    '#10b981',
+  ];
 
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
@@ -103,14 +158,13 @@ const StatisticsDashboard = () => {
         <div className="container mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              <button className="flex items-center text-cyan-400 hover:text-cyan-300 transition-colors">
-                <ArrowLeft className="h-5 w-5 mr-2" />
-                Kembali ke Dashboard
-              </button>
-              <div className="text-2xl font-bold text-white">Statistik Data</div>
+              <button className="flex items-center text-cyan-400 hover:text-cyan-300 transition-colors"></button>
+              <div className="text-2xl font-bold text-white">
+                Statistik Data
+              </div>
             </div>
             <div className="flex items-center space-x-4">
-              <select 
+              <select
                 value={selectedTimeRange}
                 onChange={(e) => setSelectedTimeRange(e.target.value)}
                 className="bg-gray-700 border border-gray-600 text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500"
@@ -125,19 +179,29 @@ const StatisticsDashboard = () => {
         </div>
       </div>
 
-      <div className={`container mx-auto px-6 py-8 transition-opacity duration-300 ${isLoading ? 'opacity-50' : 'opacity-100'}`}>
+      <div
+        className={`container mx-auto px-6 py-8 transition-opacity duration-300 ${isLoading ? 'opacity-50' : 'opacity-100'}`}
+      >
         {/* Charts Section */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
           {/* Bar Chart: Lokasi Paling Rawan */}
           <div className="bg-gray-800 rounded-xl border border-gray-700 p-6 lg:col-span-1">
-            <h3 className="text-lg font-semibold text-white mb-4">Lokasi Paling Rawan</h3>
+            <h3 className="text-lg font-semibold text-white mb-4">
+              Lokasi Paling Rawan
+            </h3>
             <div style={{ width: '100%', height: 300 }}>
               <ResponsiveContainer>
-                <BarChart data={chartData.bar} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
+                <BarChart
+                  data={chartData.bar}
+                  margin={{ top: 5, right: 20, left: -10, bottom: 5 }}
+                >
                   <CartesianGrid strokeDasharray="3 3" stroke="#4a5568" />
                   <XAxis dataKey="name" stroke="#a0aec0" fontSize={12} />
                   <YAxis stroke="#a0aec0" fontSize={12} />
-                  <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(100, 116, 139, 0.1)' }} />
+                  <Tooltip
+                    content={<CustomTooltip />}
+                    cursor={{ fill: 'rgba(100, 116, 139, 0.1)' }}
+                  />
                   <Bar dataKey="jumlah" fill="#2dd4bf" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
@@ -146,17 +210,33 @@ const StatisticsDashboard = () => {
 
           {/* Line Chart: Tren Kejadian Banjir */}
           <div className="bg-gray-800 rounded-xl border border-gray-700 p-6 lg:col-span-2">
-            <h3 className="text-lg font-semibold text-white mb-4">Tren Kejadian Banjir</h3>
+            <h3 className="text-lg font-semibold text-white mb-4">
+              Tren Kejadian Banjir
+            </h3>
             <div style={{ width: '100%', height: 300 }}>
               <ResponsiveContainer>
-                <LineChart data={chartData.line} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
+                <LineChart
+                  data={chartData.line}
+                  margin={{ top: 5, right: 20, left: -10, bottom: 5 }}
+                >
                   <CartesianGrid strokeDasharray="3 3" stroke="#4a5568" />
                   <XAxis dataKey="day" stroke="#a0aec0" fontSize={12} />
                   <YAxis stroke="#a0aec0" fontSize={12} />
                   <Tooltip content={<CustomTooltip />} />
                   <Legend />
-                  <Line type="monotone" dataKey="jumlah" stroke="#2dd4bf" strokeWidth={2} activeDot={{ r: 8 }} />
-                  <Line type="monotone" dataKey="resolved" stroke="#818cf8" strokeWidth={2} />
+                  <Line
+                    type="monotone"
+                    dataKey="jumlah"
+                    stroke="#2dd4bf"
+                    strokeWidth={2}
+                    activeDot={{ r: 8 }}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="resolved"
+                    stroke="#818cf8"
+                    strokeWidth={2}
+                  />
                 </LineChart>
               </ResponsiveContainer>
             </div>
@@ -164,7 +244,9 @@ const StatisticsDashboard = () => {
 
           {/* Pie Chart: Komposisi Laporan */}
           <div className="bg-gray-800 rounded-xl border border-gray-700 p-6 lg:col-span-1">
-            <h3 className="text-lg font-semibold text-white mb-4">Komposisi Laporan</h3>
+            <h3 className="text-lg font-semibold text-white mb-4">
+              Komposisi Laporan
+            </h3>
             <div style={{ width: '100%', height: 300 }}>
               <ResponsiveContainer>
                 <PieChart>
@@ -179,7 +261,10 @@ const StatisticsDashboard = () => {
                     nameKey="name"
                   >
                     {chartData.pie.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      <Cell
+                        key={`cell-${index}`}
+                        fill={COLORS[index % COLORS.length]}
+                      />
                     ))}
                   </Pie>
                   <Tooltip content={<CustomTooltip />} />
@@ -191,17 +276,32 @@ const StatisticsDashboard = () => {
 
           {/* New Stacked Bar Chart: Laporan Harian & Terselesaikan */}
           <div className="bg-gray-800 rounded-xl border border-gray-700 p-6 lg:col-span-2">
-            <h3 className="text-lg font-semibold text-white mb-4">Laporan Harian & Terselesaikan</h3>
+            <h3 className="text-lg font-semibold text-white mb-4">
+              Laporan Harian & Terselesaikan
+            </h3>
             <div style={{ width: '100%', height: 300 }}>
               <ResponsiveContainer>
-                <BarChart data={chartData.line} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
+                <BarChart
+                  data={chartData.line}
+                  margin={{ top: 5, right: 20, left: -10, bottom: 5 }}
+                >
                   <CartesianGrid strokeDasharray="3 3" stroke="#4a5568" />
                   <XAxis dataKey="day" stroke="#a0aec0" fontSize={12} />
                   <YAxis stroke="#a0aec0" fontSize={12} />
                   <Tooltip />
                   <Legend />
-                  <Bar dataKey="jumlah" stackId="a" fill="#2dd4bf" name="Total Laporan" />
-                  <Bar dataKey="resolved" stackId="a" fill="#818cf8" name="Terselesaikan" />
+                  <Bar
+                    dataKey="jumlah"
+                    stackId="a"
+                    fill="#2dd4bf"
+                    name="Total Laporan"
+                  />
+                  <Bar
+                    dataKey="resolved"
+                    stackId="a"
+                    fill="#818cf8"
+                    name="Terselesaikan"
+                  />
                 </BarChart>
               </ResponsiveContainer>
             </div>

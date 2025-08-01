@@ -18,17 +18,23 @@ import {
   ChevronRight,
   Activity,
   Thermometer,
-  Wind
+  Wind,
+  Cloud
 } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { format, parseISO } from 'date-fns';
 import { id } from 'date-fns/locale';
+
+import { createSupabaseBrowserClient } from '@/lib/supabase/client';
+import { useWeatherData } from '@/hooks/useWeatherData';
+import FloodReportChart from './FloodReportChart';
 
 interface LaporanBanjir {
   id: string;
   location: string;
   latitude: number;
   longitude: number;
-  water_level: number;
+  water_level: string; // Changed to string
   description?: string;
   photo_url?: string;
   reporter_name?: string;
@@ -36,51 +42,57 @@ interface LaporanBanjir {
   created_at: string; // ISO string
 }
 
+const classifyWaterLevelString = (waterLevelString: string): {
+  label: string;
+  level: 'low' | 'medium' | 'high';
+  colorClass: string;
+  icon: React.ReactNode;
+} => {
+  switch (waterLevelString) {
+    case 'semata_kaki':
+      return { label: 'Semata Kaki', level: 'low', colorClass: 'text-green-400 bg-green-500/20', icon: <Activity className="h-4 w-4" /> };
+    case 'selutut':
+      return { label: 'Selutut', level: 'medium', colorClass: 'text-yellow-440 bg-yellow-500/20', icon: <Droplets className="h-4 w-4" /> };
+    case 'sepaha':
+      return { label: 'Sepaha', level: 'medium', colorClass: 'text-orange-400 bg-orange-500/20', icon: <Droplets className="h-4 w-4" /> };
+    case 'sepusar':
+      return { label: 'Sepusar', level: 'high', colorClass: 'text-red-400 bg-red-500/20', icon: <AlertCircle className="h-4 w-4" /> };
+    case 'lebih_dari_sepusar':
+      return { label: 'Lebih dari Sepusar', level: 'high', colorClass: 'text-red-600 bg-red-700/20', icon: <AlertCircle className="h-4 w-4" /> };
+    default:
+      return { label: 'Tidak diketahui', level: 'low', colorClass: 'text-gray-400 bg-gray-500/20', icon: <Activity className="h-4 w-4" /> };
+  }
+};
+
 const DataSensorAnalysis: React.FC = () => {
   const [laporan, setLaporan] = useState<LaporanBanjir[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedFilter, setSelectedFilter] = useState('all');
+  const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
+  const [scheduleEmail, setScheduleEmail] = useState('');
+  const [scheduleFrequency, setScheduleFrequency] = useState('daily');
+  const [isAlertModalOpen, setIsAlertModalOpen] = useState(false);
+  const [alertThreshold, setAlertThreshold] = useState('high');
+  const [alertMethod, setAlertMethod] = useState('email');
+  const { weatherData, isLoading: isWeatherLoading, error: weatherError, fetchWeather } = useWeatherData();
 
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchFloodData = async () => {
       try {
         setIsLoading(true);
-        // Menggunakan data mock lokal untuk menghindari masalah API
-        const mockLaporanBanjir: LaporanBanjir[] = [
-          {
-            id: '1',
-            location: 'Jl. Merdeka No. 10, Jakarta',
-            latitude: -6.2088,
-            longitude: 106.8456,
-            water_level: 60,
-            description: 'Banjir setinggi lutut di area ini.',
-            reporter_name: 'Andi',
-            created_at: new Date().toISOString(),
-          },
-          {
-            id: '2',
-            location: 'Perumahan Indah, Bekasi',
-            latitude: -6.2388,
-            longitude: 107.0000,
-            water_level: 30,
-            description: 'Genangan air di jalan utama.',
-            reporter_name: 'Budi',
-            created_at: new Date(Date.now() - 3600 * 1000).toISOString(), // 1 hour ago
-          },
-          {
-            id: '3',
-            location: 'Desa Sejahtera, Bogor',
-            latitude: -6.5950,
-            longitude: 106.7970,
-            water_level: 10,
-            description: 'Air mulai surut.',
-            reporter_name: 'Citra',
-            created_at: new Date(Date.now() - 2 * 3600 * 1000).toISOString(), // 2 hours ago
-          },
-        ];
-        setLaporan(mockLaporanBanjir);
+        const supabase = createSupabaseBrowserClient();
+        const { data, error } = await supabase
+          .from('laporan_banjir')
+          .select('*')
+          .order('created_at', { ascending: false });
+
+        if (error) {
+          throw error;
+        }
+
+        setLaporan(data as LaporanBanjir[]);
       } catch (err: any) {
         setError(err.message);
       } finally {
@@ -88,8 +100,10 @@ const DataSensorAnalysis: React.FC = () => {
       }
     };
 
-    fetchData();
-  }, []);
+    fetchFloodData();
+    // Fetch weather data for a default location (e.g., Jakarta)
+    fetchWeather(-6.2088, 106.8456); 
+  }, [fetchWeather]);
 
   const latestReports = useMemo(() => {
     let filtered = [...laporan].sort((a, b) => parseISO(b.created_at).getTime() - parseISO(a.created_at).getTime());
@@ -105,10 +119,8 @@ const DataSensorAnalysis: React.FC = () => {
     // Level filter
     if (selectedFilter !== 'all') {
       filtered = filtered.filter(report => {
-        if (selectedFilter === 'high') return report.water_level >= 50;
-        if (selectedFilter === 'medium') return report.water_level >= 20 && report.water_level < 50;
-        if (selectedFilter === 'low') return report.water_level < 20;
-        return true;
+        const { level } = classifyWaterLevelString(report.water_level);
+        return level === selectedFilter;
       });
     }
 
@@ -117,24 +129,106 @@ const DataSensorAnalysis: React.FC = () => {
 
   const stats = useMemo(() => {
     const total = laporan.length;
-    const highLevel = laporan.filter(r => r.water_level >= 50).length;
-    const mediumLevel = laporan.filter(r => r.water_level >= 20 && r.water_level < 50).length;
-    const lowLevel = laporan.filter(r => r.water_level < 20).length;
-    const avgLevel = total > 0 ? Math.round(laporan.reduce((sum, r) => sum + r.water_level, 0) / total) : 0;
+    const highLevel = laporan.filter(r => classifyWaterLevelString(r.water_level).level === 'high').length;
+    const mediumLevel = laporan.filter(r => classifyWaterLevelString(r.water_level).level === 'medium').length;
+    const lowLevel = laporan.filter(r => classifyWaterLevelString(r.water_level).level === 'low').length;
+    // Average water level is not directly applicable with string water levels, so we'll omit it or calculate based on a mapping if needed.
     
-    return { total, highLevel, mediumLevel, lowLevel, avgLevel };
+    return { total, highLevel, mediumLevel, lowLevel, avgLevel: 0 }; // avgLevel set to 0 for now
   }, [laporan]);
 
-  const getWaterLevelColor = (level: number) => {
-    if (level >= 50) return 'text-red-400 bg-red-500/20';
-    if (level >= 20) return 'text-yellow-400 bg-yellow-500/20';
-    return 'text-green-400 bg-green-500/20';
+  const handleExportData = () => {
+    if (latestReports.length === 0) {
+      alert('Tidak ada data untuk diekspor.');
+      return;
+    }
+
+    const headers = [
+      'ID', 'Lokasi', 'Latitude', 'Longitude', 'Level Air', 
+      'Deskripsi', 'Nama Pelapor', 'Kontak Pelapor', 'Waktu Laporan'
+    ];
+    
+    const csvContent = [
+      headers.join(','),
+      ...latestReports.map(report => 
+        [
+          `"${report.id}"`,
+          `"${report.location}"`,
+          report.latitude,
+          report.longitude,
+          `"${classifyWaterLevelString(report.water_level).label}"`,
+          `"${report.description ? report.description.replace(/"/g, '""') : ''}"`,
+          `"${report.reporter_name ? report.reporter_name.replace(/"/g, '""') : ''}"`,
+          `"${report.reporter_contact ? report.reporter_contact.replace(/"/g, '""') : ''}"`,
+          `"${format(parseISO(report.created_at), 'dd MMM yyyy, HH:mm', { locale: id })}"`
+        ].join(',')
+      )
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    if (link.download !== undefined) { // feature detection
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      link.setAttribute('download', 'laporan_banjir.csv');
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
   };
 
-  const getWaterLevelIcon = (level: number) => {
-    if (level >= 50) return <AlertCircle className="h-4 w-4" />;
-    if (level >= 20) return <Droplets className="h-4 w-4" />;
-    return <Activity className="h-4 w-4" />;
+  const handleOpenScheduleModal = () => {
+    setIsScheduleModalOpen(true);
+  };
+
+  const handleCloseScheduleModal = () => {
+    setIsScheduleModalOpen(false);
+    setScheduleEmail('');
+    setScheduleFrequency('daily');
+  };
+
+  const handleScheduleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    alert(`Jadwal laporan diatur untuk ${scheduleEmail} dengan frekuensi ${scheduleFrequency}. (Simulasi)`);
+    handleCloseScheduleModal();
+  };
+
+  const handleOpenAlertModal = () => {
+    setIsAlertModalOpen(true);
+  };
+
+  const handleCloseAlertModal = () => {
+    setIsAlertModalOpen(false);
+    setAlertThreshold('high');
+    setAlertMethod('email');
+  };
+
+  const handleAlertSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    alert(`Pengaturan notifikasi: Ambang batas '${alertThreshold}' dengan metode '${alertMethod}'. (Simulasi)`);
+    handleCloseAlertModal();
+  };
+
+  const handleOpenWeatherModal = () => {
+    setIsWeatherModalOpen(true);
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          fetchWeather(position.coords.latitude, position.coords.longitude);
+        },
+        (geoError) => {
+          console.error("Error getting geolocation:", geoError);
+          alert("Gagal mendapatkan lokasi Anda. Pastikan GPS diaktifkan dan berikan izin lokasi.");
+        }
+      );
+    } else {
+      alert("Geolocation tidak didukung oleh browser Anda.");
+    }
+  };
+
+  const handleCloseWeatherModal = () => {
+    setIsWeatherModalOpen(false);
   };
 
   if (isLoading) {
@@ -194,7 +288,7 @@ const DataSensorAnalysis: React.FC = () => {
               <span className="bg-red-500/20 text-red-400 text-xs px-2 py-1 rounded-full">Tinggi</span>
             </div>
             <div className="text-3xl font-bold mb-1">{stats.highLevel}</div>
-            <div className="text-gray-400 text-sm">Level Bahaya</div>
+            <div className="text-gray-400 text-sm">Level Bahaya (Sepusar/Lebih)</div>
           </div>
 
           <div className="bg-gray-800 rounded-xl p-6 border border-gray-700">
@@ -203,7 +297,7 @@ const DataSensorAnalysis: React.FC = () => {
               <span className="bg-yellow-500/20 text-yellow-400 text-xs px-2 py-1 rounded-full">Sedang</span>
             </div>
             <div className="text-3xl font-bold mb-1">{stats.mediumLevel}</div>
-            <div className="text-gray-400 text-sm">Level Waspada</div>
+            <div className="text-gray-400 text-sm">Level Waspada (Selutut/Sepaha)</div>
           </div>
 
           <div className="bg-gray-800 rounded-xl p-6 border border-gray-700">
@@ -212,7 +306,7 @@ const DataSensorAnalysis: React.FC = () => {
               <span className="bg-green-500/20 text-green-400 text-xs px-2 py-1 rounded-full">Rendah</span>
             </div>
             <div className="text-3xl font-bold mb-1">{stats.lowLevel}</div>
-            <div className="text-gray-400 text-sm">Level Normal</div>
+            <div className="text-gray-400 text-sm">Level Normal (Semata Kaki)</div>
           </div>
 
           <div className="bg-gray-800 rounded-xl p-6 border border-gray-700">
@@ -245,16 +339,19 @@ const DataSensorAnalysis: React.FC = () => {
                 className="bg-gray-700 border border-gray-600 text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500"
               >
                 <option value="all">Semua Level</option>
-                <option value="high">Bahaya (≥50cm)</option>
-                <option value="medium">Waspada (20-49cm)</option>
-                <option value="low">Normal (&lt;20cm)</option>
+                <option value="low">Semata Kaki</option>
+                <option value="medium">Selutut/Sepaha</option>
+                <option value="high">Sepusar/Lebih</option>
               </select>
             </div>
             <div className="flex items-center space-x-2">
-              <button className="flex items-center space-x-2 bg-cyan-500/20 text-cyan-400 px-4 py-2 rounded-lg hover:bg-cyan-500/30 transition-colors">
-                <Download className="h-4 w-4" />
-                <span>Export</span>
-              </button>
+              <button 
+                  onClick={handleExportData}
+                  className="flex items-center space-x-2 bg-cyan-500/20 text-cyan-400 px-4 py-2 rounded-lg hover:bg-cyan-500/30 transition-colors"
+                >
+                  <Download className="h-4 w-4" />
+                  <span>Export Data</span>
+                </button>
               <button className="flex items-center space-x-2 bg-gray-700 text-gray-300 px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors">
                 <Filter className="h-4 w-4" />
                 <span>Filter</span>
@@ -293,9 +390,9 @@ const DataSensorAnalysis: React.FC = () => {
                             <div className="flex items-center space-x-3 mb-3">
                               <MapPin className="h-4 w-4 text-cyan-400 flex-shrink-0" />
                               <h4 className="font-semibold text-white truncate">{report.location}</h4>
-                              <div className={`flex items-center space-x-1 px-2 py-1 rounded-full text-xs font-medium ${getWaterLevelColor(report.water_level)}`}>
-                                {getWaterLevelIcon(report.water_level)}
-                                <span>{report.water_level}cm</span>
+                              <div className={`flex items-center space-x-1 px-2 py-1 rounded-full text-xs font-medium ${classifyWaterLevelString(report.water_level || '').colorClass}}`}>
+                                {classifyWaterLevelString(report.water_level || '').icon}
+                                <span>{classifyWaterLevelString(report.water_level || '').label}</span>
                               </div>
                             </div>
                             
@@ -319,6 +416,9 @@ const DataSensorAnalysis: React.FC = () => {
                                   : report.description
                                 }
                               </p>
+                            )}
+                            {report.photo_url && (
+                              <img src={report.photo_url} alt="Foto Laporan" className="mt-2 max-h-48 object-cover rounded-md" />
                             )}
                           </div>
                           
@@ -356,80 +456,97 @@ const DataSensorAnalysis: React.FC = () => {
                 </div>
               </div>
               <div className="p-6 space-y-4">
-                <div className="text-center mb-6">
-                  <div className="text-4xl font-bold text-white mb-2">28°C</div>
-                  <div className="text-gray-400">Berawan</div>
-                </div>
-                
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="text-center">
-                    <Droplets className="h-6 w-6 text-blue-400 mx-auto mb-2" />
-                    <div className="text-lg font-semibold text-white">72%</div>
-                    <div className="text-xs text-gray-400">Kelembaban</div>
+                {isWeatherLoading ? (
+                  <div className="text-center py-8">
+                    <Loader2 className="h-8 w-8 animate-spin text-cyan-400 mx-auto mb-3" />
+                    <p className="text-gray-400">Memuat data cuaca...</p>
                   </div>
-                  <div className="text-center">
-                    <Wind className="h-6 w-6 text-green-400 mx-auto mb-2" />
-                    <div className="text-lg font-semibold text-white">1.7 m/s</div>
-                    <div className="text-xs text-gray-400">Angin</div>
+                ) : weatherError ? (
+                  <div className="text-center py-8">
+                    <AlertCircle className="h-8 w-8 text-red-400 mx-auto mb-3" />
+                    <p className="text-red-400">Gagal memuat cuaca: {weatherError}</p>
                   </div>
-                  <div className="text-center">
-                    <Thermometer className="h-6 w-6 text-orange-400 mx-auto mb-2" />
-                    <div className="text-lg font-semibold text-white">1012</div>
-                    <div className="text-xs text-gray-400">Tekanan</div>
+                ) : weatherData ? (
+                  <>
+                    <div className="text-center mb-6">
+                      <div className="text-4xl font-bold text-white mb-2">{Math.round(weatherData.current.main.temp)}°C</div>
+                      <div className="text-gray-400">{weatherData.current.weather[0].description}</div>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="text-center">
+                        <Droplets className="h-6 w-6 text-blue-400 mx-auto mb-2" />
+                        <div className="text-lg font-semibold text-white">{weatherData.current.main.humidity}%</div>
+                        <div className="text-xs text-gray-400">Kelembaban</div>
+                      </div>
+                      <div className="text-center">
+                        <Wind className="h-6 w-6 text-green-400 mx-auto mb-2" />
+                        <div className="text-lg font-semibold text-white">{weatherData.current.wind.speed} m/s</div>
+                        <div className="text-xs text-gray-400">Angin</div>
+                      </div>
+                      <div className="text-center">
+                        <Thermometer className="h-6 w-6 text-orange-400 mx-auto mb-2" />
+                        <div className="text-lg font-semibold text-white">{weatherData.current.main.pressure} hPa</div>
+                        <div className="text-xs text-gray-400">Tekanan</div>
+                      </div>
+                      <div className="text-center">
+                        <Eye className="h-6 w-6 text-purple-400 mx-auto mb-2" />
+                        <div className="text-lg font-semibold text-white">{weatherData.current.visibility / 1000} km</div>
+                        <div className="text-xs text-gray-400">Jarak Pandang</div>
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <div className="text-center py-8">
+                    <AlertCircle className="h-8 w-8 text-gray-400 mx-auto mb-3" />
+                    <p className="text-gray-400">Data cuaca tidak tersedia.</p>
                   </div>
-                  <div className="text-center">
-                    <Eye className="h-6 w-6 text-purple-400 mx-auto mb-2" />
-                    <div className="text-lg font-semibold text-white">10km</div>
-                    <div className="text-xs text-gray-400">Jarak Pandang</div>
-                  </div>
-                </div>
+                )}
               </div>
             </div>
 
-            {/* Weather History Placeholder */}
-            <div className="bg-gray-800 rounded-xl border border-gray-700 overflow-hidden">
-              <div className="p-6 border-b border-gray-700">
-                <div className="flex items-center space-x-3">
-                  <div className="p-2 bg-green-500/20 rounded-lg">
-                    <Calendar className="h-5 w-5 text-green-400" />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-semibold text-white">Riwayat Curah Hujan</h3>
-                    <p className="text-sm text-gray-400">Data historis 7 hari terakhir</p>
-                  </div>
-                </div>
-              </div>
-              <div className="p-6">
-                <div className="text-center py-8">
-                  <CloudRain className="h-12 w-12 text-gray-600 mx-auto mb-3" />
-                  <p className="text-gray-400 mb-2">Fitur Akan Datang</p>
-                  <p className="text-gray-500 text-sm">Integrasi dengan API cuaca untuk data historis</p>
-                </div>
-              </div>
-            </div>
+            
+
+            {/* Flood Report Chart */}
+            <FloodReportChart />
 
             {/* Quick Actions */}
             <div className="bg-gray-800 rounded-xl border border-gray-700 p-6">
               <h3 className="text-lg font-semibold text-white mb-4">Aksi Cepat</h3>
               <div className="space-y-3">
-                <button className="w-full flex items-center justify-between p-3 bg-cyan-500/20 text-cyan-400 rounded-lg hover:bg-cyan-500/30 transition-colors">
+                <button 
+                  onClick={handleExportData}
+                  className="w-full flex items-center justify-between p-3 bg-cyan-500/20 text-cyan-400 rounded-lg hover:bg-cyan-500/30 transition-colors">
                   <div className="flex items-center space-x-3">
                     <Download className="h-4 w-4" />
                     <span>Export Data</span>
                   </div>
                   <ChevronRight className="h-4 w-4" />
                 </button>
-                <button className="w-full flex items-center justify-between p-3 bg-gray-700 text-gray-300 rounded-lg hover:bg-gray-600 transition-colors">
+                <button 
+                  onClick={handleOpenScheduleModal}
+                  className="w-full flex items-center justify-between p-3 bg-gray-700 text-gray-300 rounded-lg hover:bg-gray-600 transition-colors">
                   <div className="flex items-center space-x-3">
                     <Calendar className="h-4 w-4" />
                     <span>Jadwal Laporan</span>
                   </div>
                   <ChevronRight className="h-4 w-4" />
                 </button>
-                <button className="w-full flex items-center justify-between p-3 bg-gray-700 text-gray-300 rounded-lg hover:bg-gray-600 transition-colors">
+                <button 
+                  onClick={handleOpenAlertModal}
+                  className="w-full flex items-center justify-between p-3 bg-gray-700 text-gray-300 rounded-lg hover:bg-gray-600 transition-colors">
                   <div className="flex items-center space-x-3">
                     <AlertCircle className="h-4 w-4" />
                     <span>Alert Settings</span>
+                  </div>
+                  <ChevronRight className="h-4 w-4" />
+                </button>
+                <button 
+                  onClick={handleOpenWeatherModal}
+                  className="w-full flex items-center justify-between p-3 bg-gray-700 text-gray-300 rounded-lg hover:bg-gray-600 transition-colors">
+                  <div className="flex items-center space-x-3">
+                    <Cloud className="h-4 w-4" />
+                    <span>Cuaca Sekarang</span>
                   </div>
                   <ChevronRight className="h-4 w-4" />
                 </button>
@@ -438,6 +555,178 @@ const DataSensorAnalysis: React.FC = () => {
           </div>
         </div>
       </div>
+      {isScheduleModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
+          <div className="bg-gray-800 p-8 rounded-xl border border-gray-700 w-full max-w-md mx-auto shadow-lg">
+            <h3 className="text-xl font-semibold text-white mb-4">Jadwalkan Laporan</h3>
+            <form onSubmit={handleScheduleSubmit} className="space-y-4">
+              <div>
+                <label htmlFor="scheduleEmail" className="block text-gray-300 text-sm font-medium mb-1">Email Penerima</label>
+                <input
+                  type="email"
+                  id="scheduleEmail"
+                  value={scheduleEmail}
+                  onChange={(e) => setScheduleEmail(e.target.value)}
+                  placeholder="contoh@email.com"
+                  className="w-full bg-gray-700 border border-gray-600 text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                  required
+                />
+              </div>
+              <div>
+                <label htmlFor="scheduleFrequency" className="block text-gray-300 text-sm font-medium mb-1">Frekuensi</label>
+                <select
+                  id="scheduleFrequency"
+                  value={scheduleFrequency}
+                  onChange={(e) => setScheduleFrequency(e.target.value)}
+                  className="w-full bg-gray-700 border border-gray-600 text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                >
+                  <option value="daily">Harian</option>
+                  <option value="weekly">Mingguan</option>
+                  <option value="monthly">Bulanan</option>
+                </select>
+              </div>
+              <div className="flex justify-end space-x-3">
+                <button
+                  type="button"
+                  onClick={handleCloseScheduleModal}
+                  className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-cyan-600 text-white rounded-lg hover:bg-cyan-700 transition-colors"
+                >
+                  Jadwalkan
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {isAlertModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
+          <div className="bg-gray-800 p-8 rounded-xl border border-gray-700 w-full max-w-md mx-auto shadow-lg">
+            <h3 className="text-xl font-semibold text-white mb-4">Pengaturan Notifikasi</h3>
+            <form onSubmit={handleAlertSubmit} className="space-y-4">
+              <div>
+                <label htmlFor="alertThreshold" className="block text-gray-300 text-sm font-medium mb-1">Ambang Batas Peringatan</label>
+                <select
+                  id="alertThreshold"
+                  value={alertThreshold}
+                  onChange={(e) => setAlertThreshold(e.target.value)}
+                  className="w-full bg-gray-700 border border-gray-600 text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                >
+                  <option value="low">Semata Kaki</option>
+                  <option value="medium">Selutut/Sepaha</option>
+                  <option value="high">Sepusar/Lebih</option>
+                </select>
+              </div>
+              <div>
+                <label htmlFor="alertMethod" className="block text-gray-300 text-sm font-medium mb-1">Metode Notifikasi</label>
+                <select
+                  id="alertMethod"
+                  value={alertMethod}
+                  onChange={(e) => setAlertMethod(e.target.value)}
+                  className="w-full bg-gray-700 border border-gray-600 text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                >
+                  <option value="email">Email</option>
+                  <option value="sms">SMS (Simulasi)</option>
+                </select>
+              </div>
+              <div className="flex justify-end space-x-3">
+                <button
+                  type="button"
+                  onClick={handleCloseAlertModal}
+                  className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-cyan-600 text-white rounded-lg hover:bg-cyan-700 transition-colors"
+                >
+                  Simpan
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {isWeatherModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
+          <div className="bg-gray-800 p-8 rounded-xl border border-gray-700 w-full max-w-md mx-auto shadow-lg">
+            <h3 className="text-xl font-semibold text-white mb-4">Cuaca Sekarang</h3>
+            {isWeatherLoading ? (
+              <div className="text-center py-8">
+                <Loader2 className="h-8 w-8 animate-spin text-cyan-400 mx-auto mb-3" />
+                <p className="text-gray-400">Memuat data cuaca...</p>
+              </div>
+            ) : weatherError ? (
+              <div className="text-center py-8">
+                <AlertCircle className="h-8 w-8 text-red-400 mx-auto mb-3" />
+                <p className="text-red-400">Gagal memuat cuaca: {weatherError}</p>
+              </div>
+            ) : weatherData ? (
+              <div className="space-y-4">
+                <div className="text-center">
+                  <p className="text-gray-400 text-sm">Lokasi: {weatherData?.name}</p>
+                  <div className="text-5xl font-bold text-white mt-2">{Math.round(weatherData?.main?.temp || 0)}°C</div>
+                  <p className="text-gray-400 text-lg">{weatherData?.weather?.[0]?.description}</p>
+                </div>
+                <div className="grid grid-cols-2 gap-4 text-center">
+                  <div>
+                    <Droplets className="h-6 w-6 text-blue-400 mx-auto mb-1" />
+                    <p className="text-lg font-semibold text-white">{weatherData?.main?.humidity}%</p>
+                    <p className="text-xs text-gray-400">Kelembaban</p>
+                  </div>
+                  <div>
+                    <Wind className="h-6 w-6 text-green-400 mx-auto mb-1" />
+                    <p className="text-lg font-semibold text-white">{weatherData?.wind?.speed} m/s</p>
+                    <p className="text-xs text-gray-400">Angin</p>
+                  </div>
+                  <div>
+                    <Thermometer className="h-6 w-6 text-orange-400 mx-auto mb-1" />
+                    <p className="text-lg font-semibold text-white">{weatherData?.main?.pressure} hPa</p>
+                    <p className="text-xs text-gray-400">Tekanan</p>
+                  </div>
+                  <div>
+                    <Eye className="h-6 w-6 text-purple-400 mx-auto mb-1" />
+                    <p className="text-lg font-semibold text-white">{weatherData?.visibility ? weatherData.visibility / 1000 : 'N/A'} km</p>
+                    <p className="text-xs text-gray-400">Jarak Pandang</p>
+                  </div>
+                  <div>
+                    <Clock className="h-6 w-6 text-yellow-400 mx-auto mb-1" />
+                    <p className="text-lg font-semibold text-white">{weatherData?.sys?.sunrise ? format(new Date(weatherData.sys.sunrise * 1000), 'HH:mm') : 'N/A'}</p>
+                    <p className="text-xs text-gray-400">Matahari Terbit</p>
+                  </div>
+                  <div>
+                    <Clock className="h-6 w-6 text-yellow-400 mx-auto mb-1" />
+                    <p className="text-lg font-semibold text-white">{weatherData?.sys?.sunset ? format(new Date(weatherData.sys.sunset * 1000), 'HH:mm') : 'N/A'}</p>
+                    <p className="text-xs text-gray-400">Matahari Terbenam</p>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <AlertCircle className="h-8 w-8 text-gray-400 mx-auto mb-3" />
+                <p className="text-gray-400">Data cuaca tidak tersedia.</p>
+              </div>
+            )}
+            <div className="flex justify-end mt-6">
+              <button
+                type="button"
+                onClick={handleCloseWeatherModal}
+                className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+              >
+                Tutup
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
