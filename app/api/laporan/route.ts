@@ -1,45 +1,29 @@
 import { NextResponse } from 'next/server';
-import { supabaseServiceRole } from '@/lib/supabase';
+import { createClient } from '@supabase/supabase-js';
 
-export async function POST(request: Request) {
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+if (!supabaseUrl || !supabaseAnonKey) {
+  throw new Error('Missing Supabase URL or Anon Key environment variables');
+}
+
+const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+export async function GET() {
   try {
-    const data = await request.json();
-
-    // Validasi data dasar
-    if (!data.location || !data.water_level) {
-      return NextResponse.json(
-        { error: 'Lokasi dan tinggi air wajib diisi.' },
-        { status: 400 },
-      );
-    }
-
-    const { error } = await supabaseServiceRole.from('laporan_banjir').insert([
-      {
-        location: data.location,
-        latitude: data.latitude,
-        longitude: data.longitude,
-        water_level: data.water_level,
-        description: data.description,
-        photo_url: data.photo_url,
-        reporter_name: data.reporter_name,
-        reporter_contact: data.reporter_contact,
-      },
-    ]);
+    const { data, error } = await supabase
+      .from('laporan_banjir')
+      .select('id, location, waterLevel, timestamp, status, reporterName'); // Sesuaikan dengan kolom di tabel Anda
 
     if (error) {
-      console.error('Error inserting data to Supabase:', error);
+      console.error('Error fetching data from Supabase:', error);
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    return NextResponse.json(
-      { message: 'Laporan berhasil disimpan.' },
-      { status: 201 },
-    );
-  } catch (error: any) {
-    console.error('Error processing request:', error);
-    return NextResponse.json(
-      { error: 'Internal Server Error' },
-      { status: 500 },
-    );
+    return NextResponse.json(data);
+  } catch (error) {
+    console.error('Unexpected error in /api/laporan:', error);
+    return NextResponse.json({ error: `Internal server error: ${(error as Error).message}` }, { status: 500 });
   }
 }

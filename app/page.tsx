@@ -248,15 +248,8 @@ export default function Home() {
   // --- Memoized Data ---
   const realTimeAlerts = useMemo(() => {
     const alerts: FloodAlertType[] = [];
-    const selectedDistrictName = selectedLocation?.districtName?.toLowerCase();
 
     if (latestQuake) {
-      const quakeWilayah = latestQuake.Wilayah.toLowerCase();
-      // Filter gempa jika ada lokasi yang dipilih dan wilayah gempa cocok
-      if (
-        !selectedDistrictName ||
-        quakeWilayah.includes(selectedDistrictName)
-      ) {
         const quakeTimestampISO =
           latestQuake.DateTime.replace(' ', 'T') + '+07:00';
         alerts.push({
@@ -269,22 +262,14 @@ export default function Home() {
           isActive: true,
           affectedAreas: latestQuake.Wilayah.split(',').map((s) => s.trim()),
         });
-      }
     }
 
-    const filteredMockAlerts = FLOOD_MOCK_ALERTS.filter((alert) => {
-      if (!selectedDistrictName) return true; // Jika tidak ada lokasi dipilih, tampilkan semua
-      return alert.affectedAreas.some((area) =>
-        area.toLowerCase().includes(selectedDistrictName),
-      );
-    });
-
-    const combinedAlerts = [...alerts, ...filteredMockAlerts];
+    const combinedAlerts = [...alerts, ...FLOOD_MOCK_ALERTS];
     return combinedAlerts.sort(
       (a, b) =>
         new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime(),
     );
-  }, [latestQuake, selectedLocation]);
+  }, [latestQuake]);
 
   const heroCards = useMemo(
     () => [

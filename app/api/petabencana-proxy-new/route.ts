@@ -15,9 +15,9 @@ export async function GET(request: Request) {
   try {
     const response = await fetch(apiUrl, {
       cache: 'no-store', // Pastikan data selalu terbaru
-      headers: {
+      headers: PETABENCANA_API_KEY ? {
         Authorization: `Bearer ${PETABENCANA_API_KEY}`,
-      },
+      } : {},
     });
 
     if (!response.ok) {
