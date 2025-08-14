@@ -22,6 +22,7 @@ import {
   Cloud
 } from 'lucide-react';
 import { motion } from 'framer-motion';
+import Image from 'next/image';
 import { format, parseISO } from 'date-fns';
 import { id } from 'date-fns/locale';
 
@@ -419,7 +420,7 @@ const DataSensorAnalysis: React.FC = () => {
                               </p>
                             )}
                             {report.photo_url && (
-                              <img src={report.photo_url} alt="Foto Laporan" className="mt-2 max-h-48 object-cover rounded-md" />
+                                                            <Image src={report.photo_url} alt="Foto Laporan" width={192} height={192} className="mt-2 max-h-48 object-cover rounded-md" />
                             )}
                           </div>
                           

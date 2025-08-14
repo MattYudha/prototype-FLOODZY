@@ -77,12 +77,13 @@ const MapEvents: React.FC<MapEventsHandlerProps> = ({
   );
 
   useEffect(() => {
-    if (markerRef.current) {
-      markerRef.current.on('dragend', eventHandlers);
+    const marker = markerRef.current;
+    if (marker) {
+      marker.on('dragend', eventHandlers);
     }
     return () => {
-      if (markerRef.current) {
-        markerRef.current.off('dragend', eventHandlers);
+      if (marker) {
+        marker.off('dragend', eventHandlers);
       }
     };
   }, [eventHandlers]);

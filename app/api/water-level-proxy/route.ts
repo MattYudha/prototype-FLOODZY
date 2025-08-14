@@ -29,7 +29,8 @@ export async function GET(request: Request) {
     }
 
     // Parsing dan pemetaan data dari respons Supabase
-    const waterLevelPosts = data
+    const rows = data ?? [];
+    const waterLevelPosts = rows
       .map((item: any) => {
         // Sesuaikan nama properti di sini agar sesuai dengan NAMA KOLOM di tabel Supabase Anda
         // berdasarkan CSV yang Anda impor.

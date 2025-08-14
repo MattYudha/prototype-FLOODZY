@@ -18,6 +18,7 @@ import {
 import type { SupabaseClient } from '@supabase/supabase-js'; // Import tipe data untuk Supabase
 import MapPicker from '@/components/map/MapPicker'; // Add this import
 import { motion } from 'framer-motion'; // Import motion
+import Image from 'next/image';
 
 export default function LaporBanjirPage() {
   // --- STATE MANAGEMENT ---
@@ -374,10 +375,12 @@ export default function LaporBanjirPage() {
                   >
                     {selectedPhoto ? (
                       <div className="flex items-center gap-3">
-                        <img
+                        <Image
                           src={selectedPhoto.preview}
                           alt="Preview"
-                          className="w-16 h-16 object-cover rounded-lg"
+                          width={64}
+                          height={64}
+                          className="object-cover rounded-lg"
                         />
                         <div>
                           <p className="text-white font-medium">

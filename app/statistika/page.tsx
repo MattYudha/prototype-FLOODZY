@@ -392,7 +392,7 @@ export default function StatistikPage() {
       return true;
     });
     setChartData(generateChartData(filteredByDate));
-  }, [startDate, endDate, mockHistoricalIncidents]);
+  }, [startDate, endDate]);
 
   const statCards: StatCard[] = [
     {
@@ -879,7 +879,7 @@ Berdasarkan data historis, diproyeksikan peningkatan 15% insiden banjir pada 202
                           dataKey="value"
                           labelLine={false}
                           label={({ name, percent }) =>
-                            `${name} (${(percent * 100).toFixed(0)}%)`
+                            `${name} (${percent ? (percent * 100).toFixed(0) : 0}%)`
                           }
                         >
                           {pieData.map((entry, index) => (

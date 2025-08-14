@@ -22,6 +22,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { toast } from 'sonner';
 
 // Icons
 import {
@@ -265,6 +266,7 @@ export default function Home() {
           timestamp: quakeTimestampISO,
           isActive: true,
           affectedAreas: latestQuake.Wilayah.split(',').map((s) => s.trim()),
+          actions: [],
         });
     }
 
@@ -407,9 +409,7 @@ export default function Home() {
           case 'warning':
             toast.custom((t) => (
               <div
-                className={`${
-                  t.visible ? 'animate-enter' : 'animate-leave'
-                } max-w-md w-full bg-yellow-500 shadow-lg rounded-lg pointer-events-auto flex ring-1 ring-black ring-opacity-5`}
+                className={`max-w-md w-full bg-yellow-500 shadow-lg rounded-lg pointer-events-auto flex ring-1 ring-black ring-opacity-5`}
               >
                 <div className="flex-1 w-0 p-4">
                   <div className="flex items-start">
@@ -428,7 +428,7 @@ export default function Home() {
                 </div>
                 <div className="flex border-l border-yellow-600">
                   <button
-                    onClick={() => toast.dismiss(t.id)}
+                    onClick={() => toast.dismiss(t)}
                     className="w-full border border-transparent rounded-none rounded-r-lg p-4 flex items-center justify-center text-sm font-medium text-white hover:text-yellow-100 focus:outline-none focus:ring-2 focus:ring-yellow-500"
                   >
                     Tutup
@@ -440,9 +440,7 @@ export default function Home() {
           case 'info':
             toast.custom((t) => (
               <div
-                className={`${
-                  t.visible ? 'animate-enter' : 'animate-leave'
-                } max-w-md w-full bg-blue-500 shadow-lg rounded-lg pointer-events-auto flex ring-1 ring-black ring-opacity-5`}
+                className={`max-w-md w-full bg-blue-500 shadow-lg rounded-lg pointer-events-auto flex ring-1 ring-black ring-opacity-5`}
               >
                 <div className="flex-1 w-0 p-4">
                   <div className="flex items-start">
@@ -461,7 +459,7 @@ export default function Home() {
                 </div>
                 <div className="flex border-l border-blue-600">
                   <button
-                    onClick={() => toast.dismiss(t.id)}
+                    onClick={() => toast.dismiss(t)}
                     className="w-full border border-transparent rounded-none rounded-r-lg p-4 flex items-center justify-center text-sm font-medium text-white hover:text-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
                     Tutup
@@ -598,7 +596,7 @@ export default function Home() {
                 }
                 currentWeatherData={weatherData}
                 loadingWeather={isLoadingWeather}
-                error={weatherError}
+                weatherError={weatherError}
               />
             </CardContent>
           </Card>

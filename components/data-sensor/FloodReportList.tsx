@@ -10,6 +10,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { format } from 'date-fns';
+import Image from 'next/image';
 
 const classifyWaterLevel = (waterLevel: number): string => {
   if (waterLevel <= 10) {
@@ -131,7 +132,7 @@ const FloodReportList: React.FC = () => {
                 <p>Tinggi Air: {classifyWaterLevelString(report.water_level)}</p>
                 <p>Waktu Laporan: {format(new Date(report.created_at), 'dd/MM/yyyy HH:mm')}</p>
                 {report.photo_url && (
-                  <img src={report.photo_url} alt="Foto Laporan" className="mt-2 max-h-48 object-cover rounded-md" />
+                                    <Image src={report.photo_url} alt="Foto Laporan" width={192} height={192} className="mt-2 max-h-48 object-cover rounded-md" />
                 )}
               </div>
             ))}
