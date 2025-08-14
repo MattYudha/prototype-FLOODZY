@@ -159,13 +159,13 @@ export default function Home() {
     isLoading: isLoadingWaterLevel,
     error: waterLevelError,
     fetchWaterLevels,
-  } = useWaterLevelData();
+  } = useWaterLevelData(selectedLocation?.districtName);
   const {
     pumpStatusData,
     isLoading: isLoadingPumpStatus,
     error: pumpStatusError,
     fetchPumpStatus,
-  } = usePumpStatusData();
+  } = usePumpStatusData(selectedLocation?.districtName);
   const {
     latestQuake,
     isLoading: isLoadingQuake,
@@ -196,8 +196,8 @@ export default function Home() {
       if (location && location.latitude != null && location.longitude != null) {
         const { latitude, longitude } = location;
         fetchWeather(latitude, longitude);
-        fetchPumpStatus(location.districtName);
-        fetchWaterLevels(location.districtName);
+        fetchPumpStatus();
+        fetchWaterLevels();
 
         const buffer = 0.05;
         const newBounds = {

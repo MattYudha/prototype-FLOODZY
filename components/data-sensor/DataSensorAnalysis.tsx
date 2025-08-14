@@ -76,6 +76,7 @@ const DataSensorAnalysis: React.FC = () => {
   const [isAlertModalOpen, setIsAlertModalOpen] = useState(false);
   const [alertThreshold, setAlertThreshold] = useState('high');
   const [alertMethod, setAlertMethod] = useState('email');
+  const [isWeatherModalOpen, setIsWeatherModalOpen] = useState(false);
   const { weatherData, isLoading: isWeatherLoading, error: weatherError, fetchWeather } = useWeatherData();
 
   useEffect(() => {
@@ -390,7 +391,7 @@ const DataSensorAnalysis: React.FC = () => {
                             <div className="flex items-center space-x-3 mb-3">
                               <MapPin className="h-4 w-4 text-cyan-400 flex-shrink-0" />
                               <h4 className="font-semibold text-white truncate">{report.location}</h4>
-                              <div className={`flex items-center space-x-1 px-2 py-1 rounded-full text-xs font-medium ${classifyWaterLevelString(report.water_level || '').colorClass}}`}>
+                              <div className={`flex items-center space-x-1 px-2 py-1 rounded-full text-xs font-medium ${classifyWaterLevelString(report.water_level || '').colorClass}`}>
                                 {classifyWaterLevelString(report.water_level || '').icon}
                                 <span>{classifyWaterLevelString(report.water_level || '').label}</span>
                               </div>

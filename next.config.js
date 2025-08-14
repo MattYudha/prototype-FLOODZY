@@ -11,11 +11,7 @@ const nextConfig = {
     return config;
   },
 
-  // PENAMBAHAN UNTUK OPENTELEMETRY
-  // Beritahu Next.js untuk menggunakan file instrumentation.ts saat server dimulai
-  experimental: {
-    instrumentationHook: true,
-  },
+  
 };
 
 module.exports = nextConfig;
