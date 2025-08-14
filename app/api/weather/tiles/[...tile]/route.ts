@@ -1,9 +1,16 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
+
+interface RouteContext {
+  params: {
+    tile: string[];
+  };
+}
 
 export async function GET(
-  request: Request,
-  { params }: { params: { tile: string[] } },
+  request: NextRequest,
+  context: RouteContext,
 ) {
+  const { params } = context;
   const apiKey = process.env.OPEN_WEATHER_API_KEY;
   if (!apiKey) {
     return new Response('API key is not configured', { status: 500 });

@@ -1,8 +1,9 @@
 // Health check endpoint untuk debugging koneksi
 import { NextResponse } from 'next/server';
-import { supabaseServiceRole } from '@/lib/supabase';
+import { supabaseServiceRole, fetchSupabaseDataWithRetry } from '@/lib/supabaseAdmin';
 
 export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
 
 export async function GET() {
   try {
@@ -16,10 +17,10 @@ export async function GET() {
     // Test Supabase connection
     let supabaseTest = null;
     try {
-      const { data, error } = await supabaseServiceRole
-        .from('provinces')
-        .select('province_code, province_name')
-        .limit(1);
+      const { data, error } = await fetchSupabaseDataWithRetry(
+        (client) => client.from('provinces').select('province_code, province_name').limit(1),
+        'provinces'
+      );
 
       if (error) {
         supabaseTest = { status: 'error', message: error.message };

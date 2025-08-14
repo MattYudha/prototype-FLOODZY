@@ -179,6 +179,7 @@ const tools: Tool[] = [
 // FUNGSI UTAMA UNTUK MENANGANI PERTANYAAN CHATBOT
 // ===============================================
 
+export const runtime = 'nodejs';
 export async function POST(request: Request) {
   if (!genAI) {
     console.error('[Chatbot API] ❌ GEMINI_API_KEY is missing in environment.');

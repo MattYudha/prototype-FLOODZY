@@ -1,18 +1,20 @@
 // src/app/api/pump-status-proxy/route.ts
 
 import { NextResponse } from 'next/server';
-import { supabaseServiceRole } from '@/lib/supabase'; // Pastikan ini diimpor dan terkonfigurasi dengan benar
+import { fetchSupabaseDataWithRetry } from '@/lib/supabaseAdmin';
 
 export const dynamic = 'force-dynamic'; // Penting untuk memastikan route ini dinamis
+export const runtime = 'nodejs'; // Tetapkan runtime ke Node.js
 
 export async function GET(request: Request) {
   console.log('API pump-status-proxy: Request received.');
   try {
     // Ambil data dari tabel 'pompa_banjir' di Supabase Anda
     // <<< PASTIKAN NAMA TABEL INI SAMA PERSIS DENGAN YANG ANDA BUAT DI SUPABASE UNTUK DATA POMPA >>>
-    const { data, error } = await supabaseServiceRole
-      .from('pompa_banjir') // GANTI DENGAN NAMA TABEL POMPA BANJIR ANDA (misal: 'pompa_banjir_data')
-      .select('*'); // Ambil semua kolom yang tersedia
+    const { data, error } = await fetchSupabaseDataWithRetry(
+      (client) => client.from('pompa_banjir').select('*'),
+      'pompa_banjir'
+    );
 
     if (error) {
       console.error(

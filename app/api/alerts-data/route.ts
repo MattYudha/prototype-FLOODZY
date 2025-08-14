@@ -22,6 +22,8 @@ interface Alert {
 
 const generateUniqueId = () => Math.random().toString(36).substr(2, 9);
 
+export const runtime = 'nodejs';
+
 export async function GET() {
   console.log(
     'API Route: /api/alerts-data received GET request to fetch real-time data.',

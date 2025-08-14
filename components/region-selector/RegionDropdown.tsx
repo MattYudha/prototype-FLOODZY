@@ -24,7 +24,7 @@ import {
   Info,
   Loader2,
 } from 'lucide-react';
-import { WeatherData } from '@/lib/api';
+import { WeatherData, CombinedWeatherData } from '@/lib/api';
 import { WeatherMapIframe } from '@/components/weather/WeatherMapIframe';
 
 import { SelectedLocation } from '@/app/state';
@@ -32,7 +32,7 @@ import { SelectedLocation } from '@/app/state';
 interface RegionDropdownProps {
   onSelectDistrict?: (location: SelectedLocation) => void;
   selectedLocationCoords?: { lat?: number; lng?: number; name: string } | null;
-  currentWeatherData?: WeatherData | null;
+  currentWeatherData?: CombinedWeatherData | null;
   loadingWeather?: boolean;
   weatherError?: string | null;
 }

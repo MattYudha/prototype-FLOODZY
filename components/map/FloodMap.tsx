@@ -16,11 +16,7 @@ import L, { Icon, LatLngExpression } from 'leaflet';
 // Konfigurasi ikon default Leaflet
 
 
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: '/leaflet/images/marker-icon-2x.png',
-  iconUrl: '/leaflet/images/marker-icon.png',
-  shadowUrl: '/leaflet/images/marker-shadow.png',
-});
+
 
 // Impor dari file proyek Anda
 import { useEffect, useRef, useState, useCallback } from 'react';
@@ -202,6 +198,14 @@ export function FloodMap({
   const [floodZones] = useState<FloodZone[]>(FLOOD_ZONES_MOCK); // Mock data asli
   const [weatherData] = useState<WeatherData>(WEATHER_MOCK_DATA);
   const mapRef = useRef<L.Map | null>(null);
+
+  useEffect(() => {
+    L.Icon.Default.mergeOptions({
+      iconRetinaUrl: '/leaflet/images/marker-icon-2x.png',
+      iconUrl: '/leaflet/images/marker-icon.png',
+      shadowUrl: '/leaflet/images/marker-shadow.png',
+    });
+  }, []);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [searchedLocation, setSearchedLocation] =

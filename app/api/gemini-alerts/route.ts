@@ -14,6 +14,7 @@ console.log(
 // Inisialisasi AI instance
 const genAI = GEMINI_API_KEY ? new GoogleGenerativeAI(GEMINI_API_KEY) : null;
 
+export const runtime = 'nodejs';
 export async function POST(request: Request) {
   if (!genAI) {
     console.error('[Gemini API] ❌ API key not found.');

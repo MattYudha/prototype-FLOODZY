@@ -5,7 +5,7 @@ import type {
 } from '@/lib/api';
 
 export const useWeatherData = () => {
-  const [weatherData, setWeatherData] = useState<WeatherData | null>(null);
+  const [weatherData, setWeatherData] = useState<CombinedWeatherData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -21,8 +21,8 @@ export const useWeatherData = () => {
           const errorData = await response.json();
           throw new Error(errorData.message || 'Gagal mengambil data cuaca.');
         }
-        const data: OpenWeatherMapCurrentResponse = await response.json();
-        setWeatherData({ current: data, daily: [] });
+        const data: CombinedWeatherData = await response.json();
+        setWeatherData(data);
       } catch (err: any) {
         setError(err.message);
         setWeatherData(null);

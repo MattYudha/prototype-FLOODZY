@@ -1,5 +1,5 @@
 // File: lib/api.ts
-
+import { fetchWithRobustErrorHandling } from './fetch-utils';
 // ===============================================
 // KUMPULAN INTERFACE (TIPE DATA)
 // ===============================================
@@ -184,40 +184,124 @@ export interface DisplayNotificationArgs {
 // KUMPULAN FUNGSI API
 // ===============================================
 
-export async function fetchRegions(
+export async function getRegionDataServer(
+  type: string,
+  parentCode?: string | number | null,
+): Promise<RegionData[]> {
+  // Guard: hard-fail if supabaseServiceRole is not available (i.e., called from client)
+  if (typeof window !== 'undefined' || !supabaseServiceRole) {
+    const errorMessage = `ERROR: getRegionDataServer called from client-side or supabaseServiceRole not initialized. Module: lib/api.ts, Runtime: ${typeof window !== 'undefined' ? 'client' : 'unknown'}`;
+    console.error(errorMessage);
+    throw new Error(errorMessage);
+  }
+  console.log(
+    `getRegionData called with type='${type}' and parentCode='${parentCode}'`,
+  );
+
+  if (!type) {
+    throw new Error('Missing required parameter: type');
+  }
+
+  let tableName: string;
+  let selectColumns: string;
+  let whereColumn: string | null = null;
+
+  switch (type) {
+    case 'provinces':
+      tableName = 'provinces';
+      selectColumns =
+        'province_code, province_name, province_latitude, province_longitude';
+      break;
+    case 'regencies':
+      tableName = 'regencies';
+      selectColumns = 'city_code, city_name, city_latitude, city_longitude';
+      whereColumn = 'city_province_code';
+      break;
+    case 'districts':
+      tableName = 'districts';
+      selectColumns =
+        'sub_district_code, sub_district_name, sub_district_latitude, sub_district_longitude, sub_district_geometry';
+      whereColumn = 'sub_district_city_code';
+      break;
+    case 'villages':
+      tableName = 'villages';
+      selectColumns =
+        'village_code, village_name, village_postal_codes, village_latitude, village_longitude, village_geometry';
+      whereColumn = 'village_sub_district_code';
+      break;
+    default:
+      throw new Error(`Invalid region type: '${type}'`);
+  }
+
+  if (
+    (type === 'regencies' || type === 'districts' || type === 'villages') &&
+    (parentCode === undefined || parentCode === null || String(parentCode).toLowerCase() === 'undefined')
+  ) {
+    const errorMessage = `ERROR: Missing parent_code for type: ${type}. Received: ${parentCode}. This function should not be called with undefined/null parentCode for this type.`;
+    console.error(errorMessage);
+    throw new Error(errorMessage);
+  }
+
+  let query = supabaseServiceRole.from(tableName).select(selectColumns);
+
+  const sortColumn =
+    selectColumns.split(',')[1]?.trim() ||
+    selectColumns.split(',')[0]?.trim();
+  if (sortColumn) {
+    query = query.order(sortColumn, { ascending: true });
+  }
+
+  if (whereColumn && parentCode) {
+    query = query.eq(whereColumn, parentCode);
+  }
+
+  const { data, error } = await query;
+
+  if (error) {
+    console.error('Error fetching data from Supabase:', error.message);
+    throw new Error(error.message);
+  }
+
+  return data || [];
+}
+
+
+export async function fetchRegionsServer(
   type: 'provinces' | 'regencies' | 'districts' | 'villages',
   parentCode?: number | string,
 ): Promise<RegionData[]> {
-  console.log(
-    `fetchRegions called with type: ${type}, parentCode: ${parentCode}`,
-  );
-  const params = new URLSearchParams({ type });
-  if (parentCode) {
-    params.append('parent_code', String(parentCode));
+  try {
+    const data = await getRegionDataServer(type, parentCode);
+    return data;
+  } catch (error: any) {
+    console.error(`API Error in fetchRegionsServer: ${error.message}`);
+    throw error;
   }
-
-  const url = `/api/regions?${params.toString()}`;
-  console.log(`Fetching from URL: ${url}`);
-  const response = await fetch(url, {
-    method: 'GET',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    next: { revalidate: 3600 }, // Revalidate every 1 hour
-  });
-  console.log(`Response status: ${response.status}`);
-  if (!response.ok) {
-    const errorText = await response.text();
-    console.error(`API Error: ${response.status} - ${errorText}`);
-    const errorData = await response.json();
-    throw new Error(errorData.error || `Failed to fetch ${type}`);
-  }
-  const data = await response.json();
-  console.log(`Received data:`, data);
-  return data;
 }
 
-export async function fetchDisasterProneData(
+export async function fetchRegionsClient(
+  type: 'provinces' | 'regencies' | 'districts' | 'villages',
+  parentCode?: number | string,
+): Promise<RegionData[]> {
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+  const apiUrl = `${baseUrl}/api/regions?type=${type}${parentCode ? `&parentCode=${parentCode}` : ''}`;
+
+  try {
+    const response = await fetch(apiUrl);
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || `Failed to fetch regions: ${response.statusText}`);
+    }
+    const data: RegionData[] = await response.json();
+    return data;
+  } catch (error: any) {
+    console.error(`API Error in fetchRegionsClient: ${error.message}`);
+    throw error;
+  }
+}
+
+
+  export async function fetchDisasterProneData(
   south: number,
   west: number,
   north: number,
@@ -374,17 +458,8 @@ export async function fetchPetabencanaReports(
 ): Promise<PetabencanaReport[]> {
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'; // Fallback for development
   const apiUrl = `${baseUrl}/api/petabencana-proxy-new?hazardType=${hazardType}&timeframe=${timeframe}`;
-  const response = await fetch(apiUrl, { cache: 'no-store' });
+  const data = await fetchWithRobustErrorHandling<PetabencanaReport[]>(apiUrl, { cache: 'no-store' });
 
-  if (!response.ok) {
-    const errorData = await response.json();
-    throw new Error(
-      errorData.error ||
-        `Gagal mengambil laporan PetaBencana.id dari proksi: ${response.statusText}`,
-    );
-  }
-
-  const data = await response.json();
   // Pastikan data adalah array, jika tidak, kembalikan array kosong
   if (!Array.isArray(data)) {
     console.warn('PetaBencana.id proxy returned non-array data:', data);
@@ -418,3 +493,4 @@ export async function geocodeLocation(
   console.log(`[Geocoding API] Received data for '${query}':`, data);
   return data;
 }
+

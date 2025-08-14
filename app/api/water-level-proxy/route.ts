@@ -1,17 +1,19 @@
 // src/app/api/water-level-proxy/route.ts
 
 import { NextResponse } from 'next/server';
-import { supabaseServiceRole } from '@/lib/supabase'; // Pastikan ini diimpor dan terkonfigurasi dengan benar
+import { fetchSupabaseDataWithRetry } from '@/lib/supabaseAdmin';
 
 export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs'; // Tetapkan runtime ke Node.js
 
 export async function GET(request: Request) {
   console.log('API water-level-proxy: Request received.');
   try {
     // === PERBAIKAN DI SINI: Ubah nama tabel menjadi 'posdugaair' ===
-    const { data, error } = await supabaseServiceRole
-      .from('posdugaair') // <<< NAMA TABEL SUDAH SESUAI DENGAN KOREKSI ANDA
-      .select('*'); // Ambil semua kolom
+    const { data, error } = await fetchSupabaseDataWithRetry(
+      (client) => client.from('posdugaair').select('*'),
+      'posdugaair'
+    );
 
     if (error) {
       console.error(

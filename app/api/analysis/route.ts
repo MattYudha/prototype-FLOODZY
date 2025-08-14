@@ -65,6 +65,7 @@ const API_KEY = process.env.GOOGLE_API_KEY || '';
  * POST handler for the flood analysis API route.
  * Receives historical data and a user prompt, then returns a comprehensive analysis.
  */
+export const runtime = 'nodejs';
 export async function POST(req: NextRequest) {
   if (!API_KEY) {
     return NextResponse.json(

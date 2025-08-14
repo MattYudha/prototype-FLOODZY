@@ -65,7 +65,11 @@ import { cn, formatNumber, getTimeAgo } from '@/lib/utils';
 
 // App Components
 import { RegionDropdown } from '@/components/region-selector/RegionDropdown';
-import { FloodMap } from '@/components/map/FloodMap';
+import dynamic from 'next/dynamic';
+
+const FloodMap = dynamic(() => import('@/components/map/FloodMap').then(mod => mod.FloodMap), {
+  ssr: false,
+});
 import { PeringatanBencanaCard } from '@/components/flood/PeringatanBencanaCard';
 
 // Types

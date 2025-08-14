@@ -1,20 +1,23 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { fetchSupabaseDataWithRetry } from '@/lib/supabaseAdmin';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+export const runtime = 'nodejs';
 
-if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error('Missing Supabase URL or Anon Key environment variables');
-}
+// const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL; // No longer needed
+// const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY; // No longer needed
 
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
+// if (!supabaseUrl || !supabaseAnonKey) {
+//   throw new Error('Missing Supabase URL or Anon Key environment variables');
+// } // No longer needed
+
+// const supabase = createClient(supabaseUrl, supabaseAnonKey); // No longer needed
 
 export async function GET() {
   try {
-    const { data, error } = await supabase
-      .from('laporan_banjir')
-      .select('id, location, waterLevel, timestamp, status, reporterName'); // Sesuaikan dengan kolom di tabel Anda
+    const { data, error } = await fetchSupabaseDataWithRetry(
+      (client) => client.from('laporan_banjir').select('id, location, waterLevel, timestamp, status, reporterName'),
+      'laporan_banjir'
+    );
 
     if (error) {
       console.error('Error fetching data from Supabase:', error);
