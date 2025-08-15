@@ -383,8 +383,10 @@ export default function Home() {
     try {
       const response = await fetch('/api/chatbot', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ question: messageToSend }),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ question: messageToSend, history: chatHistory }),
       });
 
       if (!response.ok) {

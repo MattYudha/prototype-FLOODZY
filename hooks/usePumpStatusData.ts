@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
-import { fetchPumpStatusData, PumpData } from '@/lib/api';
+import { fetchPumpStatusData } from '@/lib/api.client';
+import { PumpData } from '@/lib/api';
 
 export const usePumpStatusData = (districtName?: string) => {
   const { data, isLoading, error, refetch } = useQuery<PumpData[], Error>({

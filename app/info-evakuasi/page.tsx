@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import { motion, AnimatePresence } from 'framer-motion'; // Import motion dan AnimatePresence
@@ -21,15 +20,26 @@ import {
   AlertTriangle,
 } from 'lucide-react';
 import { EvacuationLocation } from '@/types';
+import dynamic from 'next/dynamic';
+
+const MapContainer = dynamic(
+  () => import('react-leaflet').then((mod) => mod.MapContainer),
+  { ssr: false },
+);
+const TileLayer = dynamic(
+  () => import('react-leaflet').then((mod) => mod.TileLayer),
+  { ssr: false },
+);
+const Marker = dynamic(
+  () => import('react-leaflet').then((mod) => mod.Marker),
+  { ssr: false },
+);
+const Popup = dynamic(
+  () => import('react-leaflet').then((mod) => mod.Popup),
+  { ssr: false },
+);
 
 // Custom marker icon
-const evacuationIcon = new L.Icon({
-  iconUrl: '/assets/evacuation_marker.svg',
-  iconSize: [32, 32],
-  iconAnchor: [16, 32],
-  popupAnchor: [0, -32],
-});
-
 const DEFAULT_MAP_CENTER: [number, number] = [-6.2088, 106.8456]; // Jakarta
 const DEFAULT_MAP_ZOOM = 10;
 
@@ -43,7 +53,21 @@ export default function InfoEvakuasiPage() {
     useState<EvacuationLocation | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
+  const [evacuationIcon, setEvacuationIcon] = useState<L.Icon | null>(null);
+
   useEffect(() => {
+    // Only create the icon on the client side
+    if (typeof window !== 'undefined') {
+      setEvacuationIcon(
+        new L.Icon({
+          iconUrl: '/assets/evacuation_marker.svg',
+          iconSize: [32, 32],
+          iconAnchor: [16, 32],
+          popupAnchor: [0, -32],
+        }),
+      );
+    }
+
     const fetchEvacuationLocations = async () => {
       try {
         const response = await fetch('/api/evakuasi');
@@ -272,39 +296,41 @@ export default function InfoEvakuasiPage() {
             </div>
 
             <div className="h-96 w-full rounded-lg overflow-hidden border border-slate-600/30">
-              <MapContainer
-                center={DEFAULT_MAP_CENTER}
-                zoom={DEFAULT_MAP_ZOOM}
-                scrollWheelZoom={true}
-                className="h-full w-full"
-              >
-                <TileLayer
-                  attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
-                  url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-                />
-                {evacuationLocations.map((loc) => (
-                  <Marker
-                    key={loc.id}
-                    position={[loc.latitude, loc.longitude]}
-                    icon={evacuationIcon}
-                    eventHandlers={{
-                      click: () => handleLocationClick(loc),
-                    }}
-                  >
-                    <Popup>
-                      <div className="text-sm">
-                        <p className="font-bold">{loc.name}</p>
-                        <button
-                          onClick={() => handleLocationClick(loc)}
-                          className="text-cyan-500 hover:underline mt-1"
-                        >
-                          Lihat Detail
-                        </button>
-                      </div>
-                    </Popup>
-                  </Marker>
-                ))}
-              </MapContainer>
+              {evacuationIcon && (
+                <MapContainer
+                  center={DEFAULT_MAP_CENTER}
+                  zoom={DEFAULT_MAP_ZOOM}
+                  scrollWheelZoom={true}
+                  className="h-full w-full"
+                >
+                  <TileLayer
+                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+                    url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+                  />
+                  {evacuationLocations.map((loc) => (
+                    <Marker
+                      key={loc.id}
+                      position={[loc.latitude, loc.longitude]}
+                      icon={evacuationIcon}
+                      eventHandlers={{
+                        click: () => handleLocationClick(loc),
+                      }}
+                    >
+                      <Popup>
+                        <div className="text-sm">
+                          <p className="font-bold">{loc.name}</p>
+                          <button
+                            onClick={() => handleLocationClick(loc)}
+                            className="text-cyan-500 hover:underline mt-1"
+                          >
+                            Lihat Detail
+                          </button>
+                        </div>
+                      </Popup>
+                    </Marker>
+                  ))}
+                </MapContainer>
+              )}
             </div>
           </div>
         </motion.div>

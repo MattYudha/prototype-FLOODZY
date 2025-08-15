@@ -17,6 +17,12 @@ import {
 } from 'lucide-react';
 import type { SupabaseClient } from '@supabase/supabase-js'; // Import tipe data untuk Supabase
 import MapPicker from '@/components/map/MapPicker'; // Add this import
+import dynamic from 'next/dynamic';
+
+const DynamicMapPicker = dynamic(
+  () => import('@/components/map/MapPicker'),
+  { ssr: false }
+);
 import { motion } from 'framer-motion'; // Import motion
 import Image from 'next/image';
 
@@ -270,7 +276,7 @@ export default function LaporBanjirPage() {
                   <MapPin className="w-4 h-4 text-cyan-400" />
                   Lokasi Kejadian <span className="text-red-400">*</span>
                 </label>
-                <MapPicker
+                <DynamicMapPicker
                   currentPosition={[latitude, longitude]} // Pass current lat/lng
                   onPositionChange={({ lat, lng }) => {
                     setLatitude(lat);

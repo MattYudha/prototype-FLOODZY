@@ -111,6 +111,8 @@ const ChartTooltipContent = React.forwardRef<
       indicator?: 'line' | 'dot' | 'dashed';
       nameKey?: string;
       labelKey?: string;
+      payload?: any[];
+      label?: string | number;
     }
 >(
   (
@@ -238,11 +240,11 @@ const ChartTooltipContent = React.forwardRef<
                           {itemConfig?.label || item.name}
                         </span>
                       </div>
-                      {item.value && (
+                      {item.value !== undefined && item.value !== null ? (
                         <span className="font-mono font-medium tabular-nums text-foreground">
-                          {item.value.toLocaleString()}
+                          {(item.value || 0).toLocaleString()}
                         </span>
-                      )}
+                      ) : null}
                     </div>
                   </>
                 )}
@@ -260,10 +262,11 @@ const ChartLegend = RechartsPrimitive.Legend;
 
 const ChartLegendContent = React.forwardRef<
   HTMLDivElement,
-  React.ComponentProps<'div'> &
-    Pick<RechartsPrimitive.LegendProps, 'payload' | 'verticalAlign'> & {
+  React.ComponentProps<'div'> & {
       hideIcon?: boolean;
       nameKey?: string;
+      payload?: any[];
+      verticalAlign?: 'top' | 'middle' | 'bottom';
     }
 >(
   (

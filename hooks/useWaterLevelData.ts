@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
-import { fetchWaterLevelData, WaterLevelPost } from '@/lib/api';
+import { fetchWaterLevelData } from '@/lib/api.client';
+import { WaterLevelPost } from '@/lib/api';
 
 export const useWaterLevelData = (districtName?: string) => {
   const { data, isLoading, error, refetch } = useQuery<WaterLevelPost[], Error>(

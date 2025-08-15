@@ -1,7 +1,7 @@
 'use client';
 
 import { cva, type VariantProps } from 'class-variance-authority';
-import { motion } from 'framer-motion';
+import { motion, HTMLMotionProps } from 'framer-motion';
 import { Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -54,7 +54,7 @@ export function LoadingSpinner({
 export function LoadingSkeleton({
   className,
   ...props
-}: React.HTMLAttributes<HTMLDivElement>) {
+}: Omit<HTMLMotionProps<'div'>, 'ref'>) {
   return (
     <motion.div
       className={cn('animate-pulse rounded-md bg-muted', className)}

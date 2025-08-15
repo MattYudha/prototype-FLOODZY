@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { fetchBmkgLatestQuake, BmkgGempaData } from '@/lib/api';
+import { fetchBmkgLatestQuake } from '@/lib/api.client';
+import { BmkgGempaData } from '@/lib/api';
 
 const DATA_FETCH_INTERVAL_MS = 10 * 60 * 1000;
 

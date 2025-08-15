@@ -53,7 +53,6 @@ export function LoadingSpinner({
 
 export function LoadingSkeleton({
   className,
-  ...props
 }: React.HTMLAttributes<HTMLDivElement>) {
   return (
     <motion.div
@@ -61,7 +60,6 @@ export function LoadingSkeleton({
       initial={{ opacity: 0.5 }}
       animate={{ opacity: [0.5, 0.8, 0.5] }}
       transition={{ duration: 1.5, repeat: Infinity }}
-      {...props}
     />
   );
 }

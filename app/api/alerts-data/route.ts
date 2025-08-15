@@ -2,11 +2,13 @@
 
 import { NextResponse } from 'next/server';
 import {
-  fetchBmkgLatestQuake,
-  fetchPetabencanaReports,
   BmkgGempaData,
   PetabencanaReport,
 } from '@/lib/api';
+import {
+  fetchBmkgLatestQuake,
+  fetchPetabencanaReports,
+} from '@/lib/api.client';
 
 interface Alert {
   id: string;

@@ -82,7 +82,7 @@ export async function getRegionDataServer(
     throw new Error(error.message);
   }
 
-  return data || [];
+  return (data as RegionData[]) || [];
 }
 
 

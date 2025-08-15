@@ -329,7 +329,7 @@ const generateChartData = (
     return {
       name: `${monthName} ${year.slice(2)}`,
       incidents: data.incidents,
-      severity: parseFloat((data.severitySum / data.count).toFixed(1)),
+      severity: data.count === 0 ? 0 : parseFloat((data.severitySum / data.count).toFixed(1)),
       resolved: data.resolved,
       ongoing: data.ongoing,
       losses: data.losses,

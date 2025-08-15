@@ -235,9 +235,9 @@ export function truncate(str: string, length: number): string {
 export function parseQuery(queryString: string): Record<string, string> {
   const params = new URLSearchParams(queryString);
   const result: Record<string, string> = {};
-  for (const [key, value] of params.entries()) {
+  Array.from(params.entries()).forEach(([key, value]) => {
     result[key] = value;
-  }
+  });
   return result;
 }
 
@@ -251,4 +251,21 @@ export function buildQuery(
     }
   });
   return searchParams.toString();
+}
+
+export type ChartRow = { [k: string]: any };
+
+export function normalizeSeries<T extends ChartRow>(
+  rows: T[],
+  keys: string[],
+): T[] {
+  if (!Array.isArray(rows)) return [];
+  return rows.map((r) => {
+    const o: Record<string, any> = { ...r };
+    for (const k of keys) {
+      const v = Number(o[k]);
+      o[k] = Number.isFinite(v) ? v : 0;
+    }
+    return o as T;
+  });
 }

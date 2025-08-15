@@ -6,11 +6,14 @@ import { createSupabaseBrowserClient } from '@/lib/supabase/client';
 import { format, subHours, getHours } from 'date-fns';
 import { id } from 'date-fns/locale';
 import { Loader2, AlertCircle } from 'lucide-react';
+import { normalizeSeries, ChartRow } from '@/lib/utils';
 
 interface FloodReportData {
   hour: string;
   count: number;
 }
+
+const DATA_KEYS = ['count'];
 
 const FloodReportChart: React.FC = () => {
   const [chartData, setChartData] = useState<FloodReportData[]>([]);
@@ -41,10 +44,12 @@ const FloodReportChart: React.FC = () => {
 
       data.forEach(report => {
         const reportDate = new Date(report.created_at);
-        const hour = getHours(reportDate);
-        const formattedHour = hour.toString().padStart(2, '0');
-        if (hourlyCounts[formattedHour] !== undefined) {
-          hourlyCounts[formattedHour]++;
+        if (!isNaN(reportDate.getTime())) { // Check if date is valid
+          const hour = getHours(reportDate);
+          const formattedHour = hour.toString().padStart(2, '0');
+          if (hourlyCounts[formattedHour] !== undefined) {
+            hourlyCounts[formattedHour]++;
+          }
         }
       });
 
@@ -53,7 +58,14 @@ const FloodReportChart: React.FC = () => {
         count: hourlyCounts[hour],
       }));
 
-      setChartData(formattedData);
+      const safeData = normalizeSeries(formattedData as ChartRow[], DATA_KEYS) as FloodReportData[];
+
+      console.log('[Chart] range=24h len=', Array.isArray(safeData) ? safeData.length : 0);
+      if (safeData.length > 0) {
+        console.table(safeData.slice(0, 3));
+      }
+
+      setChartData(safeData);
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -89,20 +101,26 @@ const FloodReportChart: React.FC = () => {
     <div className="bg-gray-800 rounded-xl border border-gray-700 p-6">
       <h3 className="text-lg font-semibold text-white mb-4">Laporan Banjir 24 Jam Terakhir</h3>
       <ResponsiveContainer width="100%" height={300}>
-        <BarChart data={chartData} margin={{
-          top: 5, right: 10, left: 10, bottom: 5,
-        }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#4A5568" />
-          <XAxis dataKey="hour" stroke="#CBD5E0" tickFormatter={(tick) => format(new Date().setHours(parseInt(tick.split(':')[0])), 'HH:mm', { locale: id })} />
-          <YAxis stroke="#CBD5E0" />
-          <Tooltip 
-            contentStyle={{ backgroundColor: '#2D3748', border: 'none', borderRadius: '8px' }}
-            labelStyle={{ color: '#E2E8F0' }}
-            itemStyle={{ color: '#A0AEC0' }}
-            formatter={(value: number) => [`${value} Laporan`, 'Jumlah']}
-          />
-          <Bar dataKey="count" fill="#06B6D4" />
-        </BarChart>
+        {chartData && chartData.length > 0 ? (
+          <BarChart data={chartData} margin={{
+            top: 5, right: 10, left: 10, bottom: 5,
+          }}>
+            <CartesianGrid strokeDasharray="3 3" stroke="#4A5568" />
+            <XAxis dataKey="hour" stroke="#CBD5E0" tickFormatter={(tick) => format(new Date().setHours(parseInt(tick.split(':')[0])), 'HH:mm', { locale: id })} />
+            <YAxis stroke="#CBD5E0" />
+            <Tooltip
+              contentStyle={{ backgroundColor: '#2D3748', border: 'none', borderRadius: '8px' }}
+              labelStyle={{ color: '#E2E8F0' }}
+              itemStyle={{ color: '#A0AEC0' }}
+              formatter={(value: number) => [`${value} Laporan`, 'Jumlah']}
+            />
+            <Bar dataKey="count" fill="#06B6D4" />
+          </BarChart>
+        ) : (
+          <div className="flex items-center justify-center h-full text-gray-500">
+            Tidak ada data laporan banjir tersedia.
+          </div>
+        )}
       </ResponsiveContainer>
     </div>
   );

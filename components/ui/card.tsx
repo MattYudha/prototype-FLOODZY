@@ -38,8 +38,10 @@ const cardVariants = cva(
   },
 );
 
+type OmittedHTMLDivAttributes = Omit<HTMLAttributes<HTMLDivElement>, 'onDrag' | 'onDragEnd' | 'onDragStart' | 'onDragOver' | 'onDragEnter' | 'onDragLeave' | 'onDrop' | 'onAnimationStart' | 'onAnimationEnd' | 'onAnimationIteration'>;
+
 export interface CardProps
-  extends HTMLAttributes<HTMLDivElement>,
+  extends OmittedHTMLDivAttributes,
     VariantProps<typeof cardVariants> {
   asChild?: boolean;
 }

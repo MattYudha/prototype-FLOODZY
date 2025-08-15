@@ -132,7 +132,9 @@ const FloodReportList: React.FC = () => {
                 <p>Tinggi Air: {classifyWaterLevelString(report.water_level)}</p>
                 <p>Waktu Laporan: {format(new Date(report.created_at), 'dd/MM/yyyy HH:mm')}</p>
                 {report.photo_url && (
-                                    <Image src={report.photo_url} alt="Foto Laporan" width={192} height={192} className="mt-2 max-h-48 object-cover rounded-md" />
+                                    <div className="relative w-48 h-48 mt-2"> {/* Added a relative parent with fixed size */}
+                                        <Image src={report.photo_url} alt="Foto Laporan" fill className="object-cover rounded-md" unoptimized />
+                                    </div>
                 )}
               </div>
             ))}

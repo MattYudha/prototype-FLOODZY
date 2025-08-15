@@ -54,7 +54,7 @@ export async function GET(request: Request) {
     }
 
     const data = await response.json();
-    return NextResponse.json(data);
+    return NextResponse.json(data.result.features ?? [], { status: 200 });
   } catch (error: any) {
     console.error('Error in PetaBencana proxy:', error);
     return NextResponse.json(

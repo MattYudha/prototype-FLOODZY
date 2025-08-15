@@ -466,13 +466,29 @@ export function RegionDropdown({
 
             <CardContent className="p-3 sm:p-6 h-full">
               <div className="h-full min-h-[250px] sm:min-h-[400px] lg:min-h-[500px]">
-                <WeatherMapIframe
-                  selectedLocationCoords={selectedLocationCoords}
-                  currentWeatherData={currentWeatherData}
-                  loadingWeather={loadingWeather}
-                  weatherError={weatherError}
-                  height="100%"
-                />
+                {selectedLocationCoords &&
+                typeof selectedLocationCoords.lat === 'number' &&
+                typeof selectedLocationCoords.lng === 'number' ? (
+                  <WeatherMapIframe
+                    selectedLocationCoords={{
+                      lat: selectedLocationCoords.lat,
+                      lng: selectedLocationCoords.lng,
+                      name: selectedLocationCoords.name,
+                    }}
+                    currentWeatherData={currentWeatherData}
+                    loadingWeather={loadingWeather}
+                    weatherError={weatherError}
+                    height="100%"
+                  />
+                ) : (
+                  <div className="flex items-center justify-center h-full text-center text-gray-400">
+                    <div>
+                      <MapPin className="h-12 w-12 mx-auto text-gray-500 mb-4" />
+                      <h3 className="text-lg font-semibold text-white">Pilih Lokasi</h3>
+                      <p className="text-sm">Pilih lokasi lengkap untuk melihat peta cuaca.</p>
+                    </div>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>

@@ -8,12 +8,6 @@ import {
   SchemaType,
 } from '@google/generative-ai';
 import {
-  fetchWaterLevelData,
-  fetchPumpStatusData,
-  fetchBmkgLatestQuake,
-  fetchPetabencanaReports,
-  fetchWeatherData,
-  geocodeLocation,
   WaterLevelPost,
   PumpData,
   BmkgGempaData,
@@ -25,6 +19,14 @@ import {
   GeocodeLocationArgs,
   DisplayNotificationArgs,
 } from '@/lib/api'; // Pastikan path ini benar
+import {
+  fetchWaterLevelData,
+  fetchPumpStatusData,
+  fetchBmkgLatestQuake,
+  fetchPetabencanaReports,
+  fetchWeatherData,
+  geocodeLocation,
+} from '@/lib/api.client';
 
 // Inisialisasi Gemini API
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
@@ -179,6 +181,27 @@ const tools: Tool[] = [
 // FUNGSI UTAMA UNTUK MENANGANI PERTANYAAN CHATBOT
 // ===============================================
 
+const MAX_RETRIES = 3;
+const RETRY_DELAY_MS = 1000; // 1 second
+
+// Helper function for retrying async operations
+async function retry<T>(fn: () => Promise<T>, retries = MAX_RETRIES): Promise<T> {
+  for (let i = 0; i < retries; i++) {
+    try {
+      return await fn();
+    } catch (e: any) {
+      const status = e?.status ?? e?.response?.status;
+      if ([429, 503].includes(status) && i < retries - 1) {
+        console.warn(`[Chatbot API] Retrying due to status ${status}. Attempt ${i + 1}/${retries}...`);
+        await new Promise(resolve => setTimeout(resolve, RETRY_DELAY_MS * (i + 1)));
+      } else {
+        throw e; // Re-throw other errors or if max retries reached
+      }
+    }
+  }
+  throw new Error("Max retries reached"); // Should not be reached if retries > 0
+}
+
 export const runtime = 'nodejs';
 export async function POST(request: Request) {
   if (!genAI) {
@@ -190,7 +213,9 @@ export async function POST(request: Request) {
   }
 
   try {
+    console.log('[Chatbot API] Received request.');
     const { question, history } = await request.json();
+    console.log('[Chatbot API] Request body parsed.');
 
     if (!question) {
       return NextResponse.json(
@@ -202,20 +227,24 @@ export async function POST(request: Request) {
     const model = genAI.getGenerativeModel({
       model: 'gemini-1.5-flash',
       tools: tools,
-      // NEW: System Instruction to guide Gemini's behavior
       systemInstruction:
         "Anda adalah asisten informasi Floodzy. Gunakan fungsi yang tersedia untuk mendapatkan data real-time tentang cuaca, banjir, tinggi muka air, dan status pompa. Selalu prioritaskan penggunaan 'locationName' saat mencari cuaca jika pengguna menyebutkan nama lokasi, dan sistem akan mencari koordinatnya secara otomatis. Berikan jawaban yang ringkas, informatif, dan relevan dengan pertanyaan pengguna. Contoh: Untuk 'cuaca di Tangerang', panggil 'fetchWeatherData' dengan 'locationName: \"Tangerang\"'. Gunakan fungsi 'displayNotification' untuk menampilkan pesan popup penting kepada pengguna, misalnya untuk konfirmasi sukses, peringatan, atau informasi yang perlu segera diketahui pengguna. Contoh: 'displayNotification(message: \"Data berhasil diperbarui!\")' atau 'displayNotification(message: \"Terjadi kesalahan saat mengambil data cuaca.\", type: \"error\")'.",
     });
+    console.log('[Chatbot API] Generative model initialized.');
 
     const chat = model.startChat({
       history: history || [],
     });
+    console.log('[Chatbot API] Chat session started.');
 
     console.log('[Chatbot API] User Question:', question);
 
-    const result = await chat.sendMessage(question);
+    const result = await retry(() => chat.sendMessage(question));
+    console.log('[Chatbot API] Message sent to Gemini. Result received.');
     const call = result.response.functionCall();
     const directTextResponse = result.response.text();
+    console.log('[Chatbot API] Function call and direct text extracted.');
+
 
     let finalAnswer = '';
     let notificationPayload: {
@@ -240,6 +269,7 @@ export async function POST(request: Request) {
       let functionExecutedSuccessfully = false;
 
       try {
+        console.log(`[Chatbot API] Attempting to execute tool: ${call.name}`);
         if (call.name === 'fetchWaterLevelData') {
           toolResponseData = await fetchWaterLevelData();
         } else if (call.name === 'fetchPumpStatusData') {
@@ -379,6 +409,7 @@ export async function POST(request: Request) {
         );
 
         // Kirimkan hasil toolResponse kembali ke Gemini
+        console.log('[Chatbot API] Sending tool response back to Gemini.');
         const toolResult = await chat.sendMessage([
           {
             functionResponse: {
@@ -396,6 +427,7 @@ export async function POST(request: Request) {
         console.error(
           `[Chatbot API] ❌ Error executing tool '${call.name}':`,
           toolExecutionError.message,
+          toolExecutionError.stack,
         );
         try {
           // Kirim error kembali ke Gemini agar bisa merespons dengan tepat
@@ -437,6 +469,7 @@ export async function POST(request: Request) {
       console.warn('[Chatbot API] 🚨 Fallback: Final answer was empty.');
     }
 
+    console.log('[Chatbot API] Returning response.');
     return NextResponse.json(
       { answer: finalAnswer, notification: notificationPayload },
       { status: 200 },
@@ -447,6 +480,13 @@ export async function POST(request: Request) {
       error?.message,
       error?.stack,
     );
+    const status = error?.status ?? error?.response?.status;
+    if ([429, 503].includes(status)) {
+      return NextResponse.json(
+        { error: "Model sedang penuh. Coba lagi." },
+        { status: 503 },
+      );
+    }
     const errorMessage =
       'Terjadi kesalahan internal server yang tidak terduga. Mohon coba lagi nanti.';
     return NextResponse.json(

@@ -45,11 +45,15 @@ const badgeVariants = cva(
   },
 );
 
+type OmittedHTMLDivAttributes = Omit<React.HTMLAttributes<HTMLDivElement>, 'onDrag' | 'onDragEnd' | 'onDragStart' | 'onDragOver' | 'onDragEnter' | 'onDragLeave' | 'onDrop' | 'onAnimationStart' | 'onAnimationEnd' | 'onAnimationIteration'>;
+
 export interface BadgeProps
-  extends HTMLAttributes<HTMLDivElement>,
+  extends OmittedHTMLDivAttributes,
     VariantProps<typeof badgeVariants> {
+  asChild?: boolean;
+  as?: React.ElementType;
   icon?: React.ReactNode;
-  count?: number;
+  count?: number | string;
   dot?: boolean;
 }
 

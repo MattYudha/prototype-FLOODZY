@@ -15,7 +15,7 @@ export const runtime = 'nodejs';
 export async function GET() {
   try {
     const { data, error } = await fetchSupabaseDataWithRetry(
-      (client) => client.from('laporan_banjir').select('id, location, waterLevel, timestamp, status, reporterName'),
+      (client) => client.from('laporan_banjir').select('id, location, water_level, timestamp, status, reporterName'),
       'laporan_banjir'
     );
 

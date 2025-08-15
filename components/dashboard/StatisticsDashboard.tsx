@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { format, parseISO, subDays } from 'date-fns';
 import { id } from 'date-fns/locale';
 import {
@@ -32,6 +32,7 @@ import {
   Pie,
   Cell,
 } from 'recharts';
+import { normalizeSeries, ChartRow } from '@/lib/utils';
 
 // Helper to generate random data
 const generateRandomData = (days: number) => {
@@ -51,17 +52,25 @@ const generateRandomData = (days: number) => {
         date: date.toISOString(),
         region,
         laporan: Math.floor(Math.random() * 20) + 1,
-        resolved: Math.floor(Math.random() * 15),
+        resolved: Math.floor(Math.random() * 15) + 1,
       });
     }
   }
   return data;
 };
 
+interface ChartData {
+  line: ChartRow[];
+  bar: ChartRow[];
+  pie: ChartRow[];
+}
+
+const DATA_KEYS = ['jumlah', 'resolved'];
+
 const StatisticsDashboard = () => {
   const [selectedTimeRange, setSelectedTimeRange] = useState('7d');
   const [isLoading, setIsLoading] = useState(false);
-  const [chartData, setChartData] = useState({ line: [], bar: [], pie: [] });
+  const [chartData, setChartData] = useState<ChartData>({ line: [], bar: [], pie: [] });
   const [masterData, setMasterData] = useState(() => generateRandomData(90));
 
   // Effect to regenerate masterData every 24 hours
@@ -85,46 +94,63 @@ const StatisticsDashboard = () => {
       );
       const isHours = selectedTimeRange.includes('h');
       const now = new Date();
-      const cutoff = isHours ? subDays(now, days / 24) : subDays(now, days);
+      let dataToProcess;
 
-      const filteredData = masterData.filter((d) => new Date(d.date) >= cutoff);
+        if (selectedTimeRange === '30d') {
+          dataToProcess = generateRandomData(30); // Generate fresh mock data for 30 days
+        } else if (selectedTimeRange === '90d') {
+          dataToProcess = generateRandomData(90); // Generate fresh mock data for 90 days
+        } else {
+          // For 24h and 7d, filter from masterData as before
+          const cutoff = isHours ? subDays(now, days / 24) : subDays(now, days);
+          dataToProcess = masterData.filter((d) => new Date(d.date) >= cutoff);
+        }
 
       // Process data for charts
-      const line = filteredData
-        .reduce((acc, curr) => {
-          const day = format(parseISO(curr.date), 'yyyy-MM-dd');
-          const existing = acc.find((item) => item.date === day);
+      const line = normalizeSeries(
+        dataToProcess
+          .reduce((acc, curr) => {
+            const day = format(parseISO(curr.date), 'yyyy-MM-dd');
+            const existing = acc.find((item) => item.date === day);
+            if (existing) {
+              existing.jumlah += curr.laporan ?? 0;
+              existing.resolved += curr.resolved ?? 0;
+            } else {
+              acc.push({
+                date: day,
+                day: format(parseISO(curr.date), 'eee'),
+                jumlah: curr.laporan ?? 0,
+                resolved: curr.resolved ?? 0,
+              });
+            }
+            return acc;
+          }, [] as ChartRow[])
+          .sort(
+            (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
+          ),
+        DATA_KEYS,
+      ) as ChartRow[];
+
+      const bar = normalizeSeries(
+        dataToProcess.reduce((acc, curr) => {
+          const existing = acc.find((item) => item.name === curr.region);
           if (existing) {
-            existing.jumlah += curr.laporan;
-            existing.resolved += curr.resolved;
+            existing.jumlah += curr.laporan ?? 0;
           } else {
-            acc.push({
-              date: day,
-              day: format(parseISO(curr.date), 'eee'),
-              jumlah: curr.laporan,
-              resolved: curr.resolved,
-            });
+            acc.push({ name: curr.region, jumlah: curr.laporan ?? 0 });
           }
           return acc;
-        }, [] as any[])
-        .sort(
-          (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
-        );
+        }, [] as ChartRow[]),
+        DATA_KEYS,
+      ) as ChartRow[];
 
-      const bar = filteredData.reduce((acc, curr) => {
-        const existing = acc.find((item) => item.name === curr.region);
-        if (existing) {
-          existing.jumlah += curr.laporan;
-        } else {
-          acc.push({ name: curr.region, jumlah: curr.laporan });
-        }
-        return acc;
-      }, [] as any[]);
+      console.log('[Chart] range=', selectedTimeRange, 'len=', Array.isArray(line) ? line.length : 0);
+      if (line.length > 0) {
+        console.table(line.slice(0, 3));
+      }
 
-      setTimeout(() => {
-        setChartData({ line, bar, pie: bar });
-        setIsLoading(false);
-      }, 500); // Simulate network delay
+      setChartData({ line, bar, pie: bar });
+      setIsLoading(false);
     };
 
     fetchData();
@@ -141,10 +167,16 @@ const StatisticsDashboard = () => {
 
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
+      const dataItem = payload[0].payload;
       return (
         <div className="bg-gray-700/80 backdrop-blur-sm text-white p-3 rounded-lg border border-gray-600 shadow-lg">
           <p className="font-bold text-cyan-400">{label}</p>
-          <p className="text-sm">{`Laporan: ${payload[0].value}`}</p>
+          {dataItem.jumlah !== undefined && (
+            <p className="text-sm">{`Laporan: ${dataItem.jumlah}`}</p>
+          )}
+          {dataItem.resolved !== undefined && (
+            <p className="text-sm">{`Terselesaikan: ${dataItem.resolved}`}</p>
+          )}
         </div>
       );
     }
@@ -191,19 +223,25 @@ const StatisticsDashboard = () => {
             </h3>
             <div style={{ width: '100%', height: 300 }}>
               <ResponsiveContainer>
-                <BarChart
-                  data={chartData.bar}
-                  margin={{ top: 5, right: 20, left: -10, bottom: 5 }}
-                >
-                  <CartesianGrid strokeDasharray="3 3" stroke="#4a5568" />
-                  <XAxis dataKey="name" stroke="#a0aec0" fontSize={12} />
-                  <YAxis stroke="#a0aec0" fontSize={12} />
-                  <Tooltip
-                    content={<CustomTooltip />}
-                    cursor={{ fill: 'rgba(100, 116, 139, 0.1)' }}
-                  />
-                  <Bar dataKey="jumlah" fill="#2dd4bf" radius={[4, 4, 0, 0]} />
-                </BarChart>
+                {chartData.bar && chartData.bar.length > 0 ? (
+                  <BarChart
+                    data={chartData.bar}
+                    margin={{ top: 5, right: 20, left: -10, bottom: 5 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" stroke="#4a5568" />
+                    <XAxis dataKey="name" stroke="#a0aec0" fontSize={12} />
+                    <YAxis stroke="#a0aec0" fontSize={12} />
+                    <Tooltip
+                      content={<CustomTooltip />}
+                      cursor={{ fill: 'rgba(100, 116, 139, 0.1)' }}
+                    />
+                    <Bar dataKey="jumlah" fill="#2dd4bf" radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                ) : (
+                  <div className="flex items-center justify-center h-full text-gray-500">
+                    Tidak ada data tersedia untuk grafik ini.
+                  </div>
+                )}
               </ResponsiveContainer>
             </div>
           </div>
@@ -215,29 +253,35 @@ const StatisticsDashboard = () => {
             </h3>
             <div style={{ width: '100%', height: 300 }}>
               <ResponsiveContainer>
-                <LineChart
-                  data={chartData.line}
-                  margin={{ top: 5, right: 20, left: -10, bottom: 5 }}
-                >
-                  <CartesianGrid strokeDasharray="3 3" stroke="#4a5568" />
-                  <XAxis dataKey="day" stroke="#a0aec0" fontSize={12} />
-                  <YAxis stroke="#a0aec0" fontSize={12} />
-                  <Tooltip content={<CustomTooltip />} />
-                  <Legend />
-                  <Line
-                    type="monotone"
-                    dataKey="jumlah"
-                    stroke="#2dd4bf"
-                    strokeWidth={2}
-                    activeDot={{ r: 8 }}
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="resolved"
-                    stroke="#818cf8"
-                    strokeWidth={2}
-                  />
-                </LineChart>
+                {Array.isArray(chartData.line) && chartData.line.length > 0 ? (
+                  <LineChart
+                    data={chartData.line}
+                    margin={{ top: 5, right: 20, left: -10, bottom: 5 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" stroke="#4a5568" />
+                    <XAxis dataKey="day" stroke="#a0aec0" fontSize={12} />
+                    <YAxis stroke="#a0aec0" fontSize={12} />
+                    <Tooltip content={<CustomTooltip />} />
+                    <Legend />
+                    <Line
+                      type="monotone"
+                      dataKey="jumlah"
+                      stroke="#2dd4bf"
+                      strokeWidth={2}
+                      activeDot={{ r: 8 }}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="resolved"
+                      stroke="#818cf8"
+                      strokeWidth={2}
+                    />
+                  </LineChart>
+                ) : (
+                  <div className="flex items-center justify-center h-full text-gray-500">
+                    Tidak ada data tersedia untuk grafik ini.
+                  </div>
+                )}
               </ResponsiveContainer>
             </div>
           </div>
@@ -249,27 +293,33 @@ const StatisticsDashboard = () => {
             </h3>
             <div style={{ width: '100%', height: 300 }}>
               <ResponsiveContainer>
-                <PieChart>
-                  <Pie
-                    data={chartData.pie}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    outerRadius={110}
-                    fill="#8884d8"
-                    dataKey="jumlah"
-                    nameKey="name"
-                  >
-                    {chartData.pie.map((entry, index) => (
-                      <Cell
-                        key={`cell-${index}`}
-                        fill={COLORS[index % COLORS.length]}
-                      />
-                    ))}
-                  </Pie>
-                  <Tooltip content={<CustomTooltip />} />
-                  <Legend />
-                </PieChart>
+                {Array.isArray(chartData.pie) && chartData.pie.length > 0 ? (
+                  <PieChart>
+                    <Pie
+                      data={chartData.pie}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      outerRadius={110}
+                      fill="#8884d8"
+                      dataKey="jumlah"
+                      nameKey="name"
+                    >
+                      {chartData.pie.map((entry, index) => (
+                        <Cell
+                          key={`cell-${index}`}
+                          fill={COLORS[index % COLORS.length]}
+                        />
+                      ))}
+                    </Pie>
+                    <Tooltip content={<CustomTooltip />} />
+                    <Legend />
+                  </PieChart>
+                ) : (
+                  <div className="flex items-center justify-center h-full text-gray-500">
+                    Tidak ada data tersedia untuk grafik ini.
+                  </div>
+                )}
               </ResponsiveContainer>
             </div>
           </div>
@@ -281,28 +331,34 @@ const StatisticsDashboard = () => {
             </h3>
             <div style={{ width: '100%', height: 300 }}>
               <ResponsiveContainer>
-                <BarChart
-                  data={chartData.line}
-                  margin={{ top: 5, right: 20, left: -10, bottom: 5 }}
-                >
-                  <CartesianGrid strokeDasharray="3 3" stroke="#4a5568" />
-                  <XAxis dataKey="day" stroke="#a0aec0" fontSize={12} />
-                  <YAxis stroke="#a0aec0" fontSize={12} />
-                  <Tooltip />
-                  <Legend />
-                  <Bar
-                    dataKey="jumlah"
-                    stackId="a"
-                    fill="#2dd4bf"
-                    name="Total Laporan"
-                  />
-                  <Bar
-                    dataKey="resolved"
-                    stackId="a"
-                    fill="#818cf8"
-                    name="Terselesaikan"
-                  />
-                </BarChart>
+                {chartData.line && chartData.line.length > 0 ? (
+                  <BarChart
+                    data={chartData.line}
+                    margin={{ top: 5, right: 20, left: -10, bottom: 5 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" stroke="#4a5568" />
+                    <XAxis dataKey="day" stroke="#a0aec0" fontSize={12} />
+                    <YAxis stroke="#a0aec0" fontSize={12} />
+                    <Tooltip />
+                    <Legend />
+                    <Bar
+                      dataKey="jumlah"
+                      stackId="a"
+                      fill="#2dd4bf"
+                      name="Total Laporan"
+                    />
+                    <Bar
+                      dataKey="resolved"
+                      stackId="a"
+                      fill="#818cf8"
+                      name="Terselesaikan"
+                    />
+                  </BarChart>
+                ) : (
+                  <div className="flex items-center justify-center h-full text-gray-500">
+                    Tidak ada data tersedia untuk grafik ini.
+                  </div>
+                )}
               </ResponsiveContainer>
             </div>
           </div>

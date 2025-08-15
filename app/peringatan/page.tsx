@@ -28,11 +28,13 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'; // 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'; // Import Tabs components
 
 import {
-  fetchBmkgLatestQuake,
-  fetchPetabencanaReports,
   BmkgGempaData,
   PetabencanaReport,
 } from '@/lib/api';
+import {
+  fetchBmkgLatestQuake,
+  fetchPetabencanaReports,
+} from '@/lib/api.client';
 
 // Tipe data untuk peringatan
 interface Alert {

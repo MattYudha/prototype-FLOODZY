@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
-import { fetchDisasterProneData, OverpassElement } from '@/lib/api';
+import { fetchDisasterProneData } from '@/lib/api.client';
+import { OverpassElement } from '@/lib/api';
 
 export const useDisasterData = () => {
   const [disasterProneAreas, setDisasterProneAreas] = useState<

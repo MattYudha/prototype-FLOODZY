@@ -129,7 +129,7 @@ function MapUpdater({
   center,
   zoom,
 }: {
-  center: LatLngExpression;
+  center: [number, number];
   zoom: number;
 }) {
   const map = useMap();

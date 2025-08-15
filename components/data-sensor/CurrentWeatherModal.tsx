@@ -65,39 +65,39 @@ const CurrentWeatherModal = () => {
           ) : weatherData ? (
             <div className="space-y-4">
               <div className="text-center">
-                <p className="text-gray-400 text-sm">Lokasi: {weatherData.name}</p>
-                <div className="text-5xl font-bold text-white mt-2">{Math.round(weatherData.main.temp)}°C</div>
-                <p className="text-gray-400 text-lg">{weatherData.weather[0].description}</p>
+                <p className="text-gray-400 text-sm">Lokasi: {weatherData.current.name}</p>
+                <div className="text-5xl font-bold text-white mt-2">{Math.round(weatherData.current.main.temp)}°C</div>
+                <p className="text-gray-400 text-lg">{weatherData.current.weather[0].description}</p>
               </div>
               <div className="grid grid-cols-2 gap-4 text-center">
                 <div>
                   <Droplets className="h-6 w-6 text-blue-400 mx-auto mb-1" />
-                  <p className="text-lg font-semibold text-white">{weatherData.main.humidity}%</p>
+                  <p className="text-lg font-semibold text-white">{weatherData.current.main.humidity}%</p>
                   <p className="text-xs text-gray-400">Kelembaban</p>
                 </div>
                 <div>
                   <Wind className="h-6 w-6 text-green-400 mx-auto mb-1" />
-                  <p className="text-lg font-semibold text-white">{weatherData.wind.speed} m/s</p>
+                  <p className="text-lg font-semibold text-white">{weatherData.current.wind.speed} m/s</p>
                   <p className="text-xs text-gray-400">Angin</p>
                 </div>
                 <div>
                   <Thermometer className="h-6 w-6 text-orange-400 mx-auto mb-1" />
-                  <p className="text-lg font-semibold text-white">{weatherData.main.pressure} hPa</p>
+                  <p className="text-lg font-semibold text-white">{weatherData.current.main.pressure} hPa</p>
                   <p className="text-xs text-gray-400">Tekanan</p>
                 </div>
                 <div>
                   <Eye className="h-6 w-6 text-purple-400 mx-auto mb-1" />
-                  <p className="text-lg font-semibold text-white">{weatherData.visibility / 1000} km</p>
+                  <p className="text-lg font-semibold text-white">{weatherData.current.visibility / 1000} km</p>
                   <p className="text-xs text-gray-400">Jarak Pandang</p>
                 </div>
                 <div>
                   <Clock className="h-6 w-6 text-yellow-400 mx-auto mb-1" />
-                  <p className="text-lg font-semibold text-white">{format(new Date(weatherData.sys.sunrise * 1000), 'HH:mm')}</p>
+                  <p className="text-lg font-semibold text-white">{format(new Date(weatherData.current.sys.sunrise * 1000), 'HH:mm')}</p>
                   <p className="text-xs text-gray-400">Matahari Terbit</p>
                 </div>
                 <div>
                   <Clock className="h-6 w-6 text-yellow-400 mx-auto mb-1" />
-                  <p className="text-lg font-semibold text-white">{format(new Date(weatherData.sys.sunset * 1000), 'HH:mm')}</p>
+                  <p className="text-lg font-semibold text-white">{format(new Date(weatherData.current.sys.sunset * 1000), 'HH:mm')}</p>
                   <p className="text-xs text-gray-400">Matahari Terbenam</p>
                 </div>
               </div>

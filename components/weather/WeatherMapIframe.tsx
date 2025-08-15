@@ -46,7 +46,7 @@ export function WeatherMapIframe({
       weatherContentHtml = `<div class="status-overlay error"><span>Error: ${weatherError}</span></div>`;
     } else if (currentWeatherData?.current) {
       // Check for currentWeatherData.current
-      const { icon, weather, main } = currentWeatherData.current;
+      const { weather, main } = currentWeatherData.current;
       const description = weather[0].description;
       const temperature = main.temp;
 
@@ -57,28 +57,28 @@ export function WeatherMapIframe({
         bgColor = '#64748B',
         textColor = 'white';
 
-      if (icon?.startsWith('01')) {
-        emoji = icon === '01d' ? '☀️' : '🌙';
-        bgColor = icon === '01d' ? '#FBBF24' : '#4F46E5';
+      if (weather[0].icon?.startsWith('01')) {
+        emoji = weather[0].icon === '01d' ? '☀️' : '🌙';
+        bgColor = weather[0].icon === '01d' ? '#FBBF24' : '#4F46E5';
         textColor = 'black';
-      } else if (icon?.startsWith('02')) {
+      } else if (weather[0].icon?.startsWith('02')) {
         emoji = '🌤️';
         bgColor = '#7DD3FC';
         textColor = 'black';
-      } else if (icon?.startsWith('03') || icon?.startsWith('04')) {
+      } else if (weather[0].icon?.startsWith('03') || weather[0].icon?.startsWith('04')) {
         emoji = '☁️';
         bgColor = '#94A3B8';
-      } else if (icon?.startsWith('09') || icon?.startsWith('10')) {
+      } else if (weather[0].icon?.startsWith('09') || weather[0].icon?.startsWith('10')) {
         emoji = '🌧️';
         bgColor = '#3B82F6';
-      } else if (icon?.startsWith('11')) {
+      } else if (weather[0].icon?.startsWith('11')) {
         emoji = '⛈️';
         bgColor = '#8B5CF6';
-      } else if (icon?.startsWith('13')) {
+      } else if (weather[0].icon?.startsWith('13')) {
         emoji = '🌨️';
         bgColor = '#A5F3FC';
         textColor = 'black';
-      } else if (icon?.startsWith('50')) {
+      } else if (weather[0].icon?.startsWith('50')) {
         emoji = '🌫️';
         bgColor = '#D1D5DB';
         textColor = 'black';
