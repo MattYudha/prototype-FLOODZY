@@ -1,13 +1,13 @@
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { 
-  Loader2, 
-  Database as TableIcon, 
-  CloudRain, 
-  MapPin, 
-  Clock, 
-  Droplets, 
+import {
+  Loader2,
+  Database as TableIcon,
+  CloudRain,
+  MapPin,
+  Clock,
+  Droplets,
   AlertCircle,
   TrendingUp,
   Calendar,
@@ -26,7 +26,6 @@ import Image from 'next/image';
 import { format, parseISO } from 'date-fns';
 import { id } from 'date-fns/locale';
 
-import { createSupabaseBrowserClient } from '@/lib/supabase/client';
 import { useWeatherData } from '@/hooks/useWeatherData';
 import FloodReportChart from './FloodReportChart';
 
@@ -35,7 +34,7 @@ interface LaporanBanjir {
   location: string;
   latitude: number;
   longitude: number;
-  water_level: string; // Changed to string
+  water_level: string;
   description?: string;
   photo_url?: string;
   reporter_name?: string;
@@ -65,10 +64,12 @@ const classifyWaterLevelString = (waterLevelString: string): {
   }
 };
 
-const DataSensorAnalysis: React.FC = () => {
-  const [laporan, setLaporan] = useState<LaporanBanjir[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+interface DataSensorClientContentProps {
+  initialLaporan: LaporanBanjir[];
+}
+
+const DataSensorClientContent: React.FC<DataSensorClientContentProps> = ({ initialLaporan }) => {
+  const [laporan, setLaporan] = useState<LaporanBanjir[]>(initialLaporan);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedFilter, setSelectedFilter] = useState('all');
   const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
@@ -81,28 +82,6 @@ const DataSensorAnalysis: React.FC = () => {
   const { weatherData, isLoading: isWeatherLoading, error: weatherError, fetchWeather } = useWeatherData();
 
   useEffect(() => {
-    const fetchFloodData = async () => {
-      try {
-        setIsLoading(true);
-        const supabase = createSupabaseBrowserClient();
-        const { data, error } = await supabase
-          .from('laporan_banjir')
-          .select('*')
-          .order('created_at', { ascending: false });
-
-        if (error) {
-          throw error;
-        }
-
-        setLaporan(data as LaporanBanjir[]);
-      } catch (err: any) {
-        setError(err.message);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchFloodData();
     // Fetch weather data for a default location (e.g., Jakarta)
     fetchWeather(-6.2088, 106.8456); 
   }, [fetchWeather]);
@@ -110,7 +89,6 @@ const DataSensorAnalysis: React.FC = () => {
   const latestReports = useMemo(() => {
     let filtered = [...laporan].sort((a, b) => parseISO(b.created_at).getTime() - parseISO(a.created_at).getTime());
     
-    // Search filter
     if (searchTerm) {
       filtered = filtered.filter(report => 
         report.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -118,7 +96,6 @@ const DataSensorAnalysis: React.FC = () => {
       );
     }
 
-    // Level filter
     if (selectedFilter !== 'all') {
       filtered = filtered.filter(report => {
         const { level } = classifyWaterLevelString(report.water_level);
@@ -134,9 +111,8 @@ const DataSensorAnalysis: React.FC = () => {
     const highLevel = laporan.filter(r => classifyWaterLevelString(r.water_level).level === 'high').length;
     const mediumLevel = laporan.filter(r => classifyWaterLevelString(r.water_level).level === 'medium').length;
     const lowLevel = laporan.filter(r => classifyWaterLevelString(r.water_level).level === 'low').length;
-    // Average water level is not directly applicable with string water levels, so we'll omit it or calculate based on a mapping if needed.
     
-    return { total, highLevel, mediumLevel, lowLevel, avgLevel: 0 }; // avgLevel set to 0 for now
+    return { total, highLevel, mediumLevel, lowLevel, avgLevel: 0 };
   }, [laporan]);
 
   const handleExportData = () => {
@@ -146,7 +122,7 @@ const DataSensorAnalysis: React.FC = () => {
     }
 
     const headers = [
-      'ID', 'Lokasi', 'Latitude', 'Longitude', 'Level Air', 
+      'ID', 'Lokasi', 'Latitude', 'Longitude', 'Level Air',
       'Deskripsi', 'Nama Pelapor', 'Kontak Pelapor', 'Waktu Laporan'
     ];
     
@@ -154,14 +130,14 @@ const DataSensorAnalysis: React.FC = () => {
       headers.join(','),
       ...latestReports.map(report => 
         [
-          `"${report.id}"`,
-          `"${report.location}"`,
+          `"${report.id}"`, 
+          `"${report.location}"`, 
           report.latitude,
           report.longitude,
-          `"${classifyWaterLevelString(report.water_level).label}"`,
-          `"${report.description ? report.description.replace(/"/g, '""') : ''}"`,
-          `"${report.reporter_name ? report.reporter_name.replace(/"/g, '""') : ''}"`,
-          `"${report.reporter_contact ? report.reporter_contact.replace(/"/g, '""') : ''}"`,
+          `"${classifyWaterLevelString(report.water_level).label}"`, 
+          `"${report.description ? report.description.replace(/"/g, '""') : ''}"`, 
+          `"${report.reporter_name ? report.reporter_name.replace(/"/g, '""') : ''}"`, 
+          `"${report.reporter_contact ? report.reporter_contact.replace(/"/g, '""') : ''}"`, 
           `"${format(parseISO(report.created_at), 'dd MMM yyyy, HH:mm', { locale: id })}"`
         ].join(',')
       )
@@ -169,7 +145,7 @@ const DataSensorAnalysis: React.FC = () => {
 
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
-    if (link.download !== undefined) { // feature detection
+    if (link.download !== undefined) {
       const url = URL.createObjectURL(blob);
       link.setAttribute('href', url);
       link.setAttribute('download', 'laporan_banjir.csv');
@@ -232,30 +208,6 @@ const DataSensorAnalysis: React.FC = () => {
   const handleCloseWeatherModal = () => {
     setIsWeatherModalOpen(false);
   };
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="h-12 w-12 animate-spin text-cyan-400 mx-auto mb-4" />
-          <p className="text-gray-400 text-lg">Memuat data sensor...</p>
-          <p className="text-gray-500 text-sm mt-2">Menganalisis laporan banjir terbaru</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center">
-        <div className="text-center bg-gray-800 p-8 rounded-xl border border-red-500/20">
-          <AlertCircle className="h-16 w-16 text-red-400 mx-auto mb-4" />
-          <h3 className="text-xl font-semibold mb-2">Gagal Memuat Data</h3>
-          <p className="text-red-400">{error}</p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-gray-900 text-white">
@@ -741,4 +693,4 @@ const DataSensorAnalysis: React.FC = () => {
   );
 };
 
-export default DataSensorAnalysis;
+export default DataSensorClientContent;

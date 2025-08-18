@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useState, useEffect, useMemo } from 'react';
 import { format, parseISO, subDays } from 'date-fns';
 import { id } from 'date-fns/locale';

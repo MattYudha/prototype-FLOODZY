@@ -19,6 +19,9 @@ import type { SupabaseClient } from '@supabase/supabase-js'; // Import tipe data
 import MapPicker from '@/components/map/MapPicker'; // Add this import
 import dynamic from 'next/dynamic';
 
+import { z } from 'zod'; // ADDED: Import Zod
+import { FloodReportSchema } from '@/lib/schemas'; // ADDED: Import FloodReportSchema
+
 const DynamicMapPicker = dynamic(
   () => import('@/components/map/MapPicker'),
   { ssr: false }
@@ -43,6 +46,7 @@ export default function LaporBanjirPage() {
     file: File;
     preview: string;
   } | null>(null);
+  const [errors, setErrors] = useState<z.ZodIssue[]>([]); // ADDED: State for Zod validation errors
 
   // ✅ PERBAIKAN: Inisialisasi Supabase hanya satu kali saat komponen pertama kali dimuat.
   const [supabase] = useState<SupabaseClient>(() =>
@@ -90,6 +94,7 @@ export default function LaporBanjirPage() {
     setLoading(true);
     setMessage('');
     setMessageType('');
+    setErrors([]); // Clear errors on new search
 
     try {
       const response = await fetch(
@@ -121,6 +126,7 @@ export default function LaporBanjirPage() {
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      // Optional: Add file size/type validation here if needed
       setSelectedPhoto({
         file: file,
         preview: URL.createObjectURL(file),
@@ -130,17 +136,33 @@ export default function LaporBanjirPage() {
 
   // --- FUNGSI SUBMIT ---
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    // Change event type
-    e.preventDefault(); // Always prevent default for form submission
-    if (!location || !waterLevel || latitude === 0 || longitude === 0) {
-      // Update validation
-      setMessage('Lokasi kejadian, tinggi air, dan titik peta wajib diisi.'); // Update message
-      setMessageType('error');
-      return;
-    }
+    e.preventDefault();
     setLoading(true);
     setMessage('');
     setMessageType('');
+    setErrors([]); // Clear previous errors
+
+    // Prepare data for Zod validation
+    const formData = {
+      location: location,
+      latitude: latitude,
+      longitude: longitude,
+      water_level: waterLevel,
+      description: description,
+      reporter_name: reporterName,
+      reporter_contact: reporterContact,
+    };
+
+    // Client-side validation with Zod
+    const validationResult = FloodReportSchema.safeParse(formData);
+
+    if (!validationResult.success) {
+      setErrors(validationResult.error.issues);
+      setMessage('Validasi gagal. Periksa kembali input Anda.');
+      setMessageType('error');
+      setLoading(false);
+      return;
+    }
 
     try {
       let photoUrl = '';
@@ -170,14 +192,14 @@ export default function LaporBanjirPage() {
         .from('laporan_banjir')
         .insert([
           {
-            location: location,
-            latitude: latitude, // Use new state
-            longitude: longitude, // Use new state
-            water_level: waterLevel,
-            description: description,
+            location: validationResult.data.location, // Use validated data
+            latitude: validationResult.data.latitude,
+            longitude: validationResult.data.longitude,
+            water_level: validationResult.data.water_level,
+            description: validationResult.data.description,
             photo_url: photoUrl,
-            reporter_name: reporterName,
-            reporter_contact: reporterContact,
+            reporter_name: validationResult.data.reporter_name,
+            reporter_contact: validationResult.data.reporter_contact,
           },
         ]);
 
@@ -199,6 +221,7 @@ export default function LaporBanjirPage() {
       setReporterName('');
       setReporterContact('');
       setSelectedPhoto(null);
+      setErrors([]); // Clear errors on successful submission
     } catch (error: any) {
       console.error('Error submitting report:', error.message);
       setMessage(`Gagal mengirim laporan: ${error.message}`);
@@ -217,6 +240,12 @@ export default function LaporBanjirPage() {
       hour: '2-digit',
       minute: '2-digit',
     });
+  };
+
+  // Helper to find error message for a field
+  const getErrorMessage = (path: string) => {
+    const error = errors.find(err => err.path[0] === path);
+    return error ? error.message : null;
   };
 
   // --- RENDER UI ---
@@ -265,6 +294,25 @@ export default function LaporBanjirPage() {
         >
           <div className="bg-slate-800/80 backdrop-blur-sm border border-slate-600/50 rounded-xl p-6">
             <form onSubmit={handleSubmit} className="space-y-6">
+              {/* Message Display (for general form errors) */}
+              {message && (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5 }}
+                  className={`p-4 rounded-lg border ${messageType === 'success' ? 'bg-green-900/30 border-green-600 text-green-400' : 'bg-red-900/30 border-red-600 text-red-400'}`}
+                >
+                  <div className="flex items-center gap-2">
+                    {messageType === 'success' ? (
+                      <CheckCircle className="w-5 h-5" />
+                    ) : (
+                      <XCircle className="w-5 h-5" />
+                    )}
+                    <p className="font-medium">{message}</p>
+                  </div>
+                </motion.div>
+              )}
+
               {/* Map Picker */}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
@@ -297,7 +345,7 @@ export default function LaporBanjirPage() {
                       }
                     }}
                     placeholder="Cari lokasi secara manual (contoh: Jakarta Pusat)"
-                    className="w-full bg-slate-700/80 border border-slate-500/50 rounded-lg px-4 py-3 pr-12 text-white placeholder-slate-400 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/20 transition-all"
+                    className={`w-full bg-slate-700/80 border rounded-lg px-4 py-3 pr-12 text-white placeholder-slate-400 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/20 transition-all ${getErrorMessage('location') ? 'border-red-500' : 'border-slate-500/50'}`}
                   />
                   <button
                     type="button"
@@ -308,6 +356,15 @@ export default function LaporBanjirPage() {
                     <Search className="w-5 h-5" />
                   </button>
                 </div>
+                {getErrorMessage('location') && (
+                  <p className="text-red-400 text-xs mt-1">{getErrorMessage('location')}</p>
+                )}
+                {getErrorMessage('latitude') && (
+                  <p className="text-red-400 text-xs mt-1">{getErrorMessage('latitude')}</p>
+                )}
+                {getErrorMessage('longitude') && (
+                  <p className="text-red-400 text-xs mt-1">{getErrorMessage('longitude')}</p>
+                )}
                 <p className="text-xs text-slate-500">
                   Geser marker di peta, klik tombol GPS, atau cari lokasi secara
                   manual.
@@ -325,7 +382,7 @@ export default function LaporBanjirPage() {
                   <Droplets className="w-4 h-4 text-blue-400" />
                   Tinggi Air <span className="text-red-400">*</span>
                 </label>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <div className={`grid grid-cols-1 sm:grid-cols-2 gap-2 ${getErrorMessage('water_level') ? 'border border-red-500 rounded-lg p-2' : ''}`}>
                   {waterLevelOptions.map((option) => (
                     <label key={option.value} className="relative">
                       <input
@@ -335,7 +392,6 @@ export default function LaporBanjirPage() {
                         checked={waterLevel === option.value}
                         onChange={(e) => setWaterLevel(e.target.value)}
                         className="sr-only"
-                        required
                       />
                       <div
                         className={`p-3 rounded-lg border-2 cursor-pointer transition-all ${waterLevel === option.value ? 'border-cyan-400 bg-cyan-400/20' : 'border-slate-500/50 bg-slate-700/50 hover:border-slate-400/70'}`}
@@ -354,6 +410,9 @@ export default function LaporBanjirPage() {
                     </label>
                   ))}
                 </div>
+                {getErrorMessage('water_level') && (
+                  <p className="text-red-400 text-xs mt-1">{getErrorMessage('water_level')}</p>
+                )}
               </motion.div>
 
               {/* Photo Upload */}
@@ -427,8 +486,11 @@ export default function LaporBanjirPage() {
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   rows={4}
-                  className="w-full bg-slate-700/50 border border-slate-600 rounded-lg px-4 py-3 text-white placeholder-slate-400 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/20 transition-all resize-none"
+                  className={`w-full bg-slate-700/50 border rounded-lg px-4 py-3 text-white placeholder-slate-400 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/20 transition-all resize-none ${getErrorMessage('description') ? 'border-red-500' : 'border-slate-600'}`}
                 />
+                {getErrorMessage('description') && (
+                  <p className="text-red-400 text-xs mt-1">{getErrorMessage('description')}</p>
+                )}
               </motion.div>
 
               {/* Reporter Info */}
@@ -448,8 +510,11 @@ export default function LaporBanjirPage() {
                     placeholder="Nama lengkap"
                     value={reporterName}
                     onChange={(e) => setReporterName(e.target.value)}
-                    className="w-full bg-slate-700/50 border border-slate-600 rounded-lg px-4 py-3 text-white placeholder-slate-400 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/20 transition-all"
+                    className={`w-full bg-slate-700/50 border rounded-lg px-4 py-3 text-white placeholder-slate-400 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/20 transition-all ${getErrorMessage('reporter_name') ? 'border-red-500' : 'border-slate-600'}`}
                   />
+                  {getErrorMessage('reporter_name') && (
+                    <p className="text-red-400 text-xs mt-1">{getErrorMessage('reporter_name')}</p>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <label className="flex items-center gap-2 text-sm font-medium text-slate-300">
@@ -461,8 +526,11 @@ export default function LaporBanjirPage() {
                     placeholder="No. HP atau Email"
                     value={reporterContact}
                     onChange={(e) => setReporterContact(e.target.value)}
-                    className="w-full bg-slate-700/50 border border-slate-600 rounded-lg px-4 py-3 text-white placeholder-slate-400 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/20 transition-all"
+                    className={`w-full bg-slate-700/50 border rounded-lg px-4 py-3 text-white placeholder-slate-400 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/20 transition-all ${getErrorMessage('reporter_contact') ? 'border-red-500' : 'border-slate-600'}`}
                   />
+                  {getErrorMessage('reporter_contact') && (
+                    <p className="text-red-400 text-xs mt-1">{getErrorMessage('reporter_contact')}</p>
+                  )}
                 </div>
               </motion.div>
 
@@ -471,8 +539,8 @@ export default function LaporBanjirPage() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: 1.0 }}
-                type="submit" // Change type to submit
-                disabled={loading || !location || !waterLevel}
+                type="submit"
+                disabled={loading} // Disable only on loading, validation handled by Zod
                 className="w-full bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 disabled:from-slate-600 disabled:to-slate-700 text-white font-medium py-3 px-6 rounded-lg transition-all duration-200 flex items-center justify-center gap-2 disabled:cursor-not-allowed"
               >
                 {loading ? (
@@ -486,25 +554,6 @@ export default function LaporBanjirPage() {
                   </>
                 )}
               </motion.button>
-
-              {/* Message */}
-              {message && (
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5 }}
-                  className={`p-4 rounded-lg border ${messageType === 'success' ? 'bg-green-900/30 border-green-600 text-green-400' : 'bg-red-900/30 border-red-600 text-red-400'}`}
-                >
-                  <div className="flex items-center gap-2">
-                    {messageType === 'success' ? (
-                      <CheckCircle className="w-5 h-5" />
-                    ) : (
-                      <XCircle className="w-5 h-5" />
-                    )}
-                    <p className="font-medium">{message}</p>
-                  </div>
-                </motion.div>
-              )}
             </form>
           </div>
         </motion.div>

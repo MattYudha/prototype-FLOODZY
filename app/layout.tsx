@@ -24,9 +24,7 @@ export default function RootLayout({
         <ReactQueryProvider>
           <ThemeProvider>
             <AlertCountProvider>
-              <ClientLayoutWrapper>
-                {children}
-              </ClientLayoutWrapper>
+              <ClientLayoutWrapper>{children}</ClientLayoutWrapper>
               <Toaster
                 position="top-right"
                 toastOptions={{

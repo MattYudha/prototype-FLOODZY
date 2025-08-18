@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useEffect, useRef, useCallback, useMemo } from 'react';
+import React, { useEffect, useRef, useCallback, useMemo, memo } from 'react';
+import Link from 'next/link';
 import { AlertTriangle, Bell, Info, Clock, Users, Eye } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { getTimeAgo } from '@/lib/utils';
@@ -43,10 +44,9 @@ const getAlertIcon = (level: string) => {
 };
 
 // --- Komponen Utama Kartu Peringatan ---
-export const PeringatanBencanaCard: React.FC<{
-  alert: FloodAlertType;
-  className?: string;
-}> = ({ alert, className }) => {
+export const PeringatanBencanaCard = memo(( // ADDED: memo
+  { alert, className }: { alert: FloodAlertType; className?: string }
+) => {
   const wrapRef = useRef<HTMLDivElement>(null);
   const cardRef = useRef<HTMLElement>(null);
 
@@ -175,50 +175,43 @@ export const PeringatanBencanaCard: React.FC<{
   ]);
 
   return (
-    <div ref={wrapRef} className={cn('pc-card-wrapper', className)}>
-      <section ref={cardRef} className="pc-card">
-        <div className="pc-inside">
-          <div className="pc-glare" />
-          <div className="pc-alert-icon-content">
-            <div className="alert-icon-container">
-              {getAlertIcon(alert.level)}
-            </div>
-          </div>
-          <div className="pc-content">
-            <div className="pc-details">
-              <h3>{alert.title}</h3>
-              <p>{alert.level.toUpperCase()}</p>
-            </div>
-          </div>
-          <div className="pc-alert-info">
-            <div className="pc-alert-details">
-              <div>
-                <Info className="w-4 h-4" />
-                <span>{alert.message}</span>
+    <Link href="/peringatan" className="block">
+      <div ref={wrapRef} className={cn('pc-card-wrapper', className)}>
+        <section ref={cardRef} className="pc-card">
+          <div className="pc-inside">
+            <div className="pc-glare" />
+            <div className="pc-alert-icon-content">
+              <div className="alert-icon-container">
+                {getAlertIcon(alert.level)}
               </div>
-              <div>
-                <Clock className="w-4 h-4" />
-                <span>{getTimeAgo(alert.timestamp)}</span>
+            </div>
+            <div className="pc-content">
+              <div className="pc-details">
+                <h3>{alert.title}</h3>
+                <p>{alert.level.toUpperCase()}</p>
               </div>
-              {alert.affectedAreas && alert.affectedAreas.length > 0 && (
+            </div>
+            <div className="pc-alert-info">
+              <div className="pc-alert-details">
                 <div>
-                  <Users className="w-4 h-4" />
-                  <span>Terdampak: {alert.affectedAreas.join(', ')}</span>
+                  <Info className="w-4 h-4" />
+                  <span>{alert.message}</span>
                 </div>
-              )}
+                <div>
+                  <Clock className="w-4 h-4" />
+                  <span>{getTimeAgo(alert.timestamp)}</span>
+                </div>
+                {alert.affectedAreas && alert.affectedAreas.length > 0 && (
+                  <div>
+                    <Users className="w-4 h-4" />
+                    <span>Terdampak: {alert.affectedAreas.join(', ')}</span>
+                  </div>
+                )}
+              </div>
             </div>
-            <button
-              className="pc-details-btn"
-              style={{ pointerEvents: 'auto' }}
-              type="button"
-              aria-label={`View details for ${alert.title}`}
-            >
-              <Eye className="w-4 h-4" />
-              <span>Lihat Detail</span>
-            </button>
           </div>
-        </div>
-      </section>
-    </div>
+        </section>
+      </div>
+    </Link>
   );
-};
+});

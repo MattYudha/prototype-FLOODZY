@@ -1,5 +1,5 @@
 // File: lib/api.client.ts
-import { fetchWithRobustErrorHandling } from './fetch-utils';
+import { safeFetch, UserFriendlyError } from './error-utils';
 import {
   RegionData,
   OverpassResponse,
@@ -17,20 +17,19 @@ import {
   CombinedWeatherData,
 } from './api'; // Import necessary types from lib/api.ts
 
+const getBaseUrl = () => {
+  return process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+};
+
 export async function fetchRegionsClient(
   type: 'provinces' | 'regencies' | 'districts' | 'villages',
   parentCode?: number | string,
 ): Promise<RegionData[]> {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+  const baseUrl = getBaseUrl();
   const apiUrl = `${baseUrl}/api/regions?type=${type}${parentCode ? `&parentCode=${parentCode}` : ''}`;
 
   try {
-    const response = await fetch(apiUrl);
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || `Failed to fetch regions: ${response.statusText}`);
-    }
-    const data: RegionData[] = await response.json();
+    const data: RegionData[] = await safeFetch(apiUrl, undefined, 'Gagal mengambil data wilayah. Silakan coba lagi.');
     return data;
   } catch (error: any) {
     console.error(`API Error in fetchRegionsClient: ${error.message}`);
@@ -80,21 +79,22 @@ out body geom;
 
   console.log('Overpass API Query:', query);
 
-  const response = await fetch('https://overpass-api.de/api/interpreter', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: `data=${encodeURIComponent(query)}`,
-    next: { revalidate: 3600 }, // Revalidate every 1 hour
-  });
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(
-      `Failed to fetch disaster prone data from Overpass API: ${response.status} ${response.statusText} - ${errorText}`,
+  try {
+    const data: OverpassResponse = await safeFetch(
+      'https://overpass-api.de/api/interpreter',
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: `data=${encodeURIComponent(query)}`,
+        next: { revalidate: 3600 }, // Revalidate every 1 hour
+      },
+      'Gagal mengambil data area rawan bencana. Silakan coba lagi.'
     );
+    return data;
+  } catch (error: any) {
+    console.error(`API Error in fetchDisasterProneData: ${error.message}`);
+    throw error;
   }
-
-  return response.json();
 }
 
 export async function fetchWeatherData(
@@ -103,108 +103,86 @@ export async function fetchWeatherData(
   apiKey: string,
 ): Promise<WeatherData> {
   const url = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${apiKey}&units=metric&lang=id`;
-  const response = await fetch(url);
-
-  if (!response.ok) {
-    const errorData = await response.json();
-    throw new Error(
-      errorData.message ||
-        `Failed to fetch weather data: ${response.status} ${response.statusText}`,
-    );
+  try {
+    const data: WeatherData = await safeFetch(url, undefined, 'Gagal mengambil data cuaca. Silakan coba lagi.');
+    return data;
+  } catch (error: any) {
+    console.error(`API Error in fetchWeatherData: ${error.message}`);
+    throw error;
   }
-
-  const data = await response.json();
-  const weather: WeatherData = {
-    temperature: data.main.temp,
-    feelsLike: data.main.feels_like,
-    humidity: data.main.humidity,
-    pressure: data.main.pressure,
-    windSpeed: data.wind.speed * 3.6,
-    description: data.weather[0].description,
-    icon: data.weather[0].icon,
-    rain1h: data.rain?.['1h'] || 0,
-    dt: data.dt,
-  };
-  return weather;
 }
 
 export async function fetchWaterLevelData(
   districtName?: string,
 ): Promise<WaterLevelPost[]> {
-  let apiUrl = '/api/water-level-proxy';
+  const baseUrl = getBaseUrl(); // ADDED
+  let apiUrl = `${baseUrl}/api/water-level-proxy`; // MODIFIED
   const trimmedDistrictName = districtName?.trim();
   if (trimmedDistrictName) {
     apiUrl += `?districtName=${encodeURIComponent(trimmedDistrictName)}`;
   }
-  const response = await fetch(apiUrl);
-
-  if (!response.ok) {
-    const errorData = await response.json();
-    throw new Error(
-      errorData.error ||
-        `Failed to fetch water level data from local proxy: ${response.status} ${response.statusText}`,
-    );
+  try {
+    const data: WaterLevelPost[] = await safeFetch(apiUrl, undefined, 'Gagal mengambil data tinggi air. Silakan coba lagi.');
+    return data;
+  } catch (error: any) {
+    console.error(`API Error in fetchWaterLevelData: ${error.message}`);
+    throw error;
   }
-
-  const data: WaterLevelPost[] = await response.json();
-  return data;
 }
 
 export async function fetchPumpStatusData(
   districtName?: string,
 ): Promise<PumpData[]> {
-  let apiUrl = '/api/pump-status-proxy';
+  const baseUrl = getBaseUrl(); // ADDED
+  let apiUrl = `${baseUrl}/api/pump-status-proxy`; // MODIFIED
   const trimmedDistrictName = districtName?.trim();
   if (trimmedDistrictName) {
     apiUrl += `?districtName=${encodeURIComponent(trimmedDistrictName)}`;
   }
-  const response = await fetch(apiUrl);
-
-  if (!response.ok) {
-    const errorData = await response.json();
-    throw new Error(
-      errorData.error ||
-        `Failed to fetch pump status data from local proxy: ${response.status} ${response.statusText}`,
-    );
+  try {
+    const data: PumpData[] = await safeFetch(apiUrl, undefined, 'Gagal mengambil data status pompa. Silakan coba lagi.');
+    return data;
+  } catch (error: any) {
+    console.error(`API Error in fetchPumpStatusData: ${error.message}`);
+    throw error;
   }
-
-  const data: PumpData[] = await response.json();
-  return data;
 }
 
 export async function fetchBmkgLatestQuake(): Promise<BmkgGempaData> {
   const url = 'https://data.bmkg.go.id/DataMKG/TEWS/autogempa.json';
-  const response = await fetch(url, { cache: 'no-store' });
-
-  if (!response.ok) {
-    throw new Error(
-      `Failed to fetch BMKG earthquake data: ${response.statusText}`,
-    );
+  try {
+    const data: BmkgGempaData = await safeFetch(url, { cache: 'no-store' }, 'Gagal mengambil data gempa BMKG. Silakan coba lagi.');
+    if (data && (data as any).Infogempa && (data as any).Infogempa.gempa) {
+      return (data as any).Infogempa.gempa;
+    }
+    throw new UserFriendlyError('Format data gempa BMKG tidak valid.', new Error('Invalid BMKG earthquake data format.'));
+  } catch (error: any) {
+    console.error(`API Error in fetchBmkgLatestQuake: ${error.message}`);
+    throw error;
   }
-
-  const data = await response.json();
-  if (data && data.Infogempa && data.Infogempa.gempa) {
-    return data.Infogempa.gempa;
-  }
-  throw new Error('Invalid BMKG earthquake data format.');
 }
 
 export async function fetchPetabencanaReports(
   hazardType: string = 'flood',
   timeframe: string = '1h',
 ): Promise<PetabencanaReport[]> {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'; // Fallback for development
+  const baseUrl = getBaseUrl(); // MODIFIED to use getBaseUrl
   const apiUrl = `${baseUrl}/api/petabencana-proxy-new?hazardType=${hazardType}&timeframe=${timeframe}`;
-  const responseData = await fetchWithRobustErrorHandling<any>(apiUrl, { cache: 'no-store' }); // Use 'any' for initial fetch
+  try {
+    const responseData = await safeFetch<any>(apiUrl, { cache: 'no-store' }, 'Gagal mengambil laporan PetaBencana.id. Silakan coba lagi.');
 
-  // Access the features array from the result object
-  const features = responseData?.result?.features;
+    // Access the features array from the result object
+    const features = responseData?.result?.features;
 
-  if (!Array.isArray(features)) {
-    console.warn('PetaBencana.id proxy returned data without a features array or an empty features array:', responseData);
-    return [];
+    if (!Array.isArray(features)) {
+      console.warn('PetaBencana.id proxy returned data without a features array or an empty features array:', responseData);
+      return [];
+    }
+    return features;
+  } catch (error: any) {
+    console.error(`API Error in fetchPetabencanaReports: ${error.message}`);
+    throw error;
   }
-  return features;
 }
 
 export async function geocodeLocation(
@@ -215,20 +193,20 @@ export async function geocodeLocation(
   )}&format=json&limit=1&countrycodes=id`;
   console.log(`[Geocoding API] Fetching from URL: ${url}`);
 
-  const response = await fetch(url, {
-    headers: {
-      'User-Agent': 'FloodzyApp/1.0 (devarahmat12334@gmail.com)', // Ganti dengan email Anda
-    },
-  });
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(
-      `Failed to geocode location '${query}': ${response.status} - ${errorText}`,
+  try {
+    const data: NominatimResult[] = await safeFetch(
+      url,
+      {
+        headers: {
+          'User-Agent': 'FloodzyApp/1.0 (devarahmat12334@gmail.com)', // Ganti dengan email Anda
+        },
+      },
+      'Gagal mengidentifikasi lokasi. Silakan coba lagi.'
     );
+    console.log(`[Geocoding API] Received data for '${query}':`, data);
+    return data;
+  } catch (error: any) {
+    console.error(`API Error in geocodeLocation: ${error.message}`);
+    throw error;
   }
-
-  const data: NominatimResult[] = await response.json();
-  console.log(`[Geocoding API] Received data for '${query}':`, data);
-  return data;
 }

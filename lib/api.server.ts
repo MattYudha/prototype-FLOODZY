@@ -1,25 +1,26 @@
 // src/lib/api.server.ts
 'server-only';
 
-import { supabaseServiceRole } from './supabaseAdmin';
+import { supabaseAdmin } from '@/lib/supabase/admin';
 import { RegionData } from './api'; // Import RegionData from the shared api.ts (for interfaces)
+import { UserFriendlyError } from './error-utils'; // ADDED: Import UserFriendlyError
 
 export async function getRegionDataServer(
   type: string,
   parentCode?: string | number | null,
 ): Promise<RegionData[]> {
   // Guard: hard-fail if supabaseServiceRole is not available (i.e., called from client)
-  if (typeof window !== 'undefined' || !supabaseServiceRole) {
+  if (typeof window !== 'undefined' || !supabaseAdmin) {
     const errorMessage = `ERROR: getRegionDataServer called from client-side or supabaseServiceRole not initialized. Module: lib/api.ts, Runtime: ${typeof window !== 'undefined' ? 'client' : 'unknown'}`;
     console.error(errorMessage);
-    throw new Error(errorMessage);
+    throw new UserFriendlyError('Terjadi kesalahan server saat mengambil data wilayah.', new Error(errorMessage)); // Use UserFriendlyError
   }
   console.log(
     `getRegionData called with type='${type}' and parentCode='${parentCode}'`,
   );
 
   if (!type) {
-    throw new Error('Missing required parameter: type');
+    throw new UserFriendlyError('Tipe wilayah tidak valid.', new Error('Missing required parameter: type')); // Use UserFriendlyError
   }
 
   let tableName: string;
@@ -50,7 +51,7 @@ export async function getRegionDataServer(
       whereColumn = 'village_sub_district_code';
       break;
     default:
-      throw new Error(`Invalid region type: '${type}'`);
+      throw new UserFriendlyError(`Tipe wilayah tidak dikenal: '${type}'.`, new Error(`Invalid region type: '${type}'`)); // Use UserFriendlyError
   }
 
   if (
@@ -59,10 +60,10 @@ export async function getRegionDataServer(
   ) {
     const errorMessage = `ERROR: Missing parent_code for type: ${type}. Received: ${parentCode}. This function should not be called with undefined/null parentCode for this type.`;
     console.error(errorMessage);
-    throw new Error(errorMessage);
+    throw new UserFriendlyError('Kode induk wilayah tidak ditemukan.', new Error(errorMessage)); // Use UserFriendlyError
   }
 
-  let query = supabaseServiceRole.from(tableName).select(selectColumns);
+  let query = supabaseAdmin.from(tableName).select(selectColumns);
 
   const sortColumn =
     selectColumns.split(',')[1]?.trim() ||
@@ -79,7 +80,7 @@ export async function getRegionDataServer(
 
   if (error) {
     console.error('Error fetching data from Supabase:', error.message);
-    throw new Error(error.message);
+    throw new UserFriendlyError('Gagal mengambil data wilayah dari database.', error); // Use UserFriendlyError
   }
 
   return (data as RegionData[]) || [];
@@ -95,6 +96,6 @@ export async function fetchRegionsServer(
     return data;
   } catch (error: any) {
     console.error(`API Error in fetchRegionsServer: ${error.message}`);
-    throw error;
+    throw error; // Re-throw UserFriendlyError
   }
 }

@@ -1,15 +1,14 @@
-// components/layout/Sidebar.tsx
 'use client';
 
-import { useState } from 'react';
+import { useState, useTransition } from 'react';
+import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import Link from 'next/link';
 import {
   Home,
   Map,
   Cloud,
   Bell,
-  BarChart, // Ini adalah ikon untuk Statistik Data
+  BarChart,
   Settings,
   ChevronLeft,
   ChevronRight,
@@ -19,6 +18,7 @@ import {
   AlertTriangle,
   MapPin,
   TrendingUp,
+  Loader,
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
@@ -44,73 +44,18 @@ interface QuickActionItem {
 }
 
 const navigationItems: NavItem[] = [
-  {
-    id: 'home',
-    label: 'Dashboard',
-    href: '/',
-    icon: Home,
-    color: 'text-primary',
-  },
-  {
-    id: 'map',
-    label: 'Peta Banjir',
-    href: '/peta-banjir',
-    icon: Map,
-    color: 'text-blue-500',
-  },
-  {
-    id: 'weather',
-    label: 'Prakiraan Cuaca',
-    href: '/prakiraan-cuaca',
-    icon: Cloud,
-    color: 'text-sky-500',
-  },
-  {
-    id: 'alerts',
-    label: 'Peringatan',
-    href: '/peringatan',
-    icon: Bell,
-    color: 'text-warning',
-    // badge akan diisi secara dinamis dari context
-  },
-  {
-    id: 'report-flood',
-    label: 'Lapor Banjir',
-    href: '/lapor-banjir',
-    icon: AlertTriangle,
-    color: 'text-red-500',
-  },
-  {
-    id: 'evacuation-info',
-    label: 'Info Evakuasi',
-    href: '/info-evakuasi',
-    icon: Users,
-    color: 'text-purple-500',
-  },
-  {
-    id: 'sensor-data',
-    label: 'Data Sensor',
-    href: '/data-sensor',
-    icon: TrendingUp,
-    color: 'text-green-500',
-  },
-  {
-    id: 'stats',
-    label: 'Statistik Data',
-    href: '/statistika',
-    icon: BarChart,
-    color: 'text-green-500',
-  },
+  { id: 'home', label: 'Dashboard', href: '/', icon: Home, color: 'text-primary' },
+  { id: 'map', label: 'Peta Banjir', href: '/peta-banjir', icon: Map, color: 'text-blue-500' },
+  { id: 'weather', label: 'Prakiraan Cuaca', href: '/prakiraan-cuaca', icon: Cloud, color: 'text-sky-500' },
+  { id: 'alerts', label: 'Peringatan', href: '/peringatan', icon: Bell, color: 'text-warning' },
+  { id: 'report-flood', label: 'Lapor Banjir', href: '/lapor-banjir', icon: AlertTriangle, color: 'text-red-500' },
+  { id: 'evacuation-info', label: 'Info Evakuasi', href: '/info-evakuasi', icon: Users, color: 'text-purple-500' },
+  { id: 'sensor-data', label: 'Data Sensor', href: '/data-sensor', icon: TrendingUp, color: 'text-green-500' },
+  { id: 'stats', label: 'Statistik Data', href: '/statistika', icon: BarChart, color: 'text-green-500' },
 ];
 
 const quickActions: QuickActionItem[] = [
-  {
-    id: 'current-weather',
-    label: 'Cuaca Sekarang',
-    icon: Cloud,
-    color: 'text-sky-500',
-    onClick: () => console.log('Cuaca clicked'),
-  },
+  { id: 'current-weather', label: 'Cuaca Sekarang', icon: Cloud, color: 'text-sky-500', onClick: () => console.log('Cuaca clicked') },
 ];
 
 interface SidebarProps {
@@ -120,21 +65,26 @@ interface SidebarProps {
   setIsCollapsed: (collapsed: boolean) => void;
 }
 
-export function Sidebar({
-  isOpen,
-  onClose,
-  isCollapsed,
-  setIsCollapsed,
-}: SidebarProps) {
+export function Sidebar({ isOpen, onClose, isCollapsed, setIsCollapsed }: SidebarProps) {
+  const router = useRouter();
   const isMobile = useMediaQuery('(max-width: 768px)');
   const { highAlertCount, loadingAlerts } = useAlertCount();
+  const [isPending, startTransition] = useTransition();
+  const [loadingPath, setLoadingPath] = useState<string | null>(null);
+
+  const handleNavigate = (href: string) => {
+    setLoadingPath(href);
+    startTransition(() => {
+      router.push(href);
+      if (isMobile) {
+        onClose();
+      }
+    });
+  };
 
   const sidebarVariants = {
     open: { x: 0, opacity: 1 },
-    closed: {
-      x: isMobile ? -280 : isCollapsed ? -16 : -200,
-      opacity: isMobile ? 0 : 1,
-    },
+    closed: { x: isMobile ? -280 : isCollapsed ? -16 : -200, opacity: isMobile ? 0 : 1 },
   };
 
   const overlayVariants = {
@@ -144,7 +94,6 @@ export function Sidebar({
 
   return (
     <>
-      {/* Mobile Overlay */}
       <AnimatePresence>
         {isMobile && isOpen && (
           <motion.div
@@ -159,7 +108,6 @@ export function Sidebar({
         )}
       </AnimatePresence>
 
-      {/* Sidebar */}
       <motion.aside
         initial="closed"
         animate={isOpen ? 'open' : 'closed'}
@@ -172,154 +120,87 @@ export function Sidebar({
           isMobile ? 'w-70' : isCollapsed ? 'w-16' : 'w-64',
         )}
       >
-        {/* Header sidebar */}
         <div className="flex items-center justify-between p-4 border-b">
           {!isCollapsed && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.1 }}
-            >
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.1 }}>
               <h2 className="text-lg font-semibold">Navigasi</h2>
               <p className="text-sm text-muted-foreground">Sistem Monitoring</p>
             </motion.div>
           )}
-
           {!isMobile && (
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setIsCollapsed(!isCollapsed)}
-              className="h-8 w-8"
-            >
-              {isCollapsed ? (
-                <ChevronRight size={16} />
-              ) : (
-                <ChevronLeft size={16} />
-              )}{' '}
+            <Button variant="ghost" size="icon" onClick={() => setIsCollapsed(!isCollapsed)} className="h-8 w-8">
+              {isCollapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
             </Button>
           )}
         </div>
 
-        {/* Navigation */}
         <nav className="flex-1 overflow-y-auto p-4 space-y-2">
           {navigationItems.map((item, index) => {
-            // ✅ Tentukan badge secara dinamis untuk item "Peringatan"
-            const currentBadge =
-              item.id === 'alerts' && highAlertCount > 0 && !loadingAlerts
-                ? highAlertCount
-                : item.badge;
-
-            // Pastikan currentBadge adalah number sebelum perbandingan numerik
-            const badgeValue =
-              typeof currentBadge === 'string'
-                ? parseInt(currentBadge, 10)
-                : currentBadge;
+            const isLoading = isPending && loadingPath === item.href;
+            const currentBadge = item.id === 'alerts' && highAlertCount > 0 && !loadingAlerts ? highAlertCount : item.badge;
+            const badgeValue = typeof currentBadge === 'string' ? parseInt(currentBadge, 10) : currentBadge;
 
             return (
-              <motion.div
-                key={item.id}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: index * 0.05 }}
-              >
-                <Link href={item.href} passHref>
-                  <Button
-                    variant="ghost"
-                    className={cn(
-                      'w-full justify-start h-12 font-medium transition-all duration-200',
-                      'hover:bg-muted hover:translate-x-1',
-                      isCollapsed && 'justify-center',
-                    )}
-                  >
+              <motion.div key={item.id} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: index * 0.05 }}>
+                <Button
+                  variant="ghost"
+                  className={cn(
+                    'w-full justify-start h-12 font-medium transition-all duration-200',
+                    'hover:bg-muted hover:translate-x-1',
+                    isCollapsed && 'justify-center',
+                  )}
+                  onClick={() => handleNavigate(item.href)}
+                  disabled={isPending}
+                >
+                  {isLoading ? (
+                    <Loader className={cn('h-5 w-5 animate-spin', item.color)} />
+                  ) : (
                     <item.icon className={cn('h-5 w-5', item.color)} />
-                    {!isCollapsed && (
-                      <>
-                        <span className="ml-3">{item.label}</span>
-                        {/* ✅ Gunakan badgeValue untuk perbandingan numerik */}
-                        {badgeValue !== undefined && badgeValue > 0 && (
-                          <Badge variant="danger" size="sm" className="ml-auto">
-                            {badgeValue}
-                          </Badge>
-                        )}
-                        {item.id === 'alerts' &&
-                          loadingAlerts && ( // Indikator loading untuk alerts
-                            <motion.div
-                              className="absolute right-3 h-2 w-2 bg-warning rounded-full"
-                              animate={{ scale: [1, 1.2, 1] }}
-                              // ✅ UBAH TYPE KE "tween"
-                              transition={{
-                                duration: 1,
-                                repeat: Infinity,
-                                type: 'tween',
-                              }}
-                            />
-                          )}
-                      </>
-                    )}
-                  </Button>
-                </Link>
+                  )}
+                  {!isCollapsed && (
+                    <>
+                      <span className="ml-3">{item.label}</span>
+                      {badgeValue !== undefined && badgeValue > 0 && (
+                        <Badge variant="danger" size="sm" className="ml-auto">{badgeValue}</Badge>
+                      )}
+                      {item.id === 'alerts' && loadingAlerts && (
+                        <motion.div
+                          className="absolute right-3 h-2 w-2 bg-warning rounded-full"
+                          animate={{ scale: [1, 1.2, 1] }}
+                          transition={{ duration: 1, repeat: Infinity, type: 'tween' }}
+                        />
+                      )}
+                    </>
+                  )}
+                </Button>
               </motion.div>
             );
           })}
         </nav>
 
-        {/* Quick Actions */}
         <div className="p-4 border-t">
           {!isCollapsed && (
-            <motion.h3
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.2 }}
-              className="text-sm font-medium text-muted-foreground mb-3"
-            >
+            <motion.h3 initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }} className="text-sm font-medium text-muted-foreground mb-3">
               Aksi Cepat
             </motion.h3>
           )}
-
-          <div
-            className={cn(
-              'space-y-2',
-              isCollapsed && 'flex flex-col items-center',
-            )}
-          >
+          <div className={cn('space-y-2', isCollapsed && 'flex flex-col items-center')}>
             {quickActions.map((action, index) => (
-              <motion.div
-                key={action.id}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.3 + index * 0.05 }}
-              >
-                <Button
-                  variant="outline"
-                  size={isCollapsed ? 'icon' : 'sm'}
-                  className="w-full justify-start hover:scale-105"
-                  onClick={action.onClick}
-                >
+              <motion.div key={action.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 + index * 0.05 }}>
+                <Button variant="outline" size={isCollapsed ? 'icon' : 'sm'} className="w-full justify-start hover:scale-105" onClick={action.onClick}>
                   <action.icon className={cn('h-4 w-4', action.color)} />
-                  {!isCollapsed && (
-                    <span className="ml-2">{action.label}</span>
-                  )}{' '}
+                  {!isCollapsed && <span className="ml-2">{action.label}</span>}
                 </Button>
               </motion.div>
             ))}
           </div>
         </div>
 
-        {/* Footer */}
         <div className="p-4 border-t">
-          <Link href="/settings" passHref>
-            <Button
-              variant="ghost"
-              className={cn(
-                'w-full justify-start h-10',
-                isCollapsed && 'justify-center',
-              )}
-            >
+            <Button variant="ghost" className={cn('w-full justify-start h-10', isCollapsed && 'justify-center')} onClick={() => handleNavigate('/settings')}>
               <Settings className="h-4 w-4 text-muted-foreground" />
-              {!isCollapsed && <span className="ml-3">Pengaturan</span>}{' '}
+              {!isCollapsed && <span className="ml-3">Pengaturan</span>}
             </Button>
-          </Link>
         </div>
       </motion.aside>
     </>

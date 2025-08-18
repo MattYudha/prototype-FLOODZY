@@ -2,26 +2,26 @@ import { createClient } from '@/lib/supabase/server';
 import { NextResponse } from 'next/server';
 
 export async function GET() {
-  console.log('[API Alerts] Attempting to fetch alerts...');
+  console.log('[API] Attempting to fetch historical incidents...');
   try {
     const supabase = createClient();
     const { data, error } = await supabase
-      .from('alerts')
+      .from('historical_incidents')
       .select('*')
-      .order('created_at', { ascending: false });
+      .order('date', { ascending: false });
 
     if (error) {
-      console.error('[API Alerts] Supabase error:', error);
+      console.error('[API] Supabase error:', error);
       throw new Error(error.message);
     }
 
-    console.log(`[API Alerts] Successfully fetched ${data?.length || 0} alerts.`);
+    console.log(`[API] Successfully fetched ${data?.length || 0} incidents.`);
 
     return NextResponse.json(data);
   } catch (error) {
-    console.error('[API Alerts] Catch block error:', error);
+    console.error('[API] Catch block error:', error);
     return new NextResponse(
-      JSON.stringify({ error: 'Failed to fetch alerts' }),
+      JSON.stringify({ error: 'Failed to fetch historical incidents' }),
       {
         status: 500,
         headers: { 'Content-Type': 'application/json' },

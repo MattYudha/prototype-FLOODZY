@@ -1,4 +1,12 @@
 // next.config.js
+const { withSentryConfig } = require('@sentry/nextjs');
+const withPWA = require('next-pwa')({
+  dest: 'public',
+  register: true,
+  skipWaiting: true,
+  disable: process.env.NODE_ENV === 'development', // Disable PWA in development
+});
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   // Konfigurasi Webpack yang sudah ada
@@ -11,8 +19,7 @@ const nextConfig = {
     return config;
   },
 
-  
-images: {
+  images: {
     remotePatterns: [
       { protocol:'https', hostname:'yqybhgqeejpdgffxzsno.supabase.co', pathname:'/storage/v1/object/public/**' },
     ],
@@ -20,4 +27,12 @@ images: {
   },
 };
 
-module.exports = nextConfig;
+const sentryWebpackPluginOptions = {
+  silent: true, // Suppresses all logs
+  org: process.env.SENTRY_ORG,
+  project: process.env.SENTRY_PROJECT,
+  authToken: process.env.SENTRY_AUTH_TOKEN,
+};
+
+// Combine PWA and Sentry configurations
+module.exports = withSentryConfig(withPWA(nextConfig), sentryWebpackPluginOptions);

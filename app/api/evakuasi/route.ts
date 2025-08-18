@@ -1,21 +1,16 @@
 import { NextResponse } from 'next/server';
-import { supabaseServiceRole, fetchSupabaseDataWithRetry } from '@/lib/supabaseAdmin';
+import { supabaseAdmin } from '@/lib/supabase/admin';
 
 export const runtime = 'nodejs';
 
 export async function GET(request: Request) {
   console.log('[API Evakuasi] Request received.');
-  // const supabase = createClient(); // No longer needed
-  // console.log('[API Evakuasi] Supabase client created.'); // No longer needed
 
   try {
     console.log(
       '[API Evakuasi] Attempting to fetch from evacuation_locations...',
     );
-    const { data, error } = await fetchSupabaseDataWithRetry(
-      (client) => client.from('evacuation_locations').select('*'),
-      'evacuation_locations'
-    );
+    const { data, error } = await supabaseAdmin.from('evacuation_locations').select('*');
 
     if (error) {
       console.error('[API Evakuasi] Supabase error:', error);

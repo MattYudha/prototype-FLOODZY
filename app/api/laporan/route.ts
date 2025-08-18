@@ -1,32 +1,52 @@
+
 import { NextResponse } from 'next/server';
-import { fetchSupabaseDataWithRetry } from '@/lib/supabaseAdmin';
+import { supabaseAdmin } from '@/lib/supabase/admin';
+import { FloodReportSchema } from '@/lib/schemas';
 
 export const runtime = 'nodejs';
 
-// const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL; // No longer needed
-// const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY; // No longer needed
-
-// if (!supabaseUrl || !supabaseAnonKey) {
-//   throw new Error('Missing Supabase URL or Anon Key environment variables');
-// } // No longer needed
-
-// const supabase = createClient(supabaseUrl, supabaseAnonKey); // No longer needed
-
 export async function GET() {
   try {
-    const { data, error } = await fetchSupabaseDataWithRetry(
-      (client) => client.from('laporan_banjir').select('id, location, water_level, timestamp, status, reporterName'),
-      'laporan_banjir'
-    );
+    const { data, error } = await supabaseAdmin
+      .from('laporan_banjir')
+      .select('*')
+      .order('created_at', { ascending: false });
 
     if (error) {
-      console.error('Error fetching data from Supabase:', error);
+      console.error('Error fetching reports:', error);
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
-
     return NextResponse.json(data);
   } catch (error) {
-    console.error('Unexpected error in /api/laporan:', error);
     return NextResponse.json({ error: `Internal server error: ${(error as Error).message}` }, { status: 500 });
   }
 }
+
+export async function POST(request: Request) {
+  try {
+    const body = await request.json();
+    const validationResult = FloodReportSchema.safeParse(body);
+
+    if (!validationResult.success) {
+      return NextResponse.json(
+        { errors: validationResult.error.issues, message: 'Data input tidak valid.' },
+        { status: 400 }
+      );
+    }
+
+    const { error: insertError } = await supabaseAdmin
+      .from('laporan_banjir')
+      .insert([validationResult.data]);
+
+    if (insertError) {
+      console.error('Error inserting report:', insertError);
+      return NextResponse.json({ error: insertError.message }, { status: 500 });
+    }
+
+    return NextResponse.json({ message: 'Laporan berhasil diterima.' }, { status: 201 });
+
+  } catch (error) {
+    return NextResponse.json({ error: `Internal server error: ${(error as Error).message}` }, { status: 500 });
+  }
+}
+

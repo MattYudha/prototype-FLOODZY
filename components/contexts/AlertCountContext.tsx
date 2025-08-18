@@ -7,6 +7,7 @@ import React, {
   useState,
   useEffect,
   ReactNode,
+  useRef, // Import useRef
 } from 'react';
 
 // Definisikan tipe data Alert (harus konsisten di seluruh proyek)
@@ -54,9 +55,13 @@ export function AlertCountProvider({ children }: AlertCountProviderProps) {
   const [highAlertCount, setHighAlertCount] = useState<number>(0);
   const [loadingAlerts, setLoadingAlerts] = useState<boolean>(true);
   const [errorAlerts, setErrorAlerts] = useState<string | null>(null);
+  const isInitialFetch = useRef(true); // Lacak fetch awal
 
   const fetchAlertsData = async () => {
-    setLoadingAlerts(true);
+    // Hanya set loading true pada fetch awal
+    if (isInitialFetch.current) {
+      setLoadingAlerts(true);
+    }
     setErrorAlerts(null);
     try {
       const response = await fetch('/api/alerts-data');
@@ -74,7 +79,11 @@ export function AlertCountProvider({ children }: AlertCountProviderProps) {
       setAlertCount(0); // Reset count on error
       setHighAlertCount(0);
     } finally {
-      setLoadingAlerts(false);
+      // Pastikan loading di-set false dan tandai fetch awal selesai
+      if (isInitialFetch.current) {
+        setLoadingAlerts(false);
+        isInitialFetch.current = false;
+      }
     }
   };
 

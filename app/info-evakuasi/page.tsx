@@ -2,8 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import 'leaflet/dist/leaflet.css';
-import L from 'leaflet';
-import { motion, AnimatePresence } from 'framer-motion'; // Import motion dan AnimatePresence
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   MapPin,
   Users,
@@ -39,37 +38,34 @@ const Popup = dynamic(
   { ssr: false },
 );
 
-// Custom marker icon
 const DEFAULT_MAP_CENTER: [number, number] = [-6.2088, 106.8456]; // Jakarta
 const DEFAULT_MAP_ZOOM = 10;
 
 export default function InfoEvakuasiPage() {
-  const [evacuationLocations, setEvacuationLocations] = useState<
-    EvacuationLocation[]
-  >([]);
+  const [evacuationLocations, setEvacuationLocations] = useState<EvacuationLocation[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedLocation, setSelectedLocation] =
-    useState<EvacuationLocation | null>(null);
+  const [selectedLocation, setSelectedLocation] = useState<EvacuationLocation | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-
-  const [evacuationIcon, setEvacuationIcon] = useState<L.Icon | null>(null);
+  const [L, setL] = useState(null);
+  const [evacuationIcon, setEvacuationIcon] = useState(null);
 
   useEffect(() => {
-    // Only create the icon on the client side
-    if (typeof window !== 'undefined') {
+    import('leaflet').then(leaflet => {
+      setL(leaflet);
       setEvacuationIcon(
-        new L.Icon({
+        new leaflet.Icon({
           iconUrl: '/assets/evacuation_marker.svg',
           iconSize: [32, 32],
           iconAnchor: [16, 32],
           popupAnchor: [0, -32],
         }),
       );
-    }
+    });
 
     const fetchEvacuationLocations = async () => {
       try {
+        setLoading(true);
         const response = await fetch('/api/evakuasi');
         if (!response.ok) {
           throw new Error(`Failed to fetch: ${response.statusText}`);
@@ -296,7 +292,7 @@ export default function InfoEvakuasiPage() {
             </div>
 
             <div className="h-96 w-full rounded-lg overflow-hidden border border-slate-600/30">
-              {evacuationIcon && (
+              {L && evacuationIcon && (
                 <MapContainer
                   center={DEFAULT_MAP_CENTER}
                   zoom={DEFAULT_MAP_ZOOM}
@@ -349,7 +345,7 @@ export default function InfoEvakuasiPage() {
                 Daftar Lokasi
               </h3>
             </div>
-            {evacuationLocations.length === 0 ? (
+            {evacuationLocations.length === 0 && !loading ? (
               <p className="text-slate-400 text-center py-8">
                 Tidak ada lokasi evakuasi.
               </p>
