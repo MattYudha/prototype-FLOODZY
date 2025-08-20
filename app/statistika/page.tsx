@@ -316,7 +316,7 @@ export default function StatistikPage() {
       `${card.title}: ${card.value} (${card.changeType === 'increase' ? '+' : ''}${card.change}% dari bulan lalu)`
     ).join('\n');
 
-    const prompt = `Anda adalah asisten analisis bencana yang profesional. Jawab pertanyaan pengguna berdasarkan data statistik yang saya berikan.\n    Fokus pada analisis kemungkinan terjadinya bencana dan rekomendasi langkah pencegahan/penanganan.\n    Jika data tidak relevan atau tidak cukup, nyatakan keterbatasan Anda.\n\n    Data Insiden Historis (10 insiden terbaru):\n    ${incidentSummary || 'Tidak ada data insiden historis.'}\n\n    Ringkasan Statistik Utama:\n    ${statCardSummary || 'Tidak ada ringkasan statistik.'}\n\n    Pertanyaan Pengguna: "${geminiQuestion}"\n\n    Analisis Anda:`;
+    const prompt = `Anda adalah asisten analisis bencana yang profesional. Jawab pertanyaan pengguna berdasarkan data statistik yang saya berikan.\n    Fokus pada analisis kemungkinan terjadinya bencana dan rekomendasi langkah pencegahan/penanganan.\n    Jika data tidak relevan atau tidak cukup, nyatakan keterbatasan Anda.\n\n    Data Insiden Historis (10 insiden terbaru):\n    ${incidentSummary || 'Tidak ada data insiden historis.'}\n\n    Ringkasan Statistik Utama:\n    ${statCardSummary || 'Tidak ada ringkasan statistik.'}\n\n    Pertanyaan Pengguna: "${geminiQuestion}"\n\n    Analisis Anda:`
 
     console.log('Gemini Prompt:', prompt); // Log the generated prompt
 
@@ -1012,11 +1012,8 @@ export default function StatistikPage() {
                                       </div>
                                     )}
                                     {incident.evacuees && (
-                                      <div className="flex items-center justify-between text-sm">
-                                        <span className="text-slate-400 flex items-center gap-1">
-                                          <Shield className="w-3 h-3" />
-                                          Pengungsi
-                                        </span>
+                                      <div className="text-sm">
+                                        <span className="text-slate-400">Pengungsi:</span>{' '}
                                         <span className="font-medium text-amber-300">
                                           {incident.evacuees.toLocaleString('id-ID')}
                                         </span>
