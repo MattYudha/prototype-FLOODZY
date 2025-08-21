@@ -1,6 +1,13 @@
 'use client';
 
-import { createContext, useContext, useEffect, useState } from 'react';
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  useCallback,
+  ReactNode,
+} from 'react';
 
 type Theme = 'light' | 'dark' | 'system' | 'high-contrast';
 
@@ -12,62 +19,65 @@ interface ThemeContextType {
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
+export function ThemeProvider({ children }: { children: ReactNode }) {
+  const [theme, setThemeState] = useState<Theme>('light'); // default aman untuk SSR
+  const [isDark, setIsDark] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  // handle mount → sync dengan localStorage + system preference
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const savedTheme = localStorage.getItem('theme') as Theme | null;
+      if (savedTheme) {
+        setThemeState(savedTheme);
+        setIsDark(savedTheme === 'dark');
+      } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        setThemeState('dark');
+        setIsDark(true);
+      }
+      setMounted(true);
+    }
+  }, []);
+
+  const updateTheme = useCallback((newTheme: Theme) => {
+    setThemeState(newTheme);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('theme', newTheme);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!mounted) return;
+
+    const root = window.document.documentElement;
+    root.classList.remove('light', 'dark', 'high-contrast');
+
+    if (theme === 'system') {
+      const systemIsDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      root.classList.add(systemIsDark ? 'dark' : 'light');
+      setIsDark(systemIsDark);
+    } else {
+      root.classList.add(theme);
+      setIsDark(theme === 'dark');
+    }
+  }, [theme, mounted]);
+
+  // Pastikan render konsisten saat SSR → tampilkan children hanya setelah mounted
+  if (!mounted) {
+    return null; // atau skeleton loader kalau mau
+  }
+
+  return (
+    <ThemeContext.Provider value={{ theme, setTheme: updateTheme, isDark }}>
+      {children}
+    </ThemeContext.Provider>
+  );
+}
+
 export function useTheme() {
   const context = useContext(ThemeContext);
   if (!context) {
     throw new Error('useTheme must be used within a ThemeProvider');
   }
   return context;
-}
-
-export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setTheme] = useState<Theme>('system');
-  const [isDark, setIsDark] = useState(false);
-
-  useEffect(() => {
-    const storedTheme = localStorage.getItem('theme') as Theme;
-    if (storedTheme) {
-      setTheme(storedTheme);
-    }
-  }, []);
-
-  useEffect(() => {
-    localStorage.setItem('theme', theme);
-
-    const root = window.document.documentElement;
-    root.classList.remove('light', 'dark', 'high-contrast');
-
-    if (theme === 'system') {
-      const systemTheme = window.matchMedia('(prefers-color-scheme: dark)')
-        .matches
-        ? 'dark'
-        : 'light';
-      root.classList.add(systemTheme);
-      setIsDark(systemTheme === 'dark');
-    } else if (theme === 'high-contrast') {
-      root.classList.add('high-contrast');
-      setIsDark(true); // Anggap kontras tinggi sebagai mode gelap
-    } else {
-      root.classList.add(theme);
-      setIsDark(theme === 'dark');
-    }
-  }, [theme]);
-
-  useEffect(() => {
-    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    const handleChange = () => {
-      if (theme === 'system') {
-        setIsDark(mediaQuery.matches);
-      }
-    };
-
-    mediaQuery.addEventListener('change', handleChange);
-    return () => mediaQuery.removeEventListener('change', handleChange);
-  }, [theme]);
-
-  return (
-    <ThemeContext.Provider value={{ theme, setTheme, isDark }}>
-      {children}
-    </ThemeContext.Provider>
-  );
 }
