@@ -67,7 +67,8 @@ import { PeringatanBencanaCard } from '@/components/flood/PeringatanBencanaCard'
 
 // Types
 import type { FloodAlert as FloodAlertType } from '@/types';
-import { SelectedLocation, MapBounds } from '@/app/state';
+import { SelectedLocation } from '@/types/location';
+import { MapBounds } from '@/types';
 
 const FloodMap = dynamic(() => import('@/components/map/FloodMap').then(mod => mod.FloodMap), {
   ssr: false,

@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/Button';
 import { RegionDropdown } from '@/components/region-selector/RegionDropdown';
-import { SelectedLocation } from '@/app/state'; // Pastikan path ini benar
+import { SelectedLocation } from '@/types/location';
 
 interface LocationPickerModalProps {
   isOpen: boolean;

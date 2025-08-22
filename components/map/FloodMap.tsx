@@ -51,7 +51,7 @@ import {
   WEATHER_MOCK_DATA,
 } from '@/lib/constants';
 import { FloodZone, WeatherData, FloodAlert } from '@/types'; // Import FloodAlert
-import { MapBounds } from '@/app/state';
+
 import { cn } from '@/lib/utils';
 import { OverpassElement } from '@/lib/api';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
@@ -172,7 +172,7 @@ interface FloodMapProps {
   realtimeAlertsError?: string | null; // Properti baru untuk error
   weatherLayers?: { [key: string]: boolean };
   apiKey?: string;
-  onMapBoundsChange?: (bounds: MapBounds) => void;
+
 }
 
 export function FloodMap({

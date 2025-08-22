@@ -314,7 +314,7 @@ export default function GeminiChatSection({
                           placeholder="Tanyakan tentang kondisi banjir, cuaca, atau evakuasi..."
                           className="w-full bg-slate-800/80 border border-slate-600/50 focus:border-cyan-500/50 rounded-2xl px-4 py-3 pr-12 text-white placeholder-slate-400 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/20 transition-all duration-200"
                           value={geminiQuestion}
-                          onChange={(e) => setGeminiQuestion(e.target.value)}
+                          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setGeminiQuestion(e.target.value)}
                           onKeyPress={handleKeyPress}
                           disabled={isGeminiLoading}
                         />

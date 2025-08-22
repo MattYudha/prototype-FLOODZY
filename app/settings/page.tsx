@@ -29,7 +29,7 @@ import {
 } from 'lucide-react';
 
 import { useTheme } from '@/hooks/useTheme';
-import { SelectedLocation } from '../state';
+import { SelectedLocation } from '@/types/location';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { RegionDropdown } from '@/components/region-selector/RegionDropdown';
 import { Switch } from '@/components/ui/switch';

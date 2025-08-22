@@ -27,7 +27,7 @@ import {
 import { WeatherData, CombinedWeatherData } from '@/lib/api';
 import { WeatherMapIframe } from '@/components/weather/WeatherMapIframe';
 
-import { SelectedLocation } from '@/app/state';
+import { SelectedLocation } from '@/types/location';
 
 interface RegionDropdownProps {
   onSelectDistrict?: (location: SelectedLocation) => void;

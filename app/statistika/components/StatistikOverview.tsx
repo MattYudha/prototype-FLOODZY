@@ -1,5 +1,5 @@
 import ReactMarkdown from 'react-markdown';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
   TrendingUp,
@@ -33,10 +33,48 @@ import {
   Cell,
 } from 'recharts';
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
-import { StatCard, ChartDataPoint } from '../statistika.types';
-import { colorClasses, getChangeColor, getChangeIcon } from '../statistika.utils';
+// Asumsi tipe data ini ada di file terpisah
+interface StatCard {
+    title: string;
+    value: string;
+    description: string;
+    icon: React.ReactNode;
+    color: 'cyan' | 'blue' | 'red' | 'orange' | 'green' | 'purple';
+    change: number;
+    changeType: 'increase' | 'decrease' | 'stable';
+}
+
+interface ChartDataPoint {
+    name: string;
+    incidents: number;
+    severity: number;
+}
+
+
+// Asumsi utilitas ini ada di file terpisah
+const colorClasses = {
+  cyan: { bg: 'from-cyan-400/30 to-cyan-600/30', text: 'text-cyan-200' },
+  blue: { bg: 'from-blue-400/30 to-blue-600/30', text: 'text-blue-200' },
+  red: { bg: 'from-red-400/30 to-red-600/30', text: 'text-red-200' },
+  orange: { bg: 'from-orange-400/30 to-orange-600/30', text: 'text-orange-200' },
+  green: { bg: 'from-green-400/30 to-green-600/30', text: 'text-green-200' },
+  purple: { bg: 'from-purple-400/30 to-purple-600/30', text: 'text-purple-200' },
+};
+
+const getChangeColor = (changeType: 'increase' | 'decrease' | 'stable') => {
+  if (changeType === 'increase') return 'text-green-400';
+  if (changeType === 'decrease') return 'text-red-400';
+  return 'text-slate-400';
+};
+
+const getChangeIcon = (changeType: 'increase' | 'decrease' | 'stable') => {
+  if (changeType === 'increase') return <TrendingUp className="w-4 h-4" />;
+  if (changeType === 'decrease') return <TrendingDown className="w-4 h-4" />;
+  return null;
+};
+
 
 // Data pie chart bisa diletakkan di sini karena spesifik untuk overview
 const pieData = [
@@ -48,7 +86,8 @@ const pieData = [
 ];
 
 interface StatistikOverviewProps {
-  statCards: StatCard[];
+  // Prop statCards tetap ada, meskipun kita menggunakan data mock untuk demonstrasi
+  statCards: StatCard[]; 
   chartData: ChartDataPoint[];
 }
 
@@ -58,6 +97,72 @@ export default function StatistikOverview({ statCards, chartData }: StatistikOve
   const [isExporting, setIsExporting] = useState(false);
   const [exportReport, setExportReport] = useState<string | null>(null);
   const [geminiError, setGeminiError] = useState<string | null>(null);
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  // --- PENAMBAHAN KARTU STATISTIK ---
+  // Data ini ditambahkan untuk mendemonstrasikan 6 kartu.
+  // Idealnya, data ini datang dari parent component melalui props `statCards`.
+  const fullStatCards: StatCard[] = [
+    {
+      title: 'Total Insiden',
+      value: '10',
+      description: 'Insiden tercatat',
+      icon: <Activity className="w-6 h-6" />,
+      color: 'cyan',
+      change: 12,
+      changeType: 'increase',
+    },
+    {
+      title: 'Pengungsi',
+      value: '10.470',
+      description: 'Orang dievakuasi',
+      icon: <Users className="w-6 h-6" />,
+      color: 'blue',
+      change: 20,
+      changeType: 'increase',
+    },
+    {
+      title: 'Korban Jiwa',
+      value: '89',
+      description: 'Total korban meninggal',
+      icon: <AlertCircle className="w-6 h-6" />,
+      color: 'red',
+      change: 5,
+      changeType: 'increase',
+    },
+    {
+      title: 'Infrastruktur Rusak',
+      value: '1.204',
+      description: 'Bangunan & fasilitas',
+      icon: <Zap className="w-6 h-6" />,
+      color: 'orange',
+      change: 8,
+      changeType: 'decrease',
+    },
+    {
+      title: 'Wilayah Terdampak',
+      value: '78',
+      description: 'Kabupaten/Kota',
+      icon: <Globe className="w-6 h-6" />,
+      color: 'green',
+      change: 3,
+      changeType: 'increase',
+    },
+    {
+      title: 'Tingkat Kesiapsiagaan',
+      value: '85%',
+      description: 'Skor nasional',
+      icon: <Shield className="w-6 h-6" />,
+      color: 'purple',
+      change: 2,
+      changeType: 'increase',
+    },
+  ];
+
 
   const handleDetailedAnalysis = async () => {
     setGeminiError(null);
@@ -79,7 +184,7 @@ Data Statistik:
 ## Ringkasan Statistik Utama
 | Statistik | Nilai | Deskripsi |
 |---|---|---|
-${statCards.map(card => `| ${card.title} | ${card.value} | ${card.description} |`).join('\n')}
+${fullStatCards.map(card => `| ${card.title} | ${card.value} | ${card.description} |`).join('\n')}
 
 ## Tren Insiden Bulanan
 | Bulan | Jumlah Insiden | Tingkat Keparahan Rata-rata |
@@ -125,7 +230,7 @@ Pastikan setiap bagian analisis disajikan dalam paragraf singkat dan poin-poin y
 
     try {
       const prompt = `Buat laporan ringkas dalam format Markdown berdasarkan data statistik bencana berikut:\n\n` +
-        `## Ringkasan Statistik Utama\n${statCards.map(card => `- **${card.title}**: ${card.value} (${card.description})`).join('\n')}\n\n` +
+        `## Ringkasan Statistik Utama\n${fullStatCards.map(card => `- **${card.title}**: ${card.value} (${card.description})`).join('\n')}\n\n` +
         `## Tren Insiden Bulanan\n${chartData.map(data => `- **${data.name}**: Jumlah Insiden: ${data.incidents}, Tingkat Keparahan Rata-rata: ${data.severity}`).join('\n')}\n\n` +
         `## Distribusi Jenis Bencana\n${pieData.map(item => `- **${item.name}**: ${item.value}% dari total insiden`).join('\n')}\n\n` +
         `Sertakan bagian untuk 'Kesimpulan' dan 'Rekomendasi' berdasarkan data ini.`;
@@ -191,58 +296,60 @@ Pastikan setiap bagian analisis disajikan dalam paragraf singkat dan poin-poin y
         <p className="text-slate-400">Monitoring dan analisis data bencana Indonesia</p>
       </motion.div>
 
-      {/* Stats Grid - Enhanced */}
+      {/* Stats Grid - Enhanced with 6 cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6">
-        {statCards.map((card, index) => (
+        {fullStatCards.map((card, index) => (
           <motion.div
             key={card.title}
             initial={{ opacity: 0, scale: 0.8, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            transition={{ 
-              duration: 0.6, 
+            transition={{
+              duration: 0.6,
               delay: index * 0.1,
               type: "spring",
               stiffness: 100
             }}
           >
-            <Card className="bg-slate-900/60 backdrop-blur-xl border border-slate-700/50 hover:border-cyan-500/40 transition-all duration-500 rounded-2xl group hover:shadow-2xl hover:shadow-cyan-500/10 hover:scale-[1.02] relative overflow-hidden">
+            <Card className="bg-slate-900/60 backdrop-blur-xl border border-slate-700/50 hover:border-cyan-500/40 transition-all duration-500 rounded-2xl group hover:shadow-2xl hover:shadow-cyan-500/10 hover:scale-[1.02] relative overflow-hidden h-full">
               {/* Background Gradient Effect */}
               <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/5 via-transparent to-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
               
-              <CardContent className="p-6 relative">
-                <div className="flex items-start justify-between mb-4">
-                  <motion.div 
-                    className={`p-3 rounded-xl bg-gradient-to-br ${colorClasses[card.color]?.bg || ''} transition-all duration-300 group-hover:scale-110 shadow-lg`}
-                    whileHover={{ rotate: [0, -10, 10, 0] }}
-                    transition={{ duration: 0.3 }}
-                  >
-                    <div className={`${colorClasses[card.color]?.text || ''}`}>{card.icon}</div>
-                  </motion.div>
-                  <motion.div 
-                    className={`flex items-center gap-1 text-sm font-semibold px-2 py-1 rounded-full ${getChangeColor(card.changeType)} bg-slate-800/50 backdrop-blur-sm`}
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    transition={{ delay: 0.5 + index * 0.1 }}
-                  >
-                    {getChangeIcon(card.changeType)}
-                    <span>{Math.abs(card.change)}%</span>
-                  </motion.div>
-                </div>
-                <div className="space-y-2">
-                  <h3 className="text-sm font-semibold text-slate-300 uppercase tracking-wide">{card.title}</h3>
-                  <motion.div 
-                    className="text-3xl font-bold text-white group-hover:text-cyan-100 transition-colors"
-                    initial={{ scale: 0.5 }}
-                    animate={{ scale: 1 }}
-                    transition={{ delay: 0.3 + index * 0.1, type: "spring" }}
-                  >
-                    {card.value}
-                  </motion.div>
-                  <p className="text-xs text-slate-500 group-hover:text-slate-400 transition-colors">{card.description}</p>
+              <CardContent className="p-6 relative flex flex-col justify-between h-full">
+                <div>
+                    <div className="flex items-start justify-between mb-4">
+                    <motion.div 
+                      className={`p-3 rounded-xl bg-gradient-to-br ${colorClasses[card.color]?.bg || ''} transition-all duration-300 group-hover:scale-110 shadow-lg`}
+                      whileHover={{ rotate: [0, -10, 10, 0] }}
+                      transition={{ duration: 0.3 }}
+                    >
+                      <div className={`${colorClasses[card.color]?.text || ''}`}>{card.icon}</div>
+                    </motion.div>
+                    <motion.div 
+                      className={`flex items-center gap-1 text-sm font-semibold px-2 py-1 rounded-full ${getChangeColor(card.changeType)} bg-slate-800/50 backdrop-blur-sm`}
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      transition={{ delay: 0.5 + index * 0.1 }}
+                    >
+                      {getChangeIcon(card.changeType)}
+                      <span>{Math.abs(card.change)}%</span>
+                    </motion.div>
+                  </div>
+                  <div className="space-y-2">
+                    <h3 className="text-sm font-semibold text-slate-300 uppercase tracking-wide">{card.title}</h3>
+                    <motion.div 
+                      className="text-3xl font-bold text-white group-hover:text-cyan-100 transition-colors"
+                      initial={{ scale: 0.5 }}
+                      animate={{ scale: 1 }}
+                      transition={{ delay: 0.3 + index * 0.1, type: "spring" }}
+                    >
+                      {card.value}
+                    </motion.div>
+                    <p className="text-xs text-slate-500 group-hover:text-slate-400 transition-colors">{card.description}</p>
+                  </div>
                 </div>
 
-                {/* Decorative corner accent */}
-                <div className="absolute top-2 right-2 w-8 h-8 bg-gradient-to-br from-cyan-500/10 to-transparent rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+              {/* Decorative corner accent */}
+              <div className="absolute top-2 right-2 w-8 h-8 bg-gradient-to-br from-cyan-500/10 to-transparent rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
               </CardContent>
             </Card>
           </motion.div>
@@ -275,7 +382,8 @@ Pastikan setiap bagian analisis disajikan dalam paragraf singkat dan poin-poin y
                 </div>
               </CardTitle>
             </CardHeader>
-            <CardContent className="p-6">
+            <CardContent className="p-6 h-[350px]">
+              {isClient && (
               <ResponsiveContainer width="100%" height={350}>
                 <AreaChart data={chartData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
                   <defs>
@@ -284,7 +392,7 @@ Pastikan setiap bagian analisis disajikan dalam paragraf singkat dan poin-poin y
                       <stop offset="50%" stopColor="#06B6D4" stopOpacity={0.3} />
                       <stop offset="95%" stopColor="#06B6D4" stopOpacity={0.05} />
                     </linearGradient>
-                    <linearGradient id="colorSeverity" x1="0" y1="0" x2="0" y2="1">
+                    <linearGradient id="colorSeverity" x1="0" y1="0" y2="1">
                       <stop offset="5%" stopColor="#10B981" stopOpacity={0.6} />
                       <stop offset="50%" stopColor="#10B981" stopOpacity={0.3} />
                       <stop offset="95%" stopColor="#10B981" stopOpacity={0.05} />
@@ -342,6 +450,7 @@ Pastikan setiap bagian analisis disajikan dalam paragraf singkat dan poin-poin y
                   />
                 </AreaChart>
               </ResponsiveContainer>
+              )}
             </CardContent>
           </Card>
         </motion.div>
@@ -364,6 +473,10 @@ Pastikan setiap bagian analisis disajikan dalam paragraf singkat dan poin-poin y
                   <div className="text-lg font-bold">Distribusi Jenis</div>
                   <div className="text-xs text-purple-300 font-normal">Kategorisasi insiden bencana</div>
                 </div>
+                <div className="ml-auto flex items-center space-x-2">
+                  <div className="w-2 h-2 bg-purple-400 rounded-full animate-pulse"></div>
+                  <span className="text-xs text-slate-400">Live</span>
+                </div>
               </CardTitle>
             </CardHeader>
             <CardContent className="flex justify-center items-center h-[350px] p-6 relative">
@@ -385,7 +498,7 @@ Pastikan setiap bagian analisis disajikan dalam paragraf singkat dan poin-poin y
                   </motion.div>
                 ))}
               </div>
-
+              {isClient && (
               <ResponsiveContainer width="100%" height="100%">
                 <RechartsPieChart>
                   <Pie
@@ -407,7 +520,7 @@ Pastikan setiap bagian analisis disajikan dalam paragraf singkat dan poin-poin y
                   >
                     {pieData.map((entry, index) => (
                       <Cell 
-                        key={`cell-${index}`} 
+                        key={`cell-${index}`}
                         fill={entry.color}
                         stroke="#1e293b"
                         strokeWidth={2}
@@ -427,6 +540,7 @@ Pastikan setiap bagian analisis disajikan dalam paragraf singkat dan poin-poin y
                   />
                 </RechartsPieChart>
               </ResponsiveContainer>
+              )}
             </CardContent>
           </Card>
         </motion.div>
