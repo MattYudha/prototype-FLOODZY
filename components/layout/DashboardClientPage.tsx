@@ -47,6 +47,7 @@ import {
   X,
   Loader2,
   Eye,
+  RotateCcw, // Add this line
 } from 'lucide-react';
 
 // Hooks & Utils
@@ -118,13 +119,20 @@ export function DashboardClientPage({ initialData }) {
         const { latitude, longitude } = location;
         fetchWeather(latitude, longitude);
         const buffer = 0.05;
-        const newBounds = {
-          south: latitude - buffer,
-          west: longitude - buffer,
-          north: latitude + buffer,
-          east: longitude + buffer,
+
+        // Calculate the bounds
+        const south = latitude - buffer;
+        const west = longitude - buffer;
+        const north = latitude + buffer;
+        const east = longitude + buffer;
+
+        // Construct the MapBounds object
+        const newMapBounds: MapBounds = {
+          center: [latitude, longitude], // Center of the map
+          zoom: 12, // A reasonable default zoom level for a district view
+          bounds: [[south, west], [north, east]], // Leaflet-style bounds
         };
-        setMapBounds(newBounds);
+        setMapBounds(newMapBounds);
       } else {
         setMapBounds(null);
       }
@@ -133,8 +141,21 @@ export function DashboardClientPage({ initialData }) {
   );
 
   useEffect(() => {
+    // Initial fetch when component mounts or selectedLocation changes
+    if (selectedLocation) {
+      fetchDisasterAreas({ south: mapBounds.bounds[0][0], west: mapBounds.bounds[0][1], north: mapBounds.bounds[1][0], east: mapBounds.bounds[1][1] });
+    } else {
+      // Fetch for default map view if no specific location is selected
+      fetchDisasterAreas({ south: DEFAULT_MAP_CENTER[0] - 0.1, west: DEFAULT_MAP_CENTER[1] - 0.1, north: DEFAULT_MAP_CENTER[0] + 0.1, east: DEFAULT_MAP_CENTER[1] + 0.1 });
+    }
+  }, [selectedLocation, fetchDisasterAreas]); // Only fetch on initial load or selectedLocation change
+
+  const refreshDisasterData = useCallback(() => {
     if (mapBounds) {
-      fetchDisasterAreas(mapBounds);
+      fetchDisasterAreas({ south: mapBounds.bounds[0][0], west: mapBounds.bounds[0][1], north: mapBounds.bounds[1][0], east: mapBounds.bounds[1][1] });
+      toast.success('Data bencana diperbarui!');
+    } else {
+      toast.error('Tidak dapat memperbarui data: Peta belum dimuat.');
     }
   }, [mapBounds, fetchDisasterAreas]);
 
@@ -327,6 +348,15 @@ export function DashboardClientPage({ initialData }) {
                     <Badge variant="success" className="ml-auto">
                       Live
                     </Badge>
+                    <Button
+                      onClick={refreshDisasterData}
+                      variant="outline"
+                      size="sm"
+                      className="ml-2"
+                    >
+                      <RotateCcw className="h-4 w-4 mr-1" />
+                      Perbarui Data
+                    </Button>
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -335,21 +365,14 @@ export function DashboardClientPage({ initialData }) {
                     className="w-full rounded-lg border border-slate-800/50 relative overflow-hidden"
                   >
                     <FloodMap
-                      center={
-                        selectedLocation?.latitude != null &&
-                        selectedLocation?.longitude != null
-                          ? [
-                              selectedLocation.latitude,
-                              selectedLocation.longitude,
-                            ]
-                          : DEFAULT_MAP_CENTER
-                      }
-                      zoom={selectedLocation ? 12 : DEFAULT_MAP_ZOOM}
+                      center={mapBounds?.center || DEFAULT_MAP_CENTER}
+                      zoom={mapBounds?.zoom || DEFAULT_MAP_ZOOM}
                       className="h-full w-full"
                       floodProneData={disasterProneAreas}
                       loadingFloodData={isLoadingDisaster}
                       floodDataError={disasterError}
                       onMapBoundsChange={handleMapBoundsChange}
+                      selectedLocation={selectedLocation} // Add this prop
                     />
                   </div>
                 </CardContent>

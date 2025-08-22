@@ -3,7 +3,8 @@ import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 
 export async function GET() {
-  const supabase = createRouteHandlerClient({ cookies });
+  const cookieStore = cookies();
+  const supabase = createRouteHandlerClient({ cookies: cookieStore as any });
   const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) {
@@ -26,7 +27,8 @@ export async function GET() {
 
 export async function POST(request: Request) {
   const { default_location, preferences_data } = await request.json();
-  const supabase = createRouteHandlerClient({ cookies });
+  const cookieStore = cookies();
+  const supabase = createRouteHandlerClient({ cookies: cookieStore as any });
   const { data: { user } = {} } = await supabase.auth.getUser();
 
   if (!user) {

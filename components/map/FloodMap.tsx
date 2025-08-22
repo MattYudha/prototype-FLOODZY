@@ -1,6 +1,8 @@
 // src/components/map/FloodMap.tsx
 'use client';
 
+import React from 'react'; // Add this line
+
 // Impor React-Leaflet
 import {
   MapContainer,
@@ -50,7 +52,7 @@ import {
   FLOOD_ZONES_MOCK,
   WEATHER_MOCK_DATA,
 } from '@/lib/constants';
-import { FloodZone, WeatherData, FloodAlert } from '@/types'; // Import FloodAlert
+import { FloodZone, WeatherData, FloodAlert, MapBounds } from '@/types'; // Import FloodAlert
 
 import { cn } from '@/lib/utils';
 import { OverpassElement } from '@/lib/api';
@@ -158,6 +160,31 @@ function MapEvents({ onLocationSelect, onReverseGeocode }: MapEventsProps) {
   return null;
 }
 
+interface MapBoundsUpdaterProps {
+  onMapBoundsChange?: (bounds: MapBounds) => void;
+  selectedLocation?: SelectedLocation; // Add this prop
+}
+
+function MapBoundsUpdater({ onMapBoundsChange }: MapBoundsUpdaterProps) {
+  const map = useMap();
+
+  useMapEvents({
+    moveend: () => {
+      if (onMapBoundsChange) {
+        const bounds = map.getBounds();
+        const center = map.getCenter();
+        const zoom = map.getZoom();
+        onMapBoundsChange({
+          center: [center.lat, center.lng],
+          zoom: zoom,
+          bounds: [[bounds.getSouth(), bounds.getWest()], [bounds.getNorth(), bounds.getEast()]],
+        });
+      }
+    },
+  });
+  return null;
+}
+
 interface FloodMapProps {
   className?: string;
   height?: string;
@@ -172,10 +199,11 @@ interface FloodMapProps {
   realtimeAlertsError?: string | null; // Properti baru untuk error
   weatherLayers?: { [key: string]: boolean };
   apiKey?: string;
+  onMapBoundsChange?: (bounds: MapBounds) => void;
 
 }
 
-export function FloodMap({
+export const FloodMap = React.memo(function FloodMap({
   className,
   height,
   onLocationSelect,
@@ -189,6 +217,8 @@ export function FloodMap({
   realtimeAlertsError = null, // Inisialisasi
   weatherLayers = {}, // Inisialisasi
   apiKey, // Inisialisasi
+  onMapBoundsChange, // Add this line
+  selectedLocation, // Add this prop
 }: FloodMapProps) {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [selectedLayer, setSelectedLayer] = useState('street');
@@ -433,6 +463,7 @@ export function FloodMap({
           onLocationSelect={() => {}}
           onReverseGeocode={handleMapClick}
         />
+        {onMapBoundsChange && <MapBoundsUpdater onMapBoundsChange={onMapBoundsChange} />}
 
         {Object.entries(weatherLayers).map(
           ([key, value]) =>
@@ -458,13 +489,12 @@ export function FloodMap({
           </Marker>
         )}
 
-        {/* Marker di lokasi yang dipilih (dari RegionDropdown via page.tsx) */}
-        {center[0] !== DEFAULT_MAP_CENTER[0] ||
-        center[1] !== DEFAULT_MAP_CENTER[1] ? (
-          <Marker position={center} icon={floodIcon}>
+        {/* Marker di lokasi yang dipilih (dari RegionDropdown) */}
+        {selectedLocation?.latitude != null && selectedLocation?.longitude != null ? (
+          <Marker position={[selectedLocation.latitude, selectedLocation.longitude]} icon={floodIcon}>
             <Popup>
-              Lokasi Terpilih: <br /> Lat: {center[0].toFixed(6)}, Lng:{' '}
-              {center[1].toFixed(6)}
+              Lokasi Terpilih: {selectedLocation.districtName || 'Tidak Diketahui'} <br /> Lat: {selectedLocation.latitude.toFixed(6)}, Lng:{' '}
+              {selectedLocation.longitude.toFixed(6)}
             </Popup>
           </Marker>
         ) : null}
@@ -900,4 +930,4 @@ export function FloodMap({
       </Button>
     </motion.div>
   );
-}
+});

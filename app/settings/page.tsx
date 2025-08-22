@@ -357,7 +357,7 @@ export default function SettingsPage() {
                           <div className="text-xs text-slate-400 truncate">{loc.districtName}</div>
                         </div>
                         <div className="flex items-center space-x-1 ml-3">
-                          <button onClick={() => startEditing(index, loc.name || '')} className="p-1.5 text-cyan-400 hover:bg-cyan-400/10 rounded-md"><Edit3 className="w-4 h-4" /></button>
+                          <button onClick={() => startEditing(index, loc.districtName || '')} className="p-1.5 text-cyan-400 hover:bg-cyan-400/10 rounded-md"><Edit3 className="w-4 h-4" /></button>
                           <button onClick={() => handleLoadFavoriteLocation(loc)} className="p-1.5 text-blue-400 hover:bg-blue-400/10 rounded-md" title="Muat Lokasi"><Map className="w-4 h-4" /></button>
                           <button onClick={() => handleRemoveFavoriteLocation(index)} className="p-1.5 text-red-400 hover:bg-red-400/10 rounded-md"><Trash2 className="w-4 h-4" /></button>
                         </div>

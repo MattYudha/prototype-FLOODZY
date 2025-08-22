@@ -47,6 +47,7 @@ const getAlertIcon = (level: string) => {
 export const PeringatanBencanaCard = memo(( // ADDED: memo
   { alert, className }: { alert: FloodAlertType; className?: string }
 ) => {
+  PeringatanBencanaCard.displayName = 'PeringatanBencanaCard'; // ADDED: display name
   const wrapRef = useRef<HTMLDivElement>(null);
   const cardRef = useRef<HTMLElement>(null);
 

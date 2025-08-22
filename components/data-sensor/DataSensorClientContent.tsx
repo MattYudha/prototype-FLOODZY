@@ -83,28 +83,37 @@ const DataSensorClientContent: React.FC<DataSensorClientContentProps> = ({ initi
 
   useEffect(() => {
     // Fetch weather data for a default location (e.g., Jakarta)
-    fetchWeather(-6.2088, 106.8456); 
+    fetchWeather(-6.2088, 106.8456);
   }, [fetchWeather]);
 
-  const latestReports = useMemo(() => {
-    let filtered = [...laporan].sort((a, b) => parseISO(b.created_at).getTime() - parseISO(a.created_at).getTime());
-    
-    if (searchTerm) {
-      filtered = filtered.filter(report => 
+  const INITIAL_DISPLAY_LIMIT = 5; // You can adjust this value
+  const [displayLimit, setDisplayLimit] = useState(INITIAL_DISPLAY_LIMIT);
+
+  // Perbaikan: Mendefinisikan filteredAndSortedLaporan
+  const filteredAndSortedLaporan = useMemo(() => {
+    const filtered = laporan.filter(report => {
+      const matchesSearch = searchTerm === '' ||
         report.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (report.description && report.description.toLowerCase().includes(searchTerm.toLowerCase()))
-      );
-    }
+        (report.description && report.description.toLowerCase().includes(searchTerm.toLowerCase()));
 
-    if (selectedFilter !== 'all') {
-      filtered = filtered.filter(report => {
-        const { level } = classifyWaterLevelString(report.water_level);
-        return level === selectedFilter;
-      });
-    }
+      const level = classifyWaterLevelString(report.water_level).level;
+      const matchesFilter = selectedFilter === 'all' || selectedFilter === level;
 
-    return filtered;
+      return matchesSearch && matchesFilter;
+    });
+
+    // Sorting by created_at in descending order (terbaru ke terlama)
+    const sorted = [...filtered].sort((a, b) => 
+      parseISO(b.created_at).getTime() - parseISO(a.created_at).getTime()
+    );
+
+    return sorted;
   }, [laporan, searchTerm, selectedFilter]);
+
+
+  const displayedReports = useMemo(() => {
+    return (filteredAndSortedLaporan || []).slice(0, displayLimit);
+  }, [filteredAndSortedLaporan, displayLimit]);
 
   const stats = useMemo(() => {
     const total = laporan.length;
@@ -116,7 +125,8 @@ const DataSensorClientContent: React.FC<DataSensorClientContentProps> = ({ initi
   }, [laporan]);
 
   const handleExportData = () => {
-    if (latestReports.length === 0) {
+    // Menggunakan displayedReports (seperti yang tampaknya dimaksudkan)
+    if (displayedReports.length === 0) {
       alert('Tidak ada data untuk diekspor.');
       return;
     }
@@ -128,7 +138,7 @@ const DataSensorClientContent: React.FC<DataSensorClientContentProps> = ({ initi
     
     const csvContent = [
       headers.join(','),
-      ...latestReports.map(report => 
+      ...displayedReports.map(report => 
         [
           `"${report.id}"`, 
           `"${report.location}"`, 
@@ -327,17 +337,37 @@ const DataSensorClientContent: React.FC<DataSensorClientContentProps> = ({ initi
                     </div>
                     <div>
                       <h3 className="text-xl font-semibold text-white">Laporan Banjir Terbaru</h3>
-                      <p className="text-sm text-gray-400">Menampilkan {latestReports.length} dari {laporan.length} laporan</p>
+                      <p className="text-sm text-gray-400">Menampilkan {displayedReports.length} dari {laporan.length} laporan</p>
+                      {/* Note: Button component is not imported, assuming it's from a library like shadcn/ui */}
+                      {displayedReports.length < filteredAndSortedLaporan.length && (
+                        /*
+                        <Button
+                          onClick={() => setDisplayLimit(filteredAndSortedLaporan.length)}
+                          variant="outline"
+                          className="mt-4 w-full"
+                        >
+                          Lihat Selengkapnya ({filteredAndSortedLaporan.length - displayedReports.length} laporan lagi)
+                        </Button>
+                        */
+                        <button
+                          onClick={() => setDisplayLimit(filteredAndSortedLaporan.length)}
+                          className="mt-4 w-full border border-gray-600 text-gray-300 rounded-lg px-4 py-2 hover:bg-gray-700 transition-colors"
+                        >
+                          Lihat Selengkapnya ({filteredAndSortedLaporan.length - displayedReports.length} laporan lagi)
+                        </button>
+                      )}
                     </div>
                   </div>
-                  <div className="text-2xl font-bold text-white">{latestReports.length}</div>
+                  {/* Mengganti latestReports dengan displayedReports */}
+                  <div className="text-2xl font-bold text-white">{displayedReports.length}</div>
                 </div>
               </div>
 
               <div className="overflow-x-auto">
-                {latestReports.length > 0 ? (
+                {/* Mengganti latestReports dengan displayedReports */}
+                {displayedReports.length > 0 ? (
                   <div className="divide-y divide-gray-700">
-                    {latestReports.map((report, index) => (
+                    {displayedReports.map((report, index) => (
                       <div key={report.id || index} className="p-6 hover:bg-gray-700/50 transition-colors">
                         <div className="flex items-start justify-between">
                           <div className="flex-1">
@@ -372,15 +402,15 @@ const DataSensorClientContent: React.FC<DataSensorClientContentProps> = ({ initi
                               </p>
                             )}
                             {report.photo_url && (
-                                                            <div className="relative w-48 h-48 mt-2"> {/* Added a relative parent with fixed size */}
-                                <Image
-                                  src={report.photo_url}
-                                  alt="Foto Laporan"
-                                  fill // Use fill prop
-                                  className="object-cover rounded-md"
-                                  unoptimized // Temporary fallback
-                                />
-                            </div>
+                                <div className="relative w-48 h-48 mt-2">
+                                  <Image
+                                    src={report.photo_url}
+                                    alt="Foto Laporan"
+                                    fill
+                                    className="object-cover rounded-md"
+                                    unoptimized
+                                  />
+                                </div>
                             )}
                           </div>
                           

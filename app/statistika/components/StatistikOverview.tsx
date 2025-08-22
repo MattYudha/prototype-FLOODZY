@@ -33,17 +33,17 @@ import {
   Cell,
 } from 'recharts';
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 
 // Asumsi tipe data ini ada di file terpisah
 interface StatCard {
     title: string;
-    value: string;
-    description: string;
+    value: string | number;
+    description?: string;
     icon: React.ReactNode;
-    color: 'cyan' | 'blue' | 'red' | 'orange' | 'green' | 'purple';
+    color: string;
     change: number;
-    changeType: 'increase' | 'decrease' | 'stable';
+    changeType: 'increase' | 'decrease' | 'neutral';
 }
 
 interface ChartDataPoint {
@@ -63,15 +63,17 @@ const colorClasses = {
   purple: { bg: 'from-purple-400/30 to-purple-600/30', text: 'text-purple-200' },
 };
 
-const getChangeColor = (changeType: 'increase' | 'decrease' | 'stable') => {
+const getChangeColor = (changeType: 'increase' | 'decrease' | 'neutral') => {
   if (changeType === 'increase') return 'text-green-400';
   if (changeType === 'decrease') return 'text-red-400';
+  if (changeType === 'neutral') return 'text-slate-400';
   return 'text-slate-400';
 };
 
-const getChangeIcon = (changeType: 'increase' | 'decrease' | 'stable') => {
+const getChangeIcon = (changeType: 'increase' | 'decrease' | 'neutral') => {
   if (changeType === 'increase') return <TrendingUp className="w-4 h-4" />;
   if (changeType === 'decrease') return <TrendingDown className="w-4 h-4" />;
+  if (changeType === 'neutral') return null;
   return null;
 };
 
@@ -512,11 +514,6 @@ Pastikan setiap bagian analisis disajikan dalam paragraf singkat dan poin-poin y
                     dataKey="value"
                     nameKey="name"
                     label={({ percent }) => `${(percent * 100).toFixed(0)}%`}
-                    labelStyle={{
-                      fontSize: '14px',
-                      fontWeight: 'bold',
-                      fill: '#ffffff'
-                    }}
                   >
                     {pieData.map((entry, index) => (
                       <Cell 

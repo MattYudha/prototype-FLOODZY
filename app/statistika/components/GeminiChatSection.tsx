@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Bot, 
@@ -44,17 +44,18 @@ export default function GeminiChatSection({
   const [isOpen, setIsOpen] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [hasInitializedWelcomeMessage, setHasInitializedWelcomeMessage] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Pesan selamat datang dengan UI baru
-  const welcomeMessage: ChatMessage = {
+  const welcomeMessage: ChatMessage = useMemo(() => ({
     id: 'welcome',
     text: '👋 Selamat datang di Floodzie Assistant!\n\nSaya dapat membantu Anda menganalisis:\n• Status banjir real-time\n• Prediksi cuaca dan risiko\n• Rekomendasi tindakan darurat\n• Informasi wilayah terdampak\n\nAda yang ingin Anda tanyakan?',
     isUser: false,
     timestamp: new Date(),
     type: 'info',
-  };
+  }), []);
 
   // Saran dengan struktur UI baru (array of objects)
   const suggestions = [
@@ -68,10 +69,11 @@ export default function GeminiChatSection({
 
   // Inisialisasi dengan pesan selamat datang saat dibuka
   useEffect(() => {
-    if (isOpen && messages.length === 0) {
+    if (isOpen && !hasInitializedWelcomeMessage) {
       setMessages([welcomeMessage]);
+      setHasInitializedWelcomeMessage(true);
     }
-  }, [isOpen]);
+  }, [isOpen, hasInitializedWelcomeMessage, welcomeMessage]);
 
   // Tambahkan respons dari Gemini ke daftar pesan
   useEffect(() => {
@@ -87,7 +89,7 @@ export default function GeminiChatSection({
         }]);
       }
     }
-  }, [geminiResponse]);
+  }, [geminiResponse, messages]);
 
   // Auto-scroll ke pesan terbaru
   useEffect(() => {

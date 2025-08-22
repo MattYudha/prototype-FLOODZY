@@ -39,13 +39,6 @@ import {
   RefreshCw,
 } from 'lucide-react';
 
-// Atur path ikon marker leaflet secara manual
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: '/leaflet/images/marker-icon-2x.png',
-  iconUrl: '/leaflet/images/marker-icon.png',
-  shadowUrl: '/leaflet/images/marker-shadow.png',
-});
-
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/input';
@@ -326,14 +319,45 @@ interface DailyForecastProps {
     daily: any[];
   } | null;
   loading: boolean;
+  error: string | null; // Added error prop
 }
 
 const DailyForecast = ({
   data,
   loading,
+  error, // Destructure error prop
 }: DailyForecastProps) => {
   // ✅ PERBAIKAN: Cek data.daily yang sekarang berasal dari endpoint 2.5/forecast
-  if (loading || !data || !data.daily) return null;
+  if (loading) {
+    return (
+      <Card className="h-full flex items-center justify-center bg-slate-800/60 backdrop-blur-xl border border-slate-700/50 rounded-2xl shadow-2xl">
+        <CardContent>
+          <div className="text-center">
+            <Loader2 className="w-8 h-8 animate-spin text-blue-400 mx-auto mb-4" />
+            <p className="text-slate-400">Memuat prakiraan...</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (error) {
+    return (
+      <Card className="border-red-500/20 bg-slate-800/60 backdrop-blur-xl border border-slate-700/50 rounded-2xl shadow-2xl">
+        <CardContent>
+          <Alert
+            variant="destructive"
+            className="flex items-center space-x-3 p-4 rounded-xl border bg-red-900/20 border-red-500/50 text-red-400"
+          >
+            <AlertTriangle className="w-5 h-5" />
+            <AlertDescription className="text-sm">{error}</AlertDescription>
+          </Alert>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (!data || !data.daily) return null;
 
   return (
     <Card className="bg-slate-800/60 backdrop-blur-xl border border-slate-700/50 rounded-2xl shadow-2xl">
@@ -687,7 +711,7 @@ export default function PrakiraanCuacaPage() {
                 onClick={() =>
                   selectedLocation && handleRegionSelect(selectedLocation)
                 }
-                className="inline-flex items-center justify-center rounded-xl font-medium transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500/50 bg-transparent hover:bg-slate-700/30 text-slate-300 hover:text-white p-2 w-10 h-10"
+                className="w-10 h-10 inline-flex items-center justify-center rounded-xl font-medium transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500/50 bg-transparent hover:bg-slate-700/30 text-slate-300 hover:text-white p-2"
               >
                 <RefreshCw
                   className={`w-4 h-4 ${loadingWeather ? 'animate-spin' : ''}`}
@@ -742,7 +766,7 @@ export default function PrakiraanCuacaPage() {
                     variant="outline"
                     size="icon"
                     disabled={isSearchingLocation}
-                    className="inline-flex items-center justify-center rounded-xl font-medium transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500/50 border border-slate-600 bg-transparent hover:bg-slate-700/30 text-slate-300 hover:text-white p-2 w-10 h-10"
+                    className="w-10 h-10 inline-flex items-center justify-center rounded-xl font-medium transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500/50 border border-slate-600 bg-transparent hover:bg-slate-700/30 text-slate-300 hover:text-white p-2"
                   >
                     <LocateFixed className="w-4 h-4" />
                   </Button>
@@ -786,7 +810,7 @@ export default function PrakiraanCuacaPage() {
                     variant="ghost"
                     size="icon"
                     onClick={() => setShowFilters(!showFilters)}
-                    className="inline-flex items-center justify-center rounded-xl font-medium transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500/50 bg-transparent hover:bg-slate-700/30 text-slate-300 hover:text-white p-2 w-10 h-10"
+                    className="w-10 h-10 inline-flex items-center justify-center rounded-xl font-medium transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500/50 bg-transparent hover:bg-slate-700/30 text-slate-300 hover:text-white p-2"
                   >
                     <Filter className="w-4 h-4" />
                   </Button>
@@ -899,7 +923,7 @@ export default function PrakiraanCuacaPage() {
               loading={loadingWeather}
               error={weatherError}
             />
-            <DailyForecast data={currentWeatherData} loading={loadingWeather} />
+            <DailyForecast data={currentWeatherData} loading={loadingWeather} error={weatherError} />
             {selectedLocation && (
               <Card className="bg-slate-800/60 backdrop-blur-xl border border-slate-700/50 rounded-2xl shadow-2xl">
                 <CardHeader>

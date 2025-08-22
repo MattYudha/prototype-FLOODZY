@@ -57,67 +57,211 @@ Platform ini menyediakan data ketinggian air, status pompa, prakiraan cuaca, ana
 
 ```plaintext
 floodzy/
-├── app/                                   # Halaman utama & API Routes (Next.js App Router)
-│   ├── api/                               # Endpoint API (Server Actions / API Routes)
-│   │   ├── analysis/route.ts              # Analisis bencana berbasis AI
-│   │   ├── alerts-data/route.ts           # Data peringatan bencana dari sumber eksternal
-│   │   ├── chatbot/route.ts               # Chatbot banjir & cuaca
-│   │   ├── evakuasi/route.ts               # Titik evakuasi terdekat
-│   │   ├── gemini-alerts/route.ts         # Peringatan otomatis berbasis Gemini AI
-│   │   ├── gemini-analysis/route.ts       # Analisis banjir otomatis dengan AI
-│   │   ├── laporan/route.ts               # Laporan banjir dari pengguna
-│   │   ├── pump-status-proxy/route.ts     # Status pompa air banjir
-│   │   ├── regions/route.ts               # Data wilayah monitoring
-│   │   ├── summarize-news-batch/route.ts  # Ringkasan berita bencana
-│   │   ├── water-level-proxy/route.ts     # Data ketinggian air
-│   │   ├── weather/route.ts               # Cuaca saat ini
-│   │   ├── weather-history/route.ts       # Riwayat cuaca historis
-│   │   └── ...
-│   ├── peta-banjir/page.tsx               # Halaman peta banjir interaktif
-│   ├── lapor-banjir/page.tsx              # Form laporan banjir pengguna
-│   ├── prakiraan-cuaca/page.tsx           # Halaman prakiraan cuaca
-│   ├── statistika/page.tsx                # Statistik & analisis banjir
-│   └── ...
-│
-├── components/                            # Komponen UI & modul aplikasi
-│   ├── dashboard/                         # Statistik, grafik, dan analisis data
-│   ├── flood/                             # Kartu informasi & alert banjir
-│   ├── map/                               # Komponen peta (Leaflet, Mapbox)
-│   ├── weather/                           # Tampilan data cuaca real-time
-│   ├── ui/                                # Reusable UI components (Shadcn/UI)
-│   └── ...
-│
-├── hooks/                                 # Custom React Hooks
-│   ├── useAirPollutionData.ts             # Data kualitas udara
-│   ├── useBmkgQuakeData.ts                # Data gempa dari BMKG
-│   ├── useDisasterData.ts                 # Data bencana umum
-│   ├── usePumpStatusData.ts               # Status pompa banjir
-│   ├── useRegionData.ts                   # Data wilayah & monitoring
-│   ├── useWaterLevelData.ts               # Data ketinggian air
-│   ├── useTheme.ts                        # Manajemen tema UI
-│   ├── useDebounce.ts                     # Debouncing untuk input
-│   └── ...
-│
-├── lib/                                   # Utility functions & service API
-│   ├── supabase/                          # Client & server Supabase
-│   │   ├── client.ts                      # Supabase client-side instance
-│   │   ├── server.ts                      # Supabase server-side instance
-│   │   └── ...
-│   ├── api.client.ts                      # Helper untuk request API dari client
-│   ├── api.server.ts                      # Helper untuk request API dari server
-│   ├── geocodingService.ts                # Layanan geocoding (Mapbox / OSM)
-│   └── ...
-│
-├── public/                                # Aset publik (gambar, ikon, logo)
-│   ├── assets/                            # Gambar & ikon aplikasi
-│   └── ...
-│
-├── types/                                 # Definisi TypeScript types & interfaces
-│   ├── weather.d.ts                       # Tipe data cuaca
-│   ├── flood.d.ts                         # Tipe data banjir
-│   └── ...
-│
-└── ...
+.
+├── app
+│   ├── api
+│   │   ├── analysis
+│   │   │   └── route.ts
+│   │   ├── alerts-data
+│   │   │   └── route.ts
+│   │   ├── chatbot
+│   │   │   └── route.ts
+│   │   ├── evakuasi
+│   │   │   └── route.ts
+│   │   ├── gemini-alerts
+│   │   │   └── route.ts
+│   │   ├── gemini-analysis
+│   │   │   └── route.ts
+│   │   ├── health
+│   │   │   └── route.ts
+│   │   ├── laporan
+│   │   │   └── route.ts
+│   │   ├── petabencana-proxy-new
+│   │   │   └── route.ts
+│   │   ├── pump-status-proxy
+│   │   │   └── route.ts
+│   │   ├── regions
+│   │   │   └── route.ts
+│   │   ├── summarize-news-batch
+│   │   │   └── route.ts
+│   │   ├── water-level-proxy
+│   │   │   └── route.ts
+│   │   ├── weather
+│   │   │   ├── route.ts
+│   │   │   └── tiles
+│   │   │       └── [...tile]
+│   │   │           └── route.ts
+│   │   └── weather-history
+│   │       └── route.ts
+│   ├── data-sensor
+│   │   └── page.tsx
+│   ├── info-evakuasi
+│   │   └── page.tsx
+│   ├── lapor-banjir
+│   │   └── page.tsx
+│   ├── peta-banjir
+│   │   └── page.tsx
+│   ├── peringatan
+│   │   └── page.tsx
+│   ├── prakiraan-cuaca
+│   │   └── page.tsx
+│   ├── settings
+│   │   └── page.tsx
+│   ├── statistika
+│   │   └── page.tsx
+│   ├── test
+│   │   └── route.ts
+│   ├── globals.css
+│   ├── layout.tsx
+│   ├── page.tsx
+│   └── state.ts
+├── components
+│   ├── background
+│   │   ├── Lightning.css
+│   │   └── Lightning.tsx
+│   ├── contexts
+│   │   └── AlertCountContext.tsx
+│   ├── data-sensor
+│   │   ├── CurrentWeatherModal.tsx
+│   │   ├── DataSensorAnalysis.tsx
+│   │   ├── FloodReportChart.tsx
+│   │   ├── FloodReportList.tsx
+│   │   ├── HistoricalRainfallChart.tsx
+│   │   └── ReportEmergencyModal.tsx
+│   ├── dashboard
+│   │   ├── AnalysisSection.tsx
+│   │   ├── DashboardStats.tsx
+│   │   └── StatisticsDashboard.tsx
+│   ├── flood
+│   │   ├── FloodAlert.tsx
+│   │   ├── PeringatanBencanaCard.css
+│   │   └── PeringatanBencanaCard.tsx
+│   ├── layout
+│   │   ├── ClientLayoutWrapper.tsx
+│   │   ├── Header.tsx
+│   │   └── Sidebar.tsx
+│   ├── map
+│   │   ├── FloodMap.tsx
+│   │   ├── MapControls.tsx
+│   │   ├── MapLegend.tsx
+│   │   └── MapPicker.tsx
+│   ├── modals
+│   │   └── LocationPickerModal.tsx
+│   ├── providers
+│   │   └── ReactQueryProvider.tsx
+│   ├── region-selector
+│   │   └── RegionDropdown.tsx
+│   ├── ui
+│   │   ├── accordion.tsx
+│   │   ├── alert-dialog.tsx
+│   │   ├── alert.tsx
+│   │   ├── aspect-ratio.tsx
+│   │   ├── avatar.tsx
+│   │   ├── badge.tsx
+│   │   ├── breadcrumb.tsx
+│   │   ├── Button.tsx
+│   │   ├── calendar.tsx
+│   │   ├── card.tsx
+│   │   ├── carousel.tsx
+│   │   ├── chart.tsx
+│   │   ├── checkbox.tsx
+│   │   ├── collapsible.tsx
+│   │   ├── command.tsx
+│   │   ├── context-menu.tsx
+│   │   ├── dialog.tsx
+│   │   ├── drawer.tsx
+│   │   ├── dropdown-menu.tsx
+│   │   ├── form.tsx
+│   │   ├── hover-card.tsx
+│   │   ├── input-otp.tsx
+│   │   ├── input.tsx
+│   │   ├── label.tsx
+│   │   ├── loading-spinner.tsx
+│   │   ├── LoadingSpinner.tsx
+│   │   ├── menubar.tsx
+│   │   ├── navigation-menu.tsx
+│   │   ├── pagination.tsx
+│   │   ├── popover.tsx
+│   │   ├── progress.tsx
+│   │   ├── radio-group.tsx
+│   │   ├── resizable.tsx
+│   │   ├── scroll-area.tsx
+│   │   ├── select.tsx
+│   │   ├── separator.tsx
+│   │   ├── sheet.tsx
+│   │   ├── skeleton.tsx
+│   │   ├── slider.tsx
+│   │   ├── sonner.tsx
+│   │   ├── switch.tsx
+│   │   ├── table.tsx
+│   │   ├── tabs.tsx
+│   │   ├── textarea.tsx
+│   │   ├── toast.tsx
+│   │   ├── toaster.tsx
+│   │   ├── toggle-group.tsx
+│   │   ├── toggle.tsx
+│   │   └── tooltip.tsx
+│   └── weather
+│       ├── AirQualityDisplay.tsx
+│       ├── WeatherDisplay.tsx
+│       ├── WeatherMap.tsx
+│       └── WeatherMapIframe.tsx
+├── hooks
+│   ├── useAirPollutionData.ts
+│   ├── useBmkgQuakeData.ts
+│   ├── useDebounce.ts
+│   ├── useDisasterData.ts
+│   ├── useMediaQuery.ts
+│   ├── usePumpStatusData.ts
+│   ├── useRegionData.ts
+│   ├── useTheme.tsx
+│   ├── use-toast.ts
+│   └── useWaterLevelData.ts
+├── lib
+│   ├── supabase
+│   │   ├── client.ts
+│   │   └── server.ts
+│   ├── api.client.ts
+│   ├── api.server.ts
+│   ├── api.ts
+│   ├── constants.ts
+│   ├── fetch-utils.ts
+│   ├── geocodingService.ts
+│   ├── supabase.ts
+│   ├── supabaseAdmin.ts
+│   └── utils.ts
+├── public
+│   ├── assets
+│   │   ├── banjir.png
+│   │   └── evacuation_marker.svg
+│   └── leaflet
+│       └── images
+│           ├── marker-icon-2x.png
+│           ├── marker-icon.png
+│           └── marker-shadow.png
+├── types
+│   ├── airPollution.ts
+│   ├── geocoding.ts
+│   ├── index.d.ts
+│   └── index.ts
+├── .bolt
+│   ├── config.json
+│   ├── ignore
+│   └── prompt
+├── .eslintrc.json
+├── .gitignore
+├── build.log
+├── commit_message.txt
+├── components.json
+├── eslint-errors.txt
+├── next.config.js
+├── package-lock.json
+├── package.json
+├── postcss.config.js
+├── README.md
+├── test-supabase.js
+├── ts-errors.txt
+└── tsconfig.json
 ```
 ## 🌟 Roadmap
 
