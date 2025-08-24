@@ -18,8 +18,8 @@ import {
   XCircle, // Icon untuk status 'Tidak Beroperasi' atau 'Rusak'
   AlertTriangle, // Icon untuk peringatan
 } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
-import { Badge } from '@/components/ui/Badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { getTimeAgo } from '@/lib/utils';
 

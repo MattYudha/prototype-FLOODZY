@@ -18,9 +18,9 @@ import { useAppStore } from '@/lib/store';
 // UI Components
 import { WeatherDisplay } from '@/components/weather/WeatherDisplay';
 import { DashboardStats } from '@/components/dashboard/DashboardStats';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/Button';
-import { Badge } from '@/components/ui/Badge';
+import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { toast } from 'sonner';
 
@@ -133,25 +133,32 @@ export function DashboardClientPage({ initialData }) {
           bounds: [[south, west], [north, east]], // Leaflet-style bounds
         };
         setMapBounds(newMapBounds);
+        // Fetch data immediately for the new location
+        fetchDisasterAreas({ south, west, north, east });
       } else {
         setMapBounds(null);
+        // Fetch for default map view if location is cleared
+        fetchDisasterAreas({ south: DEFAULT_MAP_CENTER[0] - 0.1, west: DEFAULT_MAP_CENTER[1] - 0.1, north: DEFAULT_MAP_CENTER[0] + 0.1, east: DEFAULT_MAP_CENTER[1] + 0.1 });
       }
     },
-    [fetchWeather, setSelectedLocation, setMapBounds],
+    [fetchWeather, setSelectedLocation, setMapBounds, fetchDisasterAreas],
   );
 
   useEffect(() => {
-    // Initial fetch when component mounts or selectedLocation changes
-    if (selectedLocation) {
+    // This effect runs only once on initial component mount to fetch initial data.
+    // It avoids re-fetching when the map is panned or zoomed.
+    if (mapBounds && mapBounds.bounds) {
+      // If bounds are already available (e.g., from persisted state), fetch data for them.
       fetchDisasterAreas({ south: mapBounds.bounds[0][0], west: mapBounds.bounds[0][1], north: mapBounds.bounds[1][0], east: mapBounds.bounds[1][1] });
     } else {
-      // Fetch for default map view if no specific location is selected
+      // Otherwise, fetch for the default map view.
       fetchDisasterAreas({ south: DEFAULT_MAP_CENTER[0] - 0.1, west: DEFAULT_MAP_CENTER[1] - 0.1, north: DEFAULT_MAP_CENTER[0] + 0.1, east: DEFAULT_MAP_CENTER[1] + 0.1 });
     }
-  }, [selectedLocation, fetchDisasterAreas]); // Only fetch on initial load or selectedLocation change
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Empty dependency array ensures this runs only ONCE on mount.
 
   const refreshDisasterData = useCallback(() => {
-    if (mapBounds) {
+    if (mapBounds && mapBounds.bounds) {
       fetchDisasterAreas({ south: mapBounds.bounds[0][0], west: mapBounds.bounds[0][1], north: mapBounds.bounds[1][0], east: mapBounds.bounds[1][1] });
       toast.success('Data bencana diperbarui!');
     } else {

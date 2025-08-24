@@ -20,7 +20,7 @@ import {
   FileSearch,
   Filter,
 } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/Button';
 import { HistoricalIncident } from '../statistika.types';
 

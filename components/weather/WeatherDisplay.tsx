@@ -18,8 +18,8 @@ import {
   CloudDrizzle, // Digunakan juga untuk salju sementara
   CloudSnow, // Jika ada ikon salju yang lebih spesifik
 } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
-import { Badge } from '@/components/ui/Badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { Skeleton } from '../ui/skeleton';
 import { Sunrise, Sunset } from 'lucide-react'; // Add Sunrise and Sunset icons

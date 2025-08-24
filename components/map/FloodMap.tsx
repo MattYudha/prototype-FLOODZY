@@ -40,8 +40,8 @@ import {
   Search,
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
-import { Card } from '@/components/ui/Card';
-import { Badge } from '@/components/ui/Badge';
+import { Card } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { MapControls } from './MapControls';
 import { MapLegend } from './MapLegend';
@@ -53,6 +53,7 @@ import {
   WEATHER_MOCK_DATA,
 } from '@/lib/constants';
 import { FloodZone, WeatherData, FloodAlert, MapBounds } from '@/types'; // Import FloodAlert
+import { SelectedLocation } from '@/types/location';
 
 import { cn } from '@/lib/utils';
 import { OverpassElement } from '@/lib/api';
@@ -200,6 +201,7 @@ interface FloodMapProps {
   weatherLayers?: { [key: string]: boolean };
   apiKey?: string;
   onMapBoundsChange?: (bounds: MapBounds) => void;
+  selectedLocation?: SelectedLocation;
 
 }
 

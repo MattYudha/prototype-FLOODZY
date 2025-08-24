@@ -9,6 +9,7 @@ const withPWA = require('next-pwa')({
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  output: 'standalone',
   // Konfigurasi Webpack yang sudah ada
   webpack: (config, { isServer }) => {
     // Konfigurasi ini hanya berlaku untuk build sisi server,

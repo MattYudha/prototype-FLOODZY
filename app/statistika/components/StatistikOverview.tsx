@@ -33,7 +33,7 @@ import {
   Cell,
 } from 'recharts';
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 // Asumsi tipe data ini ada di file terpisah
 interface StatCard {

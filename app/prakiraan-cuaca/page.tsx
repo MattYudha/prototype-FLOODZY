@@ -5,7 +5,12 @@ import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
-import { WeatherMap } from '@/components/weather/WeatherMap';
+import dynamic from 'next/dynamic';
+
+const WeatherMap = dynamic(() => import('@/components/weather/WeatherMap').then(mod => mod.WeatherMap), {
+  ssr: false,
+  loading: () => <div className="h-full w-full bg-slate-800 flex items-center justify-center"><p className="text-white">Memuat peta...</p></div>
+});
 import {
   Search,
   MapPin,
@@ -39,10 +44,10 @@ import {
   RefreshCw,
 } from 'lucide-react';
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/Badge';
+import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Switch } from '@/components/ui/switch';
 
