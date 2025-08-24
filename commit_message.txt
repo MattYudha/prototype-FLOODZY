@@ -1,8 +1,0 @@
-feat: Apply build fixes and convert to npm
-
-- Fix TypeScript errors in page.tsx related to data fetching hooks.
-- Remove deprecated 'instrumentationHook' from next.config.js.
-- Convert project from yarn to npm by removing yarn.lock and using npm for dependency management.
-- Remove OpenTelemetry packages and instrumentation code as a final attempt to resolve persistent build failures.
-
-WARNING: The project is NOT in a buildable state. The build currently fails with a Next.js internal type error in a generated file, which requires manual investigation.
