@@ -140,6 +140,49 @@ export function WeatherMapIframe({
           /* Animasi & Ikon */
           .animate-spin { animation: spin 1s linear infinite; width: 16px; height: 16px; border: 2px solid #fff; border-top-color: transparent; border-radius: 50%; }
           @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+          /* Mobile Responsiveness */
+          @media (max-width: 600px) {
+            .weather-overlay {
+              top: 5px;
+              left: 5px;
+              right: 5px;
+              padding: 8px 10px;
+              gap: 8px;
+            }
+            .main-info {
+              gap: 10px;
+            }
+            .emoji-bg {
+              font-size: 28px;
+              width: 40px;
+              height: 40px;
+            }
+            .temp {
+              font-size: 20px;
+            }
+            .desc {
+              font-size: 11px;
+            }
+            .location-name {
+              font-size: 13px;
+            }
+            .coords {
+              font-size: 9px;
+            }
+
+            .weather-controls {
+              bottom: 5px;
+              right: 5px;
+              gap: 4px;
+            }
+            .weather-control-btn {
+              padding: 6px 8px;
+              font-size: 10px;
+              gap: 4px;
+            }
+          }
+        </style>
         </style>
       </head>
       <body>
@@ -206,7 +249,7 @@ export function WeatherMapIframe({
 
   return (
     <div
-      className="w-full h-full min-h-[400px] rounded-lg border border-slate-700/50 relative overflow-hidden bg-slate-800 shadow-lg"
+      className="w-full h-full rounded-lg border border-slate-700/50 relative overflow-hidden bg-slate-800 shadow-lg"
       style={{ height: height }}
     >
       <iframe

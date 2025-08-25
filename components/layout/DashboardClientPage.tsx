@@ -368,8 +368,7 @@ export function DashboardClientPage({ initialData }) {
                 </CardHeader>
                 <CardContent>
                   <div
-                    style={{ height: '600px', width: '100%' }}
-                    className="w-full rounded-lg border border-slate-800/50 relative overflow-hidden"
+                    className="h-72 lg:h-[600px] w-full rounded-lg border border-slate-800/50 relative overflow-hidden"
                   >
                     <FloodMap
                       center={mapBounds?.center || DEFAULT_MAP_CENTER}
@@ -414,7 +413,7 @@ export function DashboardClientPage({ initialData }) {
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <Button
                         variant="outline"
                         className="h-12 flex-col space-y-1"

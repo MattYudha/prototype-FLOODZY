@@ -412,7 +412,7 @@ export default function PrakiraanCuacaPage() {
     name: string;
     lat: number;
     lon: number;
-  }>(null);
+  }>(regionData[0]);
   const [currentMapCenter, setCurrentMapCenter] = useState<[number, number]>([-6.1751, 106.865]);
   const [currentMapZoom, setCurrentMapZoom] = useState(10);
   const [searchQuery, setSearchQuery] = useState('');

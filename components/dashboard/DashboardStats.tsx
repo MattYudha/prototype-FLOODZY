@@ -146,8 +146,8 @@ export function DashboardStats({
               <CardContent className="p-4">
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center space-x-2">
-                    <item.icon className={cn('h-5 w-5', item.color)} />
-                    <span className="text-sm font-medium text-muted-foreground">
+                    <item.icon className={cn('h-4 w-4 sm:h-5 sm:w-5', item.color)} />
+                    <span className="text-xs sm:text-sm font-medium text-muted-foreground">
                       {item.title}
                     </span>
                   </div>
@@ -160,9 +160,9 @@ export function DashboardStats({
                     </Badge>
                   )}
                 </div>
-                <div className="text-2xl font-bold text-white">
+                <div className="text-xl sm:text-2xl font-bold text-white">
                   {item.value}
-                  <span className="text-base text-muted-foreground ml-1">
+                  <span className="text-sm sm:text-base text-muted-foreground ml-1">
                     {item.unit}
                   </span>
                 </div>
@@ -183,51 +183,51 @@ export function DashboardStats({
           <Card className="h-full">
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
-                <Activity className="h-5 w-5 text-primary" />
-                <span>Status Sistem Pompa</span> {/* Judul diubah */}
+                <Activity className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+                <span className="text-base sm:text-lg font-semibold">Status Sistem Pompa</span> {/* Judul diubah */}
               </CardTitle>
             </CardHeader>
             <CardContent>
               {loadingPumpStatus ? (
-                <div className="text-center text-sm text-muted-foreground flex items-center justify-center space-x-2 h-[120px]">
-                  <Loader2 className="h-5 w-5 animate-spin" />
+                <div className="text-center text-xs sm:text-sm text-muted-foreground flex items-center justify-center space-x-2 h-[120px]">
+                  <Loader2 className="h-4 w-4 sm:h-5 sm:w-5 animate-spin" />
                   <span>Memuat status pompa...</span>
                 </div>
               ) : pumpStatusError ? (
-                <div className="text-center text-sm text-red-400 h-[120px] flex items-center justify-center">
+                <div className="text-center text-xs sm:text-sm text-red-400 h-[120px] flex items-center justify-center">
                   <AlertTriangle className="h-5 w-5 mr-2" />
                   <span>Error pompa: {pumpStatusError}</span>
                 </div>
               ) : totalPumps > 0 ? (
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm">Total Pompa Terdaftar</span>
+                    <span className="text-xs sm:text-sm">Total Pompa Terdaftar</span>
                     <Badge variant="secondary">{totalPumps}</Badge>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-sm">Pompa Beroperasi</span>
+                    <span className="text-xs sm:text-sm">Pompa Beroperasi</span>
                     <Badge variant="success">
-                      <CheckCircle className="h-4 w-4 mr-1" />
+                      <CheckCircle className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
                       {activePumps}
                     </Badge>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-sm">Pompa Tidak Beroperasi</span>
+                    <span className="text-xs sm:text-sm">Pompa Tidak Beroperasi</span>
                     <Badge variant="danger">
-                      <XCircle className="h-4 w-4 mr-1" />
+                      <XCircle className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
                       {inactivePumps}
                     </Badge>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-sm">Membutuhkan Perbaikan</span>
+                    <span className="text-xs sm:text-sm">Membutuhkan Perbaikan</span>
                     <Badge variant="warning">
-                      <AlertTriangle className="h-4 w-4 mr-1" />
+                      <AlertTriangle className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
                       {pumpsNeedingMaintenance}
                     </Badge>
                   </div>
                 </div>
               ) : (
-                <div className="text-center text-sm text-muted-foreground h-[120px] flex items-center justify-center">
+                <div className="text-center text-xs sm:text-sm text-muted-foreground h-[120px] flex items-center justify-center">
                   <span>Pilih wilayah untuk melihat pompa.</span>
                 </div>
               )}
@@ -244,8 +244,8 @@ export function DashboardStats({
           <Card className="h-full">
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
-                <Clock className="h-5 w-5 text-secondary" />
-                <span>Aktivitas Terkini</span>
+                <Clock className="h-4 w-4 sm:h-5 sm:w-5 text-secondary" />
+                <span className="text-base sm:text-lg font-semibold">Aktivitas Terkini</span>
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -253,7 +253,7 @@ export function DashboardStats({
                 {/* MENAMPILKAN DATA TINGGI MUKA AIR DARI PUPR */}
                 {loadingWaterLevel && (
                   <div className="text-center text-sm text-muted-foreground flex items-center justify-center space-x-2">
-                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <Loader2 className="h-3 w-3 sm:h-4 sm:w-4 animate-spin" />
                     <span>Memuat data TMA...</span>
                   </div>
                 )}
@@ -281,7 +281,7 @@ export function DashboardStats({
                             {post.unit || 'm'}
                             {post.status && ` (${post.status})`}
                           </p>
-                          <p className="text-xs text-muted-foreground">
+                          <p className="text-xs sm:text-sm text-muted-foreground">
                             {post.timestamp
                               ? getTimeAgo(new Date(post.timestamp))
                               : 'Waktu tidak tersedia'}

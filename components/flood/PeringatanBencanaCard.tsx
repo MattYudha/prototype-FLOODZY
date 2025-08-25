@@ -195,16 +195,16 @@ export const PeringatanBencanaCard = memo(( // ADDED: memo
             <div className="pc-alert-info">
               <div className="pc-alert-details">
                 <div>
-                  <Info className="w-4 h-4" />
+                  <Info className="w-3 h-3 sm:w-4 sm:h-4" />
                   <span>{alert.message}</span>
                 </div>
                 <div>
-                  <Clock className="w-4 h-4" />
+                  <Clock className="w-3 h-3 sm:w-4 sm:h-4" />
                   <span>{getTimeAgo(alert.timestamp)}</span>
                 </div>
                 {alert.affectedAreas && alert.affectedAreas.length > 0 && (
                   <div>
-                    <Users className="w-4 h-4" />
+                    <Users className="w-3 h-3 sm:w-4 sm:h-4" />
                     <span>Terdampak: {alert.affectedAreas.join(', ')}</span>
                   </div>
                 )}

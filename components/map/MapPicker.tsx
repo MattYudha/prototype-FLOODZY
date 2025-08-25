@@ -139,7 +139,7 @@ const MapPicker: React.FC<MapPickerProps> = ({
   };
 
   return (
-    <div className="relative w-full h-96 rounded-lg overflow-hidden border border-slate-600">
+    <div className="relative w-full h-72 sm:h-96 rounded-lg overflow-hidden border border-slate-600">
       <MapContainer
         center={position}
         zoom={13}

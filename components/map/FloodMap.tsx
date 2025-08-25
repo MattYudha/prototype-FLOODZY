@@ -135,7 +135,7 @@ function MapReset({
       variant="glass"
       size="icon"
       onClick={resetView}
-      className="absolute top-20 right-4 z-[1000]"
+      className="absolute top-24 sm:top-20 right-4 z-[1000]"
     >
       <RotateCcw size={16} />
     </Button>
@@ -435,12 +435,12 @@ export const FloodMap = React.memo(function FloodMap({
                 handleSearch();
               }
             }}
-            className="w-full pl-10 pr-20 py-2 rounded-full bg-slate-900/80 border-slate-700/50 text-white placeholder:text-slate-400 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 shadow-lg backdrop-blur-md transition-colors duration-300"
+            className="w-full pl-10 pr-20 py-2 rounded-full bg-slate-900/80 border-slate-700/50 text-xs sm:text-sm text-white placeholder:text-slate-400 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 shadow-lg backdrop-blur-md transition-colors duration-300"
           />
           <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
           <Button
             onClick={handleSearch}
-            className="absolute right-2 top-1/2 -translate-y-1/2 px-3 py-1 h-8 rounded-full bg-cyan-600 hover:bg-cyan-700 text-white text-sm"
+            className="absolute right-2 top-1/2 -translate-y-1/2 px-3 py-1 h-8 rounded-full bg-cyan-600 hover:bg-cyan-700 text-white text-xs sm:text-sm"
           >
             Cari
           </Button>
@@ -516,7 +516,7 @@ export const FloodMap = React.memo(function FloodMap({
               }}
             >
               <Popup>
-                <Card className="min-w-[200px] p-4">
+                <Card className="min-w-[150px] sm:min-w-[200px] p-4">
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
                       <h3 className="font-semibold">{zone.name}</h3>
@@ -532,7 +532,7 @@ export const FloodMap = React.memo(function FloodMap({
                         {zone.riskLevel.toUpperCase()}
                       </Badge>
                     </div>
-                    <div className="space-y-2 text-sm">
+                    <div className="space-y-2 text-xs sm:text-sm">
                       <div className="flex items-center space-x-2">
                         <MapPin size={14} className="text-muted-foreground" />
                         <span>Luas: {zone.area} km²</span>
@@ -547,7 +547,7 @@ export const FloodMap = React.memo(function FloodMap({
                         </span>
                       </div>
                     </div>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-xs sm:text-sm text-muted-foreground">
                       {zone.description}
                     </p>
                     <div className="flex space-x-2">
@@ -568,13 +568,13 @@ export const FloodMap = React.memo(function FloodMap({
         {showWeatherStations && (
           <Marker position={[-6.2, 106.816]} icon={weatherIcon}>
             <Popup>
-              <Card className="min-w-[250px] p-4">
+              <Card className="min-w-[180px] sm:min-w-[250px] p-4">
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <h3 className="font-semibold">Stasiun Cuaca Jakarta</h3>
                     <Badge variant="info">Aktif</Badge>
                   </div>
-                  <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div className="grid grid-cols-2 gap-4 text-xs sm:text-sm">
                     <div className="space-y-1">
                       <p className="text-muted-foreground">Suhu</p>
                       <p className="font-medium">
@@ -610,7 +610,7 @@ export const FloodMap = React.memo(function FloodMap({
                   </div>
                   <div className="flex items-center space-x-2 p-2 bg-muted rounded">
                     <Droplets size={16} className="text-secondary" />
-                    <span className="text-sm">
+                    <span className="text-xs sm:text-sm">
                       {weatherData.description || 'N/A'}
                     </span>
                   </div>
@@ -665,17 +665,17 @@ export const FloodMap = React.memo(function FloodMap({
                   }}
                 >
                   <Popup>
-                    <Card className="min-w-[200px] p-3">
+                    <Card className="min-w-[150px] sm:min-w-[200px] p-3">
                       <h4 className={`font-semibold ${cardTitleColor}`}>
                         {cardTitle}
                       </h4>
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-xs sm:text-sm text-muted-foreground">
                         ID OSM: {element.id}
                       </p>
                       <p className="text-xs text-muted-foreground">
                         Tipe OSM: {element.type}
                       </p>
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-xs sm:text-sm text-muted-foreground">
                         Detail: {detailText}
                       </p>
                       {Object.keys(element.tags).length > 0 && (
@@ -687,7 +687,7 @@ export const FloodMap = React.memo(function FloodMap({
                                 <Badge
                                   key={key}
                                   variant="outline"
-                                  className="text-xs"
+                                  className="text-xxs sm:text-xs"
                                 >
                                   {key}: {value}
                                 </Badge>
@@ -710,11 +710,11 @@ export const FloodMap = React.memo(function FloodMap({
                   icon={iconToUse}
                 >
                   <Popup>
-                    <Card className="min-w-[180px] p-3">
+                    <Card className="min-w-[140px] sm:min-w-[180px] p-3">
                       <h4 className={`font-semibold ${cardTitleColor}`}>
                         {cardTitle}
                       </h4>
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-xs sm:text-sm text-muted-foreground">
                         Detail: {detailText}
                       </p>
                       <p className="text-xs text-muted-foreground">
@@ -729,7 +729,7 @@ export const FloodMap = React.memo(function FloodMap({
                                 <Badge
                                   key={key}
                                   variant="outline"
-                                  className="text-xs"
+                                  className="text-xxs sm:text-xs"
                                 >
                                   {key}: {value}
                                 </Badge>
@@ -793,7 +793,7 @@ export const FloodMap = React.memo(function FloodMap({
                   }}
                 >
                   <Popup>
-                    <Card className="min-w-[200px] p-3">
+                    <Card className="min-w-[150px] sm:min-w-[200px] p-3">
                       <div className="flex items-center justify-between">
                         <h4 className={`font-semibold ${cardTitleColor}`}>
                           {cardTitle}
@@ -802,7 +802,7 @@ export const FloodMap = React.memo(function FloodMap({
                           {alert.level.toUpperCase()}
                         </Badge>
                       </div>
-                      <p className="text-sm mt-2">
+                      <p className="text-xs sm:text-sm mt-2">
                         {alert.title || 'Tidak ada judul'}
                       </p>
                       <p className="text-xs text-muted-foreground">
@@ -817,7 +817,7 @@ export const FloodMap = React.memo(function FloodMap({
                                 <Badge
                                   key={index}
                                   variant="outline"
-                                  className="text-xs"
+                                  className="text-xxs sm:text-xs"
                                 >
                                   {area}
                                 </Badge>
@@ -855,7 +855,7 @@ export const FloodMap = React.memo(function FloodMap({
                   icon={iconToUse}
                 >
                   <Popup>
-                    <Card className="min-w-[180px] p-3">
+                    <Card className="min-w-[140px] sm:min-w-[180px] p-3">
                       <div className="flex items-center justify-between">
                         <h4 className={`font-semibold ${cardTitleColor}`}>
                           {cardTitle}
@@ -864,7 +864,7 @@ export const FloodMap = React.memo(function FloodMap({
                           {alert.level.toUpperCase()}
                         </Badge>
                       </div>
-                      <p className="text-sm mt-2">
+                      <p className="text-xs sm:text-sm mt-2">
                         {alert.title || 'Tidak ada judul'}
                       </p>
                       <p className="text-xs text-muted-foreground">
@@ -879,7 +879,7 @@ export const FloodMap = React.memo(function FloodMap({
                                 <Badge
                                   key={index}
                                   variant="outline"
-                                  className="text-xs"
+                                  className="text-xxs sm:text-xs"
                                 >
                                   {area}
                                 </Badge>
@@ -926,7 +926,7 @@ export const FloodMap = React.memo(function FloodMap({
         variant="glass"
         size="icon"
         onClick={toggleFullscreen}
-        className="absolute top-4 right-4 z-[1000]"
+        className="absolute top-24 sm:top-4 right-4 z-[1000]"
       >
         {isFullscreen ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
       </Button>

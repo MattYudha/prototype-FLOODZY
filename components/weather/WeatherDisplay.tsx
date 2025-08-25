@@ -154,7 +154,7 @@ export function WeatherDisplay({
       >
         <CardHeader>
           <div className="flex items-center justify-between">
-            <CardTitle className="text-white">Cuaca Saat Ini</CardTitle>
+            <CardTitle className="text-lg sm:text-xl md:text-2xl text-white">Cuaca Saat Ini</CardTitle>
             <Badge variant="glass" className="text-white">
               {new Date(current.dt * 1000).toLocaleTimeString('id-ID', {
                 hour: '2-digit',
@@ -171,17 +171,17 @@ export function WeatherDisplay({
                 animate={{ rotate: 360 }}
                 transition={{ duration: 20, repeat: Infinity, ease: 'linear' }}
               >
-                <WeatherIcon className="h-16 w-16" />
+                <WeatherIcon className="h-12 w-12 sm:h-16 sm:w-16 md:h-20 md:w-20" />
               </motion.div>
 
               <div>
                 <div className="flex items-baseline space-x-1">
-                  <span className="text-4xl font-bold">
+                  <span className="text-3xl sm:text-4xl md:text-5xl font-bold">
                     {getRoundedValue(current.main.temp)}
                   </span>
-                  <span className="text-xl">°C</span>
+                  <span className="text-lg sm:text-xl md:text-2xl">°C</span>
                 </div>
-                <p className="text-white/90 capitalize">
+                <p className="text-sm sm:text-base md:text-lg text-white/90 capitalize">
                   {current.weather[0].description}
                 </p>
               </div>
@@ -189,13 +189,13 @@ export function WeatherDisplay({
 
             <div className="text-right">
               {/* UV Index removed as it's not available from this endpoint */}
-              <div className="flex items-center space-x-1 text-sm mt-1">
+              <div className="flex items-center space-x-1 text-xs sm:text-sm mt-1">
                 <Thermometer className="h-4 w-4" />
                 <span>
                   Terasa: {getRoundedValue(current.main.feels_like)}°C
                 </span>
               </div>
-              <div className="flex items-center space-x-1 text-sm mt-1">
+              <div className="flex items-center space-x-1 text-xs sm:text-sm mt-1">
                 <Sunrise className="h-4 w-4" />
                 <span>
                   Terbit:{' '}
@@ -205,7 +205,7 @@ export function WeatherDisplay({
                   )}
                 </span>
               </div>
-              <div className="flex items-center space-x-1 text-sm mt-1">
+              <div className="flex items-center space-x-1 text-xs sm:text-sm mt-1">
                 <Sunset className="h-4 w-4" />
                 <span>
                   Terbenam:{' '}
@@ -255,10 +255,10 @@ export function WeatherDisplay({
                 <div className="flex flex-col items-center justify-center text-center w-full">
                   <div className="flex items-center space-x-2 mb-2">
                     <metric.icon className="h-5 w-5 text-primary" />
-                    <span className="text-sm font-medium">{metric.label}</span>
+                    <span className="text-xs sm:text-sm font-medium">{metric.label}</span>
                   </div>
                   <div className="flex items-baseline space-x-1">
-                    <span className="text-2xl font-bold">
+                    <span className="text-xl sm:text-2xl font-bold">
                       {getRoundedValue(
                         metric.key === 'humidity'
                           ? current.main.humidity
@@ -272,7 +272,7 @@ export function WeatherDisplay({
                         metric.key === 'visibility',
                       )}
                     </span>
-                    <span className="text-sm text-muted-foreground">
+                    <span className="text-xs sm:text-sm text-muted-foreground">
                       {metric.unit}
                     </span>
                   </div>
@@ -294,15 +294,15 @@ export function WeatherDisplay({
                   <div className="flex flex-col items-center justify-center text-center w-full">
                     <div className="flex items-center space-x-2 mb-2">
                       <CloudRain className="h-5 w-5 text-primary" />
-                      <span className="text-sm font-medium">
+                      <span className="text-xs sm:text-sm font-medium">
                         Curah Hujan (1h)
                       </span>
                     </div>
                     <div className="flex items-baseline space-x-1">
-                      <span className="text-2xl font-bold">
+                      <span className="text-xl sm:text-2xl font-bold">
                         {getRoundedValue(current.rain['1h'])}
                       </span>
-                      <span className="text-sm text-muted-foreground">mm</span>
+                      <span className="text-xs sm:text-sm text-muted-foreground">mm</span>
                     </div>
                   </div>
                 </CardContent>

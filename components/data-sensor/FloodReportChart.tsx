@@ -94,8 +94,8 @@ const FloodReportChart: React.FC = () => {
   if (isLoading) {
     return (
       <div className="bg-gray-800 rounded-xl border border-gray-700 p-6 text-center">
-        <Loader2 className="h-8 w-8 animate-spin text-cyan-400 mx-auto mb-3" />
-        <p className="text-gray-400">Memuat data statistik...</p>
+        <Loader2 className="h-6 w-6 sm:h-8 sm:w-8 animate-spin text-cyan-400 mx-auto mb-3" />
+        <p className="text-sm sm:text-base text-gray-400">Memuat data statistik...</p>
       </div>
     );
   }
@@ -103,15 +103,15 @@ const FloodReportChart: React.FC = () => {
   if (error) {
     return (
       <div className="bg-gray-800 rounded-xl border border-gray-700 p-6 text-center">
-        <AlertCircle className="h-8 w-8 text-red-400 mx-auto mb-3" />
-        <p className="text-red-400">Gagal memuat statistik: {error}</p>
+        <AlertCircle className="h-6 w-6 sm:h-8 sm:w-8 text-red-400 mx-auto mb-3" />
+        <p className="text-sm sm:text-base text-red-400">Gagal memuat statistik: {error}</p>
       </div>
     );
   }
 
   return (
     <div className="bg-gray-800 rounded-xl border border-gray-700 p-6">
-      <h3 className="text-lg font-semibold text-white mb-4">Laporan Banjir 24 Jam Terakhir</h3>
+      <h3 className="text-base sm:text-lg font-semibold text-white mb-4">Laporan Banjir 24 Jam Terakhir</h3>
       <ResponsiveContainer width="100%" height={300}>
         {chartData && chartData.length > 0 ? (
           <BarChart data={chartData} margin={{
@@ -133,7 +133,7 @@ const FloodReportChart: React.FC = () => {
             <Bar dataKey="count" fill="#06B6D4" />
           </BarChart>
         ) : (
-          <div className="flex items-center justify-center h-full text-gray-500">
+          <div className="flex items-center justify-center h-full text-sm sm:text-base text-gray-500">
             Tidak ada data laporan banjir tersedia.
           </div>
         )}

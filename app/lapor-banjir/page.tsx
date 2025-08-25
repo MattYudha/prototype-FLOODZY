@@ -250,7 +250,7 @@ export default function LaporBanjirPage() {
 
   // --- RENDER UI ---
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800 p-4 font-sans">
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800 p-2 sm:p-4 font-sans">
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
@@ -263,8 +263,8 @@ export default function LaporBanjirPage() {
             <Droplets className="w-6 h-6 text-white" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-white">Floodzie</h1>
-            <p className="text-cyan-400 text-sm">Sistem Deteksi Banjir</p>
+            <h1 className="text-xl sm:text-2xl font-bold text-white">Floodzie</h1>
+            <p className="text-xs sm:text-sm text-cyan-400">Sistem Deteksi Banjir</p>
           </div>
         </div>
         <motion.div
@@ -275,7 +275,7 @@ export default function LaporBanjirPage() {
         >
           <div className="flex items-center gap-2 mb-2">
             <AlertTriangle className="w-5 h-5 text-orange-400" />
-            <h2 className="text-xl font-semibold text-white">Lapor Banjir</h2>
+            <h2 className="text-lg sm:text-xl font-semibold text-white">Lapor Banjir</h2>
           </div>
           <p className="text-slate-400">
             Laporkan kondisi banjir di wilayah Anda untuk membantu monitoring
@@ -320,7 +320,7 @@ export default function LaporBanjirPage() {
                 transition={{ duration: 0.5, delay: 0.5 }}
                 className="space-y-2"
               >
-                <label className="flex items-center gap-2 text-sm font-medium text-slate-300">
+                <label className="flex items-center gap-2 text-xs sm:text-sm font-medium text-slate-300">
                   <MapPin className="w-4 h-4 text-cyan-400" />
                   Lokasi Kejadian <span className="text-red-400">*</span>
                 </label>
@@ -345,13 +345,13 @@ export default function LaporBanjirPage() {
                       }
                     }}
                     placeholder="Cari lokasi secara manual (contoh: Jakarta Pusat)"
-                    className={`w-full bg-slate-700/80 border rounded-lg px-4 py-3 pr-12 text-white placeholder-slate-400 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/20 transition-all ${getErrorMessage('location') ? 'border-red-500' : 'border-slate-500/50'}`}
+                    className={`w-full bg-slate-700/80 border rounded-lg px-3 py-2 sm:px-4 sm:py-3 pr-12 text-xs sm:text-sm text-white placeholder-slate-400 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/20 transition-all ${getErrorMessage('location') ? 'border-red-500' : 'border-slate-500/50'}`}
                   />
                   <button
                     type="button"
                     onClick={handleSearchLocation}
                     disabled={loading}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-lg bg-cyan-500 hover:bg-cyan-600 text-white transition-colors duration-200"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 sm:p-2 rounded-lg bg-cyan-500 hover:bg-cyan-600 text-white transition-colors duration-200"
                   >
                     <Search className="w-5 h-5" />
                   </button>
@@ -378,7 +378,7 @@ export default function LaporBanjirPage() {
                 transition={{ duration: 0.5, delay: 0.6 }}
                 className="space-y-2"
               >
-                <label className="flex items-center gap-2 text-sm font-medium text-slate-300">
+                <label className="flex items-center gap-2 text-xs sm:text-sm font-medium text-slate-300">
                   <Droplets className="w-4 h-4 text-blue-400" />
                   Tinggi Air <span className="text-red-400">*</span>
                 </label>
@@ -398,11 +398,11 @@ export default function LaporBanjirPage() {
                       >
                         <div className="flex items-center justify-between">
                           <span
-                            className={`font-medium ${waterLevel === option.value ? 'text-white' : 'text-slate-300'}`}
+                            className={`text-sm sm:text-base font-medium ${waterLevel === option.value ? 'text-white' : 'text-slate-300'}`}
                           >
                             {option.label}
                           </span>
-                          <span className={`text-sm ${option.color}`}>
+                          <span className={`text-xs sm:text-sm ${option.color}`}>
                             {option.height}
                           </span>
                         </div>
@@ -422,8 +422,8 @@ export default function LaporBanjirPage() {
                 transition={{ duration: 0.5, delay: 0.7 }}
                 className="space-y-2"
               >
-                <label className="flex items-center gap-2 text-sm font-medium text-slate-300">
-                  <Camera className="w-4 h-4 text-green-400" />
+                <label className="flex items-center gap-2 text-xs sm:text-sm font-medium text-slate-300">
+                  <Camera className="w-3 h-3 sm:w-4 sm:h-4 text-green-400" />
                   Unggah Foto (Opsional)
                 </label>
                 <div className="relative">
@@ -448,21 +448,21 @@ export default function LaporBanjirPage() {
                           className="object-cover rounded-lg"
                         />
                         <div>
-                          <p className="text-white font-medium">
+                          <p className="text-sm sm:text-base text-white font-medium">
                             {selectedPhoto.file.name}
                           </p>
-                          <p className="text-slate-400 text-sm">
+                          <p className="text-xs sm:text-sm text-slate-400">
                             Klik untuk mengganti foto
                           </p>
                         </div>
                       </div>
                     ) : (
                       <div className="text-center">
-                        <Camera className="w-8 h-8 text-slate-400 mx-auto mb-2" />
+                        <Camera className="w-6 h-6 sm:w-8 sm:h-8 text-slate-400 mx-auto mb-2" />
                         <p className="text-slate-400">
                           Klik untuk memilih foto
                         </p>
-                        <p className="text-slate-500 text-sm">
+                        <p className="text-xs sm:text-sm text-slate-500">
                           PNG, JPG hingga 10MB
                         </p>
                       </div>
@@ -486,7 +486,7 @@ export default function LaporBanjirPage() {
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   rows={4}
-                  className={`w-full bg-slate-700/50 border rounded-lg px-4 py-3 text-white placeholder-slate-400 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/20 transition-all resize-none ${getErrorMessage('description') ? 'border-red-500' : 'border-slate-600'}`}
+                  className={`w-full bg-slate-700/50 border rounded-lg px-3 py-2 sm:px-4 sm:py-3 text-xs sm:text-sm text-white placeholder-slate-400 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/20 transition-all resize-none ${getErrorMessage('description') ? 'border-red-500' : 'border-slate-600'}`}
                 />
                 {getErrorMessage('description') && (
                   <p className="text-red-400 text-xs mt-1">{getErrorMessage('description')}</p>
@@ -501,7 +501,7 @@ export default function LaporBanjirPage() {
                 className="grid sm:grid-cols-2 gap-4"
               >
                 <div className="space-y-2">
-                  <label className="flex items-center gap-2 text-sm font-medium text-slate-300">
+                  <label className="flex items-center gap-2 text-xs sm:text-sm font-medium text-slate-300">
                     <User className="w-4 h-4 text-purple-400" /> Nama Pelapor
                     (Opsional)
                   </label>
@@ -510,14 +510,14 @@ export default function LaporBanjirPage() {
                     placeholder="Nama lengkap"
                     value={reporterName}
                     onChange={(e) => setReporterName(e.target.value)}
-                    className={`w-full bg-slate-700/50 border rounded-lg px-4 py-3 text-white placeholder-slate-400 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/20 transition-all ${getErrorMessage('reporter_name') ? 'border-red-500' : 'border-slate-600'}`}
+                    className={`w-full bg-slate-700/50 border rounded-lg px-3 py-2 sm:px-4 sm:py-3 text-xs sm:text-sm text-white placeholder-slate-400 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/20 transition-all ${getErrorMessage('reporter_name') ? 'border-red-500' : 'border-slate-600'}`}
                   />
                   {getErrorMessage('reporter_name') && (
                     <p className="text-red-400 text-xs mt-1">{getErrorMessage('reporter_name')}</p>
                   )}
                 </div>
                 <div className="space-y-2">
-                  <label className="flex items-center gap-2 text-sm font-medium text-slate-300">
+                  <label className="flex items-center gap-2 text-xs sm:text-sm font-medium text-slate-300">
                     <Phone className="w-4 h-4 text-orange-400" /> Kontak
                     (Opsional)
                   </label>
@@ -526,7 +526,7 @@ export default function LaporBanjirPage() {
                     placeholder="No. HP atau Email"
                     value={reporterContact}
                     onChange={(e) => setReporterContact(e.target.value)}
-                    className={`w-full bg-slate-700/50 border rounded-lg px-4 py-3 text-white placeholder-slate-400 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/20 transition-all ${getErrorMessage('reporter_contact') ? 'border-red-500' : 'border-slate-600'}`}
+                    className={`w-full bg-slate-700/50 border rounded-lg px-3 py-2 sm:px-4 sm:py-3 text-xs sm:text-sm text-white placeholder-slate-400 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/20 transition-all ${getErrorMessage('reporter_contact') ? 'border-red-500' : 'border-slate-600'}`}
                   />
                   {getErrorMessage('reporter_contact') && (
                     <p className="text-red-400 text-xs mt-1">{getErrorMessage('reporter_contact')}</p>
@@ -541,7 +541,7 @@ export default function LaporBanjirPage() {
                 transition={{ duration: 0.5, delay: 1.0 }}
                 type="submit"
                 disabled={loading} // Disable only on loading, validation handled by Zod
-                className="w-full bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 disabled:from-slate-600 disabled:to-slate-700 text-white font-medium py-3 px-6 rounded-lg transition-all duration-200 flex items-center justify-center gap-2 disabled:cursor-not-allowed"
+                className="w-full bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 disabled:from-slate-600 disabled:to-slate-700 text-white font-medium py-2.5 px-5 sm:py-3 sm:px-6 rounded-lg transition-all duration-200 flex items-center justify-center gap-2 disabled:cursor-not-allowed"
               >
                 {loading ? (
                   <>
@@ -568,12 +568,12 @@ export default function LaporBanjirPage() {
           >
             <div className="flex items-center gap-2 mb-3">
               <Clock className="w-5 h-5 text-cyan-400" />
-              <h3 className="font-medium text-white">Waktu Saat Ini</h3>
+              <h3 className="text-base sm:text-lg font-medium text-white">Waktu Saat Ini</h3>
             </div>
-            <p className="text-2xl font-bold text-cyan-400">
+            <p className="text-xl sm:text-2xl font-bold text-cyan-400">
               {getCurrentTime()}
             </p>
-            <p className="text-slate-400 text-sm mt-1">
+            <p className="text-xs sm:text-sm text-slate-400 mt-1">
               WIB - Zona Waktu Indonesia
             </p>
           </motion.div>
@@ -583,15 +583,15 @@ export default function LaporBanjirPage() {
             transition={{ duration: 0.5, delay: 0.6 }}
             className="bg-slate-800/50 backdrop-blur-sm border border-slate-700 rounded-xl p-4"
           >
-            <h3 className="font-medium text-white mb-3">Panduan Pelaporan</h3>
-            <ul className="space-y-2 text-sm text-slate-400">
+            <h3 className="text-base sm:text-lg font-medium text-white mb-3">Panduan Pelaporan</h3>
+            <ul className="space-y-2 text-xs sm:text-sm text-slate-400">
               <motion.li
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.3, delay: 0.7 }}
                 className="flex items-start gap-2"
               >
-                <div className="w-1.5 h-1.5 bg-cyan-400 rounded-full mt-2 flex-shrink-0" />
+                <div className="w-1 h-1 sm:w-1.5 sm:h-1.5 bg-cyan-400 rounded-full mt-2 flex-shrink-0" />
                 Pastikan lokasi yang dilaporkan akurat
               </motion.li>
               <motion.li
@@ -600,7 +600,7 @@ export default function LaporBanjirPage() {
                 transition={{ duration: 0.3, delay: 0.8 }}
                 className="flex items-start gap-2"
               >
-                <div className="w-1.5 h-1.5 bg-cyan-400 rounded-full mt-2 flex-shrink-0" />
+                <div className="w-1 h-1 sm:w-1.5 sm:h-1.5 bg-cyan-400 rounded-full mt-2 flex-shrink-0" />
                 Pilih tinggi air sesuai kondisi sebenarnya
               </motion.li>
               <motion.li
@@ -609,7 +609,7 @@ export default function LaporBanjirPage() {
                 transition={{ duration: 0.3, delay: 0.9 }}
                 className="flex items-start gap-2"
               >
-                <div className="w-1.5 h-1.5 bg-cyan-400 rounded-full mt-2 flex-shrink-0" />
+                <div className="w-1 h-1 sm:w-1.5 sm:h-1.5 bg-cyan-400 rounded-full mt-2 flex-shrink-0" />
                 Sertakan foto untuk validasi data
               </motion.li>
               <motion.li
@@ -618,7 +618,7 @@ export default function LaporBanjirPage() {
                 transition={{ duration: 0.3, delay: 1.0 }}
                 className="flex items-start gap-2"
               >
-                <div className="w-1.5 h-1.5 bg-cyan-400 rounded-full mt-2 flex-shrink-0" />
+                <div className="w-1 h-1 sm:w-1.5 sm:h-1.5 bg-cyan-400 rounded-full mt-2 flex-shrink-0" />
                 Deskripsi detail membantu tim respons
               </motion.li>
             </ul>
@@ -629,11 +629,11 @@ export default function LaporBanjirPage() {
             transition={{ duration: 0.5, delay: 0.7 }}
             className="bg-gradient-to-r from-green-900/20 to-green-600/20 border border-green-600/30 rounded-xl p-4"
           >
-            <h3 className="font-medium text-white mb-3 flex items-center gap-2">
+            <h3 className="text-base sm:text-lg font-medium text-white mb-3 flex items-center gap-2">
               <AlertTriangle className="w-5 h-5 text-green-400" />
               Kontak Darurat
             </h3>
-            <div className="space-y-2 text-sm">
+            <div className="space-y-2 text-xs sm:text-sm">
               <div className="flex justify-between">
                 <span className="text-slate-400">BPBD Jakarta:</span>
                 <span className="text-white font-medium">

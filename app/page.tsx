@@ -2,7 +2,7 @@ import { createClient } from '@/lib/supabase/server';
 import { fetchBmkgLatestQuake } from '@/lib/api.client';
 import { BmkgGempaData, WaterLevelPost, PumpData } from '@/lib/api';
 import { DashboardClientPage } from '@/components/layout/DashboardClientPage';
-import { DASHBOARD_STATS_MOCK, FLOOD_MOCK_ALERTS } from '@/lib/constants'; // Import mock alerts
+import { DASHBOARD_STATS_MOCK, FLOOD_MOCK_ALERTS } from '@/lib/constants';
 
 export default async function Home() {
   const supabase = createClient();
@@ -63,8 +63,6 @@ export default async function Home() {
       actions: [],
     });
   }
-
-  // Add mock alerts to the list
   realTimeAlerts = realTimeAlerts.concat(FLOOD_MOCK_ALERTS);
 
   const initialData = {
@@ -77,7 +75,7 @@ export default async function Home() {
     pumpStatusError,
     latestQuake,
     quakeError,
-    realTimeAlerts, // Pass alerts to client
+    realTimeAlerts,
   };
 
   return <DashboardClientPage initialData={initialData} />;
