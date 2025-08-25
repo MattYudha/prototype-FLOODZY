@@ -57,25 +57,25 @@ export function MapControls({
       initial={{ opacity: 0, x: 20 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ duration: 0.3 }}
-      className="absolute top-4 left-4 z-[1000] space-y-2"
+      className="absolute top-4 left-4 z-[1001] space-y-2"
     >
       {/* Main Controls */}
-      <Card variant="glass" className="p-2">
+      <Card className="p-2 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md">
         <div className="flex flex-col space-y-2">
           <Button
-            variant="ghost"
+            variant="outline"
             size="icon"
             onClick={() => setIsExpanded(!isExpanded)}
-            className="h-10 w-10"
+            className="h-10 w-10 border-slate-400 text-slate-900 dark:border-slate-600 dark:text-slate-100"
           >
             <Settings size={16} />
           </Button>
 
           <Button
-            variant="ghost"
+            variant="outline"
             size="icon"
             onClick={onFullscreenToggle}
-            className="h-10 w-10"
+            className="h-10 w-10 border-slate-400 text-slate-900 dark:border-slate-600 dark:text-slate-100"
           >
             {isFullscreen ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
           </Button>
@@ -93,19 +93,19 @@ export function MapControls({
             className="space-y-2"
           >
             {/* Layer Selection */}
-            <Card variant="glass" className="p-3">
+            <Card className="p-3 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md">
               <div className="space-y-2">
-                <h4 className="text-sm font-medium text-white">Lapisan Peta</h4>
+                <h4 className="text-sm font-medium text-slate-900 dark:text-slate-100">Lapisan Peta</h4>
                 <div className="space-y-1">
                   {mapLayers.map((layer) => (
                     <Button
                       key={layer.id}
                       variant={
-                        selectedLayer === layer.id ? 'secondary' : 'ghost'
+                        selectedLayer === layer.id ? 'secondary' : 'outline'
                       }
                       size="sm"
                       onClick={() => onLayerChange(layer.id)}
-                      className="w-full justify-start h-8"
+                      className="w-full justify-start h-8 text-slate-900 dark:text-slate-100 border-slate-400 dark:border-slate-600"
                     >
                       <layer.icon size={14} className="mr-2" />
                       {layer.name}
@@ -116,15 +116,15 @@ export function MapControls({
             </Card>
 
             {/* Overlay Toggles */}
-            <Card variant="glass" className="p-3">
+            <Card className="p-3 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md">
               <div className="space-y-2">
-                <h4 className="text-sm font-medium text-white">Overlay</h4>
+                <h4 className="text-sm font-medium text-slate-900 dark:text-slate-100">Overlay</h4>
                 <div className="space-y-1">
                   <Button
-                    variant="ghost"
+                    variant="outline"
                     size="sm"
                     onClick={onFloodZonesToggle}
-                    className="w-full justify-between h-8"
+                    className="w-full justify-between h-8 text-slate-900 dark:text-slate-100 border-slate-400 dark:border-slate-600"
                   >
                     <div className="flex items-center">
                       <MapPin size={14} className="mr-2" />
@@ -138,10 +138,10 @@ export function MapControls({
                   </Button>
 
                   <Button
-                    variant="ghost"
+                    variant="outline"
                     size="sm"
                     onClick={onWeatherToggle}
-                    className="w-full justify-between h-8"
+                    className="w-full justify-between h-8 text-slate-900 dark:text-slate-100 border-slate-400 dark:border-slate-600"
                   >
                     <div className="flex items-center">
                       <Cloud size={14} className="mr-2" />
@@ -156,10 +156,10 @@ export function MapControls({
 
                   {/* Tombol Toggle Peringatan Real-time Baru */}
                   <Button
-                    variant="ghost"
+                    variant="outline"
                     size="sm"
                     onClick={onRealtimeAlertsToggle}
-                    className="w-full justify-between h-8"
+                    className="w-full justify-between h-8 text-slate-900 dark:text-slate-100 border-slate-400 dark:border-slate-600"
                   >
                     <div className="flex items-center">
                       <AlertTriangle size={14} className="mr-2" />
@@ -176,23 +176,23 @@ export function MapControls({
             </Card>
 
             {/* Quick Stats */}
-            <Card variant="glass" className="p-3">
+            <Card className="p-3 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md">
               <div className="space-y-2">
-                <h4 className="text-sm font-medium text-white">Status</h4>
+                <h4 className="text-sm font-medium text-slate-900 dark:text-slate-100">Status</h4>
                 <div className="space-y-1">
-                  <div className="flex items-center justify-between text-sm">
+                  <div className="flex items-center justify-between text-sm text-slate-900 dark:text-slate-100">
                     <span>Zona Aktif</span>
                     <Badge variant="warning" size="sm">
                       12
                     </Badge>
                   </div>
-                  <div className="flex items-center justify-between text-sm">
+                  <div className="flex items-center justify-between text-sm text-slate-900 dark:text-slate-100">
                     <span>Peringatan</span>
                     <Badge variant="danger" size="sm">
                       3
                     </Badge>
                   </div>
-                  <div className="flex items-center justify-between text-sm">
+                  <div className="flex items-center justify-between text-sm text-slate-900 dark:text-slate-100">
                     <span>Stasiun Online</span>
                     <Badge variant="success" size="sm">
                       89

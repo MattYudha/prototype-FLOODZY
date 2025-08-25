@@ -22,6 +22,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription } from '@/components/ui/drawer';
 import { toast } from 'sonner';
 
 // Icons
@@ -58,6 +59,7 @@ import {
   DASHBOARD_STATS_MOCK,
   DEFAULT_MAP_CENTER,
   DEFAULT_MAP_ZOOM,
+  WEATHER_STATIONS_GLOBAL_MOCK,
 } from '@/lib/constants';
 import { cn, formatNumber } from '@/lib/utils';
 
@@ -110,6 +112,7 @@ export function DashboardClientPage({ initialData }) {
   const [chatError, setChatError] = useState(null);
   const [isTyping, setIsTyping] = useState(false);
   const [isChatbotOpen, setIsChatbotOpen] = useState(false);
+  const [isMapDrawerOpen, setMapDrawerOpen] = useState(false);
   const chatScrollRef = useRef(null);
 
   const handleRegionSelect = useCallback(
@@ -338,52 +341,80 @@ export function DashboardClientPage({ initialData }) {
           </motion.div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.5, delay: 0.4 }}
-              className="lg:col-span-2"
-            >
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center space-x-2">
-                    <MapPin className="h-5 w-5 text-primary" />
-                    <span>
-                      Peta Banjir -{' '}
-                      {selectedLocation?.districtName || 'Indonesia'}
-                    </span>
-                    <Badge variant="success" className="ml-auto">
-                      Live
-                    </Badge>
-                    <Button
-                      onClick={refreshDisasterData}
-                      variant="outline"
-                      size="sm"
-                      className="ml-2"
-                    >
-                      <RotateCcw className="h-4 w-4 mr-1" />
-                      Perbarui Data
+            {isMobile ? (
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.5, delay: 0.4 }}
+                className="lg:col-span-2"
+              >
+                <Card className="h-full flex flex-col items-center justify-center text-center p-8 bg-slate-900/80 border-slate-800/50">
+                  <CardHeader>
+                    <CardTitle className="flex items-center space-x-2">
+                      <MapPin className="h-8 w-8 text-primary" />
+                      <span className="text-2xl">Peta Banjir Interaktif</span>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-muted-foreground mb-6">
+                      Visualisasikan data banjir, zona rawan, dan peringatan secara real-time. Buka peta untuk eksplorasi mendalam.
+                    </p>
+                    <Button size="lg" onClick={() => setMapDrawerOpen(true)}>
+                      <Eye className="mr-2 h-5 w-5" />
+                      Buka Peta
                     </Button>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div
-                    className="h-72 lg:h-[600px] w-full rounded-lg border border-slate-800/50 relative overflow-hidden"
-                  >
-                    <FloodMap
-                      center={mapBounds?.center || DEFAULT_MAP_CENTER}
-                      zoom={mapBounds?.zoom || DEFAULT_MAP_ZOOM}
-                      className="h-full w-full"
-                      floodProneData={disasterProneAreas}
-                      loadingFloodData={isLoadingDisaster}
-                      floodDataError={disasterError}
-                      onMapBoundsChange={handleMapBoundsChange}
-                      selectedLocation={selectedLocation} // Add this prop
-                    />
-                  </div>
-                </CardContent>
-              </Card>
-            </motion.div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            ) : (
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.5, delay: 0.4 }}
+                className="lg:col-span-2"
+              >
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center space-x-2">
+                      <MapPin className="h-5 w-5 text-primary" />
+                      <span className="text-gray-900 dark:text-gray-100">
+                        Peta Banjir -{' '}
+                        {selectedLocation?.districtName || 'Indonesia'}
+                      </span>
+                      <Badge variant="success" className="ml-auto">
+                        Live
+                      </Badge>
+                      <Button
+                        onClick={refreshDisasterData}
+                        variant="outline"
+                        size="sm"
+                        className="ml-2"
+                      >
+                        <RotateCcw className="h-4 w-4 mr-1" />
+                        Perbarui Data
+                      </Button>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div
+                      className="h-72 lg:h-[600px] w-full rounded-lg border border-slate-800/50 relative overflow-hidden"
+                    >
+                      <FloodMap
+                        center={mapBounds?.center || DEFAULT_MAP_CENTER}
+                        zoom={mapBounds?.zoom || DEFAULT_MAP_ZOOM}
+                        className="h-full w-full"
+                        floodProneData={disasterProneAreas}
+                        loadingFloodData={isLoadingDisaster}
+                        floodDataError={disasterError}
+                        onMapBoundsChange={handleMapBoundsChange}
+                        selectedLocation={selectedLocation}
+                        globalWeatherStations={WEATHER_STATIONS_GLOBAL_MOCK}
+                      />
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            )}
 
             <div className="lg:col-span-1 flex flex-col gap-8">
               <motion.div
@@ -494,6 +525,29 @@ export function DashboardClientPage({ initialData }) {
           </motion.div>
         </section>
       </main>
+      <Drawer open={isMapDrawerOpen} onOpenChange={setMapDrawerOpen}>
+        <DrawerContent className="h-screen">
+          <DrawerHeader className="text-left">
+            <DrawerTitle>Peta Interaktif</DrawerTitle>
+            <DrawerDescription>
+              Gunakan dua jari untuk navigasi. Geser ke bawah untuk menutup.
+            </DrawerDescription>
+          </DrawerHeader>
+          <div className="flex-1 p-0 overflow-hidden">
+            <FloodMap
+              center={mapBounds?.center || DEFAULT_MAP_CENTER}
+              zoom={mapBounds?.zoom || DEFAULT_MAP_ZOOM}
+              className="h-full w-full"
+              floodProneData={disasterProneAreas}
+              loadingFloodData={isLoadingDisaster}
+              floodDataError={disasterError}
+              onMapBoundsChange={handleMapBoundsChange}
+              selectedLocation={selectedLocation}
+              globalWeatherStations={WEATHER_STATIONS_GLOBAL_MOCK}
+            />
+          </div>
+        </DrawerContent>
+      </Drawer>
     </div>
   );
 }

@@ -202,6 +202,7 @@ interface FloodMapProps {
   apiKey?: string;
   onMapBoundsChange?: (bounds: MapBounds) => void;
   selectedLocation?: SelectedLocation;
+  globalWeatherStations?: typeof WEATHER_STATIONS_GLOBAL_MOCK;
 
 }
 
@@ -221,14 +222,29 @@ export const FloodMap = React.memo(function FloodMap({
   apiKey, // Inisialisasi
   onMapBoundsChange, // Add this line
   selectedLocation, // Add this prop
+  globalWeatherStations = [], // Initialize new prop
 }: FloodMapProps) {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [selectedLayer, setSelectedLayer] = useState('street');
+
+  const layerConfig = {
+    street: {
+      url: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+    },
+    satellite: {
+      url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+      attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community',
+    },
+    terrain: {
+      url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}",
+      attribution: 'Tiles &copy; Esri &mdash; Esri, DeLorme, NAVTEQ, TomTom, Intermap, iPC, USGS, FAO, NPS, NRCAN, GeoBase, Kadaster NL, Ordnance Survey, Esri Japan, METI, Esri China (Hong Kong), and the GIS User Community',
+    },
+  };
   const [showFloodZones, setShowFloodZones] = useState(true); // Untuk mock data FLOOD_ZONES_MOCK
   const [showWeatherStations, setShowWeatherStations] = useState(true);
   const [showRealtimeAlerts, setShowRealtimeAlerts] = useState(true); // State baru untuk toggle peringatan real-time
   const [floodZones] = useState<FloodZone[]>(FLOOD_ZONES_MOCK); // Mock data asli
-  const [weatherData] = useState<WeatherData>(WEATHER_MOCK_DATA);
   const mapRef = useRef<L.Map | null>(null);
 
   useEffect(() => {
@@ -455,8 +471,9 @@ export const FloodMap = React.memo(function FloodMap({
         zoomControl={false}
       >
         <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          key={selectedLayer}
+          attribution={layerConfig[selectedLayer].attribution}
+          url={layerConfig[selectedLayer].url}
         />
 
         <MapUpdater center={center} zoom={zoom} />
@@ -564,46 +581,46 @@ export const FloodMap = React.memo(function FloodMap({
             </Polygon>
           ))}
 
-        {/* Weather Stations (menggunakan mock data) */}
-        {showWeatherStations && (
-          <Marker position={[-6.2, 106.816]} icon={weatherIcon}>
+        {/* Weather Stations (global data) */}
+        {showWeatherStations && globalWeatherStations.map((station) => (
+          <Marker key={station.id} position={station.coordinates} icon={weatherIcon}>
             <Popup>
               <Card className="min-w-[180px] sm:min-w-[250px] p-4">
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <h3 className="font-semibold">Stasiun Cuaca Jakarta</h3>
+                    <h3 className="font-semibold">Stasiun Cuaca {station.name}</h3>
                     <Badge variant="info">Aktif</Badge>
                   </div>
                   <div className="grid grid-cols-2 gap-4 text-xs sm:text-sm">
                     <div className="space-y-1">
                       <p className="text-muted-foreground">Suhu</p>
                       <p className="font-medium">
-                        {weatherData.temperature !== undefined
-                          ? `${weatherData.temperature}°C`
+                        {station.temperature !== undefined
+                          ? `${station.temperature}°C`
                           : 'N/A'}
                       </p>
                     </div>
                     <div className="space-y-1">
                       <p className="text-muted-foreground">Kelembaban</p>
                       <p className="font-medium">
-                        {weatherData.humidity !== undefined
-                          ? `${weatherData.humidity}%`
+                        {station.humidity !== undefined
+                          ? `${station.humidity}%`
                           : 'N/A'}
                       </p>
                     </div>
                     <div className="space-y-1">
                       <p className="text-muted-foreground">Angin</p>
                       <p className="font-medium">
-                        {weatherData.windSpeed !== undefined
-                          ? `${weatherData.windSpeed} km/h`
+                        {station.windSpeed !== undefined
+                          ? `${station.windSpeed} km/h`
                           : 'N/A'}
                       </p>
                     </div>
                     <div className="space-y-1">
                       <p className="text-muted-foreground">Tekanan</p>
                       <p className="font-medium">
-                        {weatherData.pressure !== undefined
-                          ? `${weatherData.pressure} hPa`
+                        {station.pressure !== undefined
+                          ? `${station.pressure} hPa`
                           : 'N/A'}
                       </p>
                     </div>
@@ -611,14 +628,14 @@ export const FloodMap = React.memo(function FloodMap({
                   <div className="flex items-center space-x-2 p-2 bg-muted rounded">
                     <Droplets size={16} className="text-secondary" />
                     <span className="text-xs sm:text-sm">
-                      {weatherData.description || 'N/A'}
+                      {station.description || 'N/A'}
                     </span>
                   </div>
                 </div>
               </Card>
             </Popup>
           </Marker>
-        )}
+        ))}
 
         {/* === MENAMPILKAN DATA RAWAN BANJIR/BENCANA DARI OVERPASS API === */}
         {loadingFloodData && (

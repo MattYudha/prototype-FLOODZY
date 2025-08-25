@@ -167,6 +167,64 @@ export const WEATHER_MOCK_DATA = {
   timestamp: new Date().toISOString(),
 };
 
+export const WEATHER_STATIONS_GLOBAL_MOCK = [
+  {
+    id: 'ws-jakarta',
+    name: 'Stasiun Cuaca Jakarta',
+    coordinates: [-6.2, 106.816],
+    temperature: 28,
+    humidity: 75,
+    windSpeed: 12,
+    pressure: 1013,
+    description: 'Cerah Berawan',
+    timestamp: new Date().toISOString(),
+  },
+  {
+    id: 'ws-surabaya',
+    name: 'Stasiun Cuaca Surabaya',
+    coordinates: [-7.2575, 112.7521],
+    temperature: 30,
+    humidity: 70,
+    windSpeed: 15,
+    pressure: 1010,
+    description: 'Hujan Ringan',
+    timestamp: new Date().toISOString(),
+  },
+  {
+    id: 'ws-medan',
+    name: 'Stasiun Cuaca Medan',
+    coordinates: [3.5952, 98.6722],
+    temperature: 26,
+    humidity: 80,
+    windSpeed: 10,
+    pressure: 1012,
+    description: 'Berawan Tebal',
+    timestamp: new Date().toISOString(),
+  },
+  {
+    id: 'ws-makassar',
+    name: 'Stasiun Cuaca Makassar',
+    coordinates: [-5.1477, 119.4327],
+    temperature: 29,
+    humidity: 72,
+    windSpeed: 18,
+    pressure: 1009,
+    description: 'Cerah',
+    timestamp: new Date().toISOString(),
+  },
+  {
+    id: 'ws-bandung',
+    name: 'Stasiun Cuaca Bandung',
+    coordinates: [-6.9175, 107.6191],
+    temperature: 24,
+    humidity: 85,
+    windSpeed: 8,
+    pressure: 1015,
+    description: 'Hujan Sedang',
+    timestamp: new Date().toISOString(),
+  },
+];
+
 export const FLOOD_MOCK_ALERTS = [
   {
     id: '1',
@@ -183,6 +241,7 @@ export const FLOOD_MOCK_ALERTS = [
       'Prepare emergency supplies',
       'Monitor updates',
     ],
+    coordinates: [-6.1214, 106.7741], // Example coordinate for North Jakarta
   },
   {
     id: '2',
@@ -195,6 +254,7 @@ export const FLOOD_MOCK_ALERTS = [
     isActive: true,
     affectedAreas: ['Central Jakarta', 'South Jakarta'],
     actions: ['Drive carefully', 'Allow extra travel time'],
+    coordinates: [-6.2088, 106.8456], // Example coordinate for Central Jakarta
   },
 ];
 

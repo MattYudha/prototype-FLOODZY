@@ -250,3 +250,11 @@
     transition-duration: 0.01ms !important;
   }
 }
+
+/* Make Leaflet attribution text readable on light backgrounds */
+.leaflet-control-attribution a,
+.leaflet-control-attribution {
+  color: #333 !important; /* Dark Gray */
+  -webkit-text-stroke: 0;
+  text-shadow: none;
+}

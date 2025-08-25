@@ -60,6 +60,7 @@ export default async function Home() {
       timestamp: quakeTimestampISO,
       isActive: true,
       affectedAreas: latestQuake.Wilayah.split(',').map((s) => s.trim()),
+      coordinates: [parseFloat(latestQuake.Lintang), parseFloat(latestQuake.Bujur)], // Add coordinates
       actions: [],
     });
   }
