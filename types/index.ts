@@ -192,3 +192,15 @@ export interface NavigationItem {
   badge?: string;
   children?: NavigationItem[];
 }
+
+export interface WeatherStation {
+  id: string;
+  name: string;
+  coordinates: [number, number];
+  temperature?: number;
+  humidity?: number;
+  windSpeed?: number;
+  pressure?: number;
+  description?: string;
+  timestamp?: string;
+}

@@ -51,8 +51,9 @@ import {
   FLOOD_RISK_COLORS, // Menggunakan konstanta ini untuk warna
   FLOOD_ZONES_MOCK,
   WEATHER_MOCK_DATA,
+  WEATHER_STATIONS_GLOBAL_MOCK,
 } from '@/lib/constants';
-import { FloodZone, WeatherData, FloodAlert, MapBounds } from '@/types'; // Import FloodAlert
+import { FloodZone, WeatherData, FloodAlert, MapBounds, WeatherStation } from '@/types'; // Import FloodAlert
 import { SelectedLocation } from '@/types/location';
 
 import { cn } from '@/lib/utils';
@@ -202,7 +203,7 @@ interface FloodMapProps {
   apiKey?: string;
   onMapBoundsChange?: (bounds: MapBounds) => void;
   selectedLocation?: SelectedLocation;
-  globalWeatherStations?: typeof WEATHER_STATIONS_GLOBAL_MOCK;
+  globalWeatherStations?: WeatherStation[];
 
 }
 
