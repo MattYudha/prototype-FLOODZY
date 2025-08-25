@@ -69,7 +69,7 @@ import dynamic from 'next/dynamic';
 import { PeringatanBencanaCard } from '@/components/flood/PeringatanBencanaCard';
 
 // Types
-import type { FloodAlert as FloodAlertType } from '@/types';
+import type { FloodAlert as FloodAlertType, WeatherStation } from '@/types';
 import { SelectedLocation } from '@/types/location';
 import { MapBounds } from '@/types';
 
@@ -408,7 +408,7 @@ export function DashboardClientPage({ initialData }) {
                         floodDataError={disasterError}
                         onMapBoundsChange={handleMapBoundsChange}
                         selectedLocation={selectedLocation}
-                        globalWeatherStations={WEATHER_STATIONS_GLOBAL_MOCK}
+                        globalWeatherStations={WEATHER_STATIONS_GLOBAL_MOCK as WeatherStation[]}
                       />
                     </div>
                   </CardContent>
@@ -543,7 +543,7 @@ export function DashboardClientPage({ initialData }) {
               floodDataError={disasterError}
               onMapBoundsChange={handleMapBoundsChange}
               selectedLocation={selectedLocation}
-              globalWeatherStations={WEATHER_STATIONS_GLOBAL_MOCK}
+              globalWeatherStations={WEATHER_STATIONS_GLOBAL_MOCK as WeatherStation[]}
             />
           </div>
         </DrawerContent>
