@@ -42,12 +42,13 @@ import {
   Sunset,
   LocateFixed,
   RefreshCw,
+  Leaf,
 } from 'lucide-react';
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
+import { Badge } from '@/components/ui/Badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Switch } from '@/components/ui/switch';
 
@@ -424,6 +425,7 @@ export default function PrakiraanCuacaPage() {
   const [currentWeatherData, setCurrentWeatherData] = useState<null | {
     current: any;
     daily: any;
+    airQuality?: any;
   }>(null);
   const [loadingWeather, setLoadingWeather] = useState(false);
   const [weatherError, setWeatherError] = useState<string | null>(null);
@@ -459,6 +461,7 @@ export default function PrakiraanCuacaPage() {
 
         const weatherUrl = 'https://api.openweathermap.org/data/2.5/weather';
         const forecastUrl = 'https://api.openweathermap.org/data/2.5/forecast';
+        const airPollutionUrl = 'https://api.openweathermap.org/data/2.5/air_pollution';
 
         const commonParams = {
           lat: selectedLocation.lat,
@@ -470,26 +473,51 @@ export default function PrakiraanCuacaPage() {
 
         try {
           // Lakukan 2 panggilan API secara bersamaan
-          const [weatherResponse, forecastResponse] = await Promise.all([
+          const [weatherResponse, forecastResponse, airPollutionResponse] = await Promise.all([
             axios.get(weatherUrl, { params: commonParams }),
             axios.get(forecastUrl, { params: commonParams }),
+            axios.get(airPollutionUrl, { params: commonParams }),
           ]);
 
           console.log('Weather API Response:', weatherResponse.data);
           console.log('Forecast API Response:', forecastResponse.data);
+          console.log('Air Pollution API Response:', airPollutionResponse.data);
 
-          // Proses data prakiraan untuk mendapatkan 1 data per hari
           const dailyForecasts = forecastResponse.data.list.filter(
             (forecast: any) => forecast.dt_txt.includes('12:00:00'),
           );
 
-          // Gabungkan hasil dari 2 API menjadi satu objek state
+          let airQualityData = null;
+          if (airPollutionResponse.data && airPollutionResponse.data.list && airPollutionResponse.data.list.length > 0) {
+            const aqi = airPollutionResponse.data.list[0].main.aqi;
+            const pm2_5 = airPollutionResponse.data.list[0].components.pm2_5;
+
+            let level = "Tidak Diketahui";
+            let recommendation = "Informasi kualitas udara tidak tersedia.";
+
+            if (aqi === 1) { level = "Baik"; recommendation = "Nikmati aktivitas di luar ruangan."; }
+            else if (aqi === 2) { level = "Sedang"; recommendation = "Kurangi aktivitas berat di luar ruangan jika Anda sensitif."; }
+            else if (aqi === 3) { level = "Tidak Sehat bagi Kelompok Sensitif"; recommendation = "Kelompok sensitif harus mengurangi aktivitas di luar ruangan."; }
+            else if (aqi === 4) { level = "Tidak Sehat"; recommendation = "Semua orang harus mengurangi aktivitas di luar ruangan."; }
+            else if (aqi === 5) { level = "Sangat Tidak Sehat"; recommendation = "Hindari semua aktivitas di luar ruangan."; }
+
+            airQualityData = {
+              aqi: aqi,
+              level: level,
+              pollutant: `PM2.5 (${pm2_5} µg/m³)` || "PM2.5",
+              recommendation: recommendation
+            };
+          }
+
           const formattedData = {
             current: weatherResponse.data,
             daily: dailyForecasts,
+            airQuality: airQualityData,
           };
-
           setCurrentWeatherData(formattedData);
+          console.log('Formatted Weather Data (including AQI):', formattedData);
+                    setCurrentWeatherData(formattedData);
+          console.log('Formatted Weather Data (including AQI):', formattedData);
           setCurrentMapCenter([selectedLocation.lat, selectedLocation.lon]);
           setCurrentMapZoom(12);
         } catch (error: any) {
@@ -929,6 +957,30 @@ export default function PrakiraanCuacaPage() {
               error={weatherError}
             />
             <DailyForecast data={currentWeatherData} loading={loadingWeather} error={weatherError} />
+
+            {currentWeatherData?.airQuality && (
+              <Card className="bg-slate-800/60 backdrop-blur-xl border border-slate-700/50 rounded-2xl shadow-2xl">
+                <CardHeader>
+                  <CardTitle className="text-white flex items-center space-x-2">
+                    <Leaf className="w-5 h-5 text-white" />
+                    <span>Kualitas Udara</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-4 pt-0">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center">
+                      <Wind className="w-12 h-12 text-white" />
+                      <div className="ml-4">
+                        <p className="text-5xl font-bold text-white">AQI: {currentWeatherData.airQuality.aqi}</p>
+                        <p className="text-md text-gray-300">Level: {currentWeatherData.airQuality.level}</p>
+                      </div>
+                    </div>
+                    <p className="text-sm text-gray-400 text-right">Polutan Utama: {currentWeatherData.airQuality.pollutant}</p>
+                  </div>
+                  <p className="text-sm text-gray-200 border-t border-slate-700 pt-4 mt-4">Rekomendasi: {currentWeatherData.airQuality.recommendation}</p>
+                </CardContent>
+              </Card>
+            )}
             {selectedLocation && (
               <Card className="bg-slate-800/60 backdrop-blur-xl border border-slate-700/50 rounded-2xl shadow-2xl">
                 <CardHeader>

@@ -175,13 +175,20 @@ export interface EvacuationLocation {
   address: string;
   capacity_current: number;
   capacity_total: number;
-  status: 'open' | 'closed' | 'full';
   facilities?: string[];
   contact_person?: string;
   contact_phone?: string;
   operational_hours?: string;
   notes?: string;
   last_updated?: string;
+  // NEW FIELDS
+  operational_status: "Buka" | "Penuh" | "Tutup Sementara" | "Buka dan Menerima Pengungsi";
+  essential_services: {
+    clean_water: "Tersedia" | "Terbatas" | "Tidak Tersedia";
+    electricity: "Tersedia" | "Terbatas" | "Tidak Tersedia";
+    medical_support: "Tersedia 24 Jam" | "Tersedia" | "Tidak Tersedia";
+  };
+  verified_by?: string;
 }
 
 export interface NavigationItem {

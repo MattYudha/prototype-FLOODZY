@@ -18,8 +18,8 @@ import {
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/Button';
-import { Card } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { Card } from '@/components/ui/Card';
+import { Badge } from '@/components/ui/Badge';
 import { WeatherData } from '@/lib/api';
 import { DEFAULT_MAP_CENTER, DEFAULT_MAP_ZOOM } from '@/lib/constants';
 import { cn } from '@/lib/utils';

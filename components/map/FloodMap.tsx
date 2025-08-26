@@ -15,6 +15,13 @@ import {
 } from 'react-leaflet';
 import L, { Icon, LatLngExpression } from 'leaflet';
 
+// Explicitly set default icon paths for Leaflet
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: '/leaflet/images/marker-icon-2x.png',
+  iconUrl: '/leaflet/images/marker-icon.png',
+  shadowUrl: '/leaflet/images/marker-shadow.png',
+});
+
 // Konfigurasi ikon default Leaflet
 
 
@@ -40,7 +47,7 @@ import {
   Search,
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
-import { Card } from '@/components/ui/card';
+import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { MapControls } from './MapControls';
@@ -55,6 +62,29 @@ import {
 } from '@/lib/constants';
 import { FloodZone, WeatherData, FloodAlert, MapBounds, WeatherStation } from '@/types'; // Import FloodAlert
 import { SelectedLocation } from '@/types/location';
+
+// NEW: Types for Crowdsourced and Official BPBD Data
+interface CrowdsourcedReport {
+  report_id: string;
+  type: "Laporan Pengguna";
+  severity: "Rendah" | "Sedang" | "Tinggi";
+  depth_cm: number;
+  timestamp: string;
+  notes: string;
+  upvotes: number;
+  geometry: { type: "Point"; coordinates: [number, number] }; // [longitude, latitude]
+}
+
+interface OfficialBPBDData {
+  report_id: string;
+  type: "Data Resmi BPBD";
+  severity: "Rendah" | "Sedang" | "Tinggi" | "Kritis";
+  depth_cm: number;
+  status: "Naik" | "Stabil" | "Surut";
+  timestamp: string;
+  geometry: { type: "Polygon"; coordinates: [number[][]] }; // [longitude, latitude]
+}
+
 
 import { cn } from '@/lib/utils';
 import { OverpassElement } from '@/lib/api';
@@ -87,6 +117,21 @@ const createCustomIcon = (color: string, iconHtml: string) => {
 
 const floodIcon = createCustomIcon(FLOOD_RISK_COLORS.high, '🌊');
 const weatherIcon = createCustomIcon('#3B82F6', '☀️');
+
+// NEW: Icons for Crowdsourced and Official BPBD Data
+const userReportIcon = createCustomIcon('#60A5FA', '👤'); // Blue for user reports
+const bpbdOfficialIcon = createCustomIcon('#EF4444', '🚨'); // Red for official BPBD data
+
+// Helper to get color based on severity for new data types
+const getSeverityColor = (severity: 'Rendah' | 'Sedang' | 'Tinggi' | 'Kritis') => {
+  switch (severity) {
+    case 'Rendah': return '#22C55E'; // Green
+    case 'Sedang': return '#FACC15'; // Yellow
+    case 'Tinggi': return '#EF4444'; // Red
+    case 'Kritis': return '#8B5CF6'; // Purple
+    default: return '#9CA3AF'; // Gray
+  }
+};
 
 // Komponen Helper untuk mengupdate view peta
 interface MapUpdaterProps {
@@ -199,6 +244,8 @@ interface FloodMapProps {
   realtimeFloodAlerts?: FloodAlert[]; // Properti baru untuk peringatan real-time
   loadingRealtimeAlerts?: boolean; // Properti baru untuk status loading
   realtimeAlertsError?: string | null; // Properti baru untuk error
+  crowdsourcedReports?: CrowdsourcedReport[]; // NEW: Crowdsourced flood reports
+  officialBPBDData?: OfficialBPBDData[]; // NEW: Official BPBD flood data
   weatherLayers?: { [key: string]: boolean };
   apiKey?: string;
   onMapBoundsChange?: (bounds: MapBounds) => void;
@@ -219,6 +266,8 @@ export const FloodMap = React.memo(function FloodMap({
   realtimeFloodAlerts = [], // Inisialisasi
   loadingRealtimeAlerts = false, // Inisialisasi
   realtimeAlertsError = null, // Inisialisasi
+  crowdsourcedReports = [], // NEW: Initialize new prop
+  officialBPBDData = [], // NEW: Initialize new prop
   weatherLayers = {}, // Inisialisasi
   apiKey, // Inisialisasi
   onMapBoundsChange, // Add this line
@@ -245,6 +294,8 @@ export const FloodMap = React.memo(function FloodMap({
   const [showFloodZones, setShowFloodZones] = useState(true); // Untuk mock data FLOOD_ZONES_MOCK
   const [showWeatherStations, setShowWeatherStations] = useState(true);
   const [showRealtimeAlerts, setShowRealtimeAlerts] = useState(true); // State baru untuk toggle peringatan real-time
+  const [showCrowdsourcedReports, setShowCrowdsourcedReports] = useState(true); // NEW: State for crowdsourced reports visibility
+  const [showOfficialBPBDData, setShowOfficialBPBDData] = useState(true); // NEW: State for official BPBD data visibility
   const [floodZones] = useState<FloodZone[]>(FLOOD_ZONES_MOCK); // Mock data asli
   const mapRef = useRef<L.Map | null>(null);
 
@@ -518,6 +569,75 @@ export const FloodMap = React.memo(function FloodMap({
             </Popup>
           </Marker>
         ) : null}
+
+        {/* NEW: Crowdsourced Reports (Markers) - Temporarily commented out for debugging */}
+        {/* {showCrowdsourcedReports && crowdsourcedReports.map((report) => (
+          <Marker
+            key={report.report_id}
+            position={[report.geometry.coordinates[1], report.geometry.coordinates[0]]} // [latitude, longitude]
+            icon={userReportIcon}
+          >
+            <Popup>
+              <Card className="min-w-[180px] sm:min-w-[250px] p-3">
+                <div className="flex items-center justify-between mb-2">
+                  <h4 className="font-semibold text-blue-500">{report.type}</h4>
+                  <Badge variant="outline" style={{ backgroundColor: getSeverityColor(report.severity), color: 'white' }}>
+                    {report.severity}
+                  </Badge>
+                </div>
+                <p className="text-xs sm:text-sm text-muted-foreground">
+                  Kedalaman: {report.depth_cm} cm
+                </p>
+                <p className="text-xs sm:text-sm text-muted-foreground">
+                  Catatan: {report.notes}
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Dilaporkan: {new Date(report.timestamp).toLocaleString()}
+                </p>
+                <div className="flex items-center justify-between mt-3">
+                  <span className="text-xs text-gray-400">👍 {report.upvotes} Validasi</span>
+                  <Button size="sm" variant="secondary" className="text-xs">
+                    👍 Validasi
+                  </Button>
+                </div>
+              </Card>
+            </Popup>
+          </Marker>
+        ))} */}
+
+        {/* NEW: Official BPBD Data (Polygons) - Temporarily commented out for debugging */}
+        {/* {showOfficialBPBDData && officialBPBDData.map((data) => (
+          <Polygon
+            key={data.report_id}
+            positions={data.geometry.coordinates[0].map(coord => [coord[1], coord[0]])} // [latitude, longitude]
+            pathOptions={{
+              color: getSeverityColor(data.severity),
+              fillColor: getSeverityColor(data.severity),
+              fillOpacity: 0.4,
+              weight: 3,
+            }}
+          >
+            <Popup>
+              <Card className="min-w-[180px] sm:min-w-[250px] p-3">
+                <div className="flex items-center justify-between mb-2">
+                  <h4 className="font-semibold text-red-500">{data.type}</h4>
+                  <Badge variant="outline" style={{ backgroundColor: getSeverityColor(data.severity), color: 'white' }}>
+                    {data.severity}
+                  </Badge>
+                </div>
+                <p className="text-xs sm:text-sm text-muted-foreground">
+                  Kedalaman: {data.depth_cm} cm
+                </p>
+                <p className="text-xs sm:text-sm text-muted-foreground">
+                  Status: {data.status}
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Pembaruan: {new Date(data.timestamp).toLocaleString()}
+                </p>
+              </Card>
+            </Popup>
+          </Polygon>
+        ))} */}
 
         {/* Flood Zones (menggunakan mock data yang sudah ada) */}
         {/* Ini tetap ada sebagai layer terpisah, bisa di toggle jika perlu */}
@@ -934,6 +1054,10 @@ export const FloodMap = React.memo(function FloodMap({
           setShowRealtimeAlerts(!showRealtimeAlerts)
         } // Properti baru
         showRealtimeAlerts={showRealtimeAlerts} // Properti baru
+        onCrowdsourcedReportsToggle={() => setShowCrowdsourcedReports(!showCrowdsourcedReports)} // NEW: Pass toggle function
+        showCrowdsourcedReports={showCrowdsourcedReports} // NEW: Pass state
+        onOfficialBPBDDataToggle={() => setShowOfficialBPBDData(!showOfficialBPBDData)} // NEW: Pass toggle function
+        showOfficialBPBDData={showOfficialBPBDData} // NEW: Pass state
       />
 
       {/* Map Legend */}

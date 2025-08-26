@@ -18,7 +18,7 @@ import { useAppStore } from '@/lib/store';
 // UI Components
 import { WeatherDisplay } from '@/components/weather/WeatherDisplay';
 import { DashboardStats } from '@/components/dashboard/DashboardStats';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -48,7 +48,7 @@ import {
   X,
   Loader2,
   Eye,
-  RotateCcw, // Add this line
+  RotateCcw,
 } from 'lucide-react';
 
 // Hooks & Utils
@@ -67,6 +67,9 @@ import { cn, formatNumber } from '@/lib/utils';
 import { RegionDropdown } from '@/components/region-selector/RegionDropdown';
 import dynamic from 'next/dynamic';
 import { PeringatanBencanaCard } from '@/components/flood/PeringatanBencanaCard';
+import { WeatherSummaryCard } from '@/components/dashboard/WeatherSummaryCard';
+import { AirQualityCard } from '@/components/dashboard/AirQualityCard';
+import { LocationPromptCard } from '@/components/dashboard/LocationPromptCard';
 
 // Types
 import type { FloodAlert as FloodAlertType, WeatherStation } from '@/types';
@@ -90,6 +93,9 @@ const FloodReportChart = dynamic(() => import('@/components/data-sensor/FloodRep
 export function DashboardClientPage({ initialData }) {
   const { selectedLocation, mapBounds, setSelectedLocation, setMapBounds } = useAppStore();
 
+  const [weatherSummary, setWeatherSummary] = useState(initialData.weatherSummary);
+  const [airQuality, setAirQuality] = useState(initialData.airQuality);
+
   const isMobile = useMediaQuery('(max-width: 768px)');
   const isLargeScreen = useMediaQuery('(min-width: 1024px)');
 
@@ -109,11 +115,36 @@ export function DashboardClientPage({ initialData }) {
   const [chatInput, setChatInput] = useState('');
   const [chatHistory, setChatHistory] = useState([]);
   const [isChatLoading, setIsChatLoading] = useState(false);
-  const [chatError, setChatError] = useState(null);
+  const [chatError, setChatError] = useState<string | null>(null);
   const [isTyping, setIsTyping] = useState(false);
   const [isChatbotOpen, setIsChatbotOpen] = useState(false);
   const [isMapDrawerOpen, setMapDrawerOpen] = useState(false);
-  const chatScrollRef = useRef(null);
+  const chatScrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const fetchDashboardWidgets = async () => {
+      if (selectedLocation && selectedLocation.latitude != null && selectedLocation.longitude != null) {
+        try {
+          const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/dashboard-widgets?lat=${selectedLocation.latitude}&lon=${selectedLocation.longitude}&locationName=${encodeURIComponent(selectedLocation.districtName || '')}`);
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+          const data = await response.json();
+          setWeatherSummary(data.weatherSummary);
+          setAirQuality(data.airQuality);
+        } catch (error) {
+          console.error('Error fetching dashboard widgets data:', error);
+          setWeatherSummary(null);
+          setAirQuality(null);
+        }
+      } else {
+        setWeatherSummary(null);
+        setAirQuality(null);
+      }
+    };
+
+    fetchDashboardWidgets();
+  }, [selectedLocation]);
 
   const handleRegionSelect = useCallback(
     (location) => {
@@ -123,24 +154,20 @@ export function DashboardClientPage({ initialData }) {
         fetchWeather(latitude, longitude);
         const buffer = 0.05;
 
-        // Calculate the bounds
         const south = latitude - buffer;
         const west = longitude - buffer;
         const north = latitude + buffer;
         const east = longitude + buffer;
 
-        // Construct the MapBounds object
         const newMapBounds: MapBounds = {
-          center: [latitude, longitude], // Center of the map
-          zoom: 12, // A reasonable default zoom level for a district view
-          bounds: [[south, west], [north, east]], // Leaflet-style bounds
+          center: [latitude, longitude],
+          zoom: 12,
+          bounds: [[south, west], [north, east]],
         };
         setMapBounds(newMapBounds);
-        // Fetch data immediately for the new location
         fetchDisasterAreas({ south, west, north, east });
       } else {
         setMapBounds(null);
-        // Fetch for default map view if location is cleared
         fetchDisasterAreas({ south: DEFAULT_MAP_CENTER[0] - 0.1, west: DEFAULT_MAP_CENTER[1] - 0.1, north: DEFAULT_MAP_CENTER[0] + 0.1, east: DEFAULT_MAP_CENTER[1] + 0.1 });
       }
     },
@@ -148,17 +175,12 @@ export function DashboardClientPage({ initialData }) {
   );
 
   useEffect(() => {
-    // This effect runs only once on initial component mount to fetch initial data.
-    // It avoids re-fetching when the map is panned or zoomed.
     if (mapBounds && mapBounds.bounds) {
-      // If bounds are already available (e.g., from persisted state), fetch data for them.
       fetchDisasterAreas({ south: mapBounds.bounds[0][0], west: mapBounds.bounds[0][1], north: mapBounds.bounds[1][0], east: mapBounds.bounds[1][1] });
     } else {
-      // Otherwise, fetch for the default map view.
       fetchDisasterAreas({ south: DEFAULT_MAP_CENTER[0] - 0.1, west: DEFAULT_MAP_CENTER[1] - 0.1, north: DEFAULT_MAP_CENTER[0] + 0.1, east: DEFAULT_MAP_CENTER[1] + 0.1 });
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Empty dependency array ensures this runs only ONCE on mount.
+  }, []);
 
   const refreshDisasterData = useCallback(() => {
     if (mapBounds && mapBounds.bounds) {
@@ -217,7 +239,10 @@ export function DashboardClientPage({ initialData }) {
     [initialData.stats],
   );
 
-  const sendChatMessage = async (customMessage) => { /* ... */ };
+  const sendChatMessage = async (customMessage: string) => {
+    // Implementasi logika pengiriman pesan
+    console.log('Sending chat message:', customMessage);
+  };
   const toggleChatbot = () => setIsChatbotOpen((prev) => !prev);
 
   return (
@@ -417,23 +442,54 @@ export function DashboardClientPage({ initialData }) {
             )}
 
             <div className="lg:col-span-1 flex flex-col gap-8">
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.5 }}
-                className="flex-1"
-              >
-                <WeatherDisplay
-                  data={weatherData}
-                  loading={isLoadingWeather}
-                  error={weatherError}
-                />
-              </motion.div>
+              {selectedLocation ? (
+                <>
+                  {weatherSummary && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.5, delay: 0.5 }}
+                      className="flex-1"
+                    >
+                      <WeatherSummaryCard weatherSummary={weatherSummary} />
+                    </motion.div>
+                  )}
+                  {airQuality && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.5, delay: 0.6 }}
+                      className="flex-1"
+                    >
+                      <AirQualityCard airQuality={airQuality} />
+                    </motion.div>
+                  )}
+                </>
+              ) : (
+                <>
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5, delay: 0.5 }}
+                    className="flex-1"
+                  >
+                    <LocationPromptCard />
+                  </motion.div>
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5, delay: 0.6 }}
+                    className="flex-1"
+                  >
+                    <LocationPromptCard />
+                  </motion.div>
+                </>
+              )}
 
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.6 }}
+                transition={{ duration: 0.5, delay: 0.7 }}
                 className="flex-1"
               >
                 <Card>
@@ -503,7 +559,7 @@ export function DashboardClientPage({ initialData }) {
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {initialData.realTimeAlerts && initialData.realTimeAlerts.length > 0 ? (
-                    initialData.realTimeAlerts.map((alert) => (
+                    initialData.realTimeAlerts.map((alert: any) => (
                       <PeringatanBencanaCard key={alert.id} alert={alert} />
                     ))
                   ) : (

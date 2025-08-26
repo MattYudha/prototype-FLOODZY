@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Card } from '@/components/ui/card';
+import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { List, X } from 'lucide-react';
 import { FLOOD_RISK_COLORS } from '@/lib/constants';

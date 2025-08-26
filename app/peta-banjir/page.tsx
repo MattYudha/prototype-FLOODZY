@@ -1,7 +1,7 @@
-
 'use client';
 
 import React, { useState, Suspense } from 'react';
+import 'leaflet/dist/leaflet.css';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
 import { Button } from '@/components/ui/Button';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription } from '@/components/ui/drawer';
@@ -12,9 +12,99 @@ const FloodMap = React.lazy(() =>
   import('@/components/map/FloodMap').then(module => ({ default: module.FloodMap }))
 );
 
+// NEW: Types for Crowdsourced and Official BPBD Data (moved here for clarity)
+interface CrowdsourcedReport {
+  report_id: string;
+  type: "Laporan Pengguna";
+  severity: "Rendah" | "Sedang" | "Tinggi";
+  depth_cm: number;
+  timestamp: string;
+  notes: string;
+  upvotes: number;
+  geometry: { type: "Point"; coordinates: [number, number] }; // [longitude, latitude]
+}
+
+interface OfficialBPBDData {
+  report_id: string;
+  type: "Data Resmi BPBD";
+  severity: "Rendah" | "Sedang" | "Tinggi" | "Kritis";
+  depth_cm: number;
+  status: "Naik" | "Stabil" | "Surut";
+  timestamp: string;
+  geometry: { type: "Polygon"; coordinates: [number[][]] }; // [longitude, latitude]
+}
+
 const PetaBanjirPage = () => {
   const isMobile = useMediaQuery("(max-width: 768px)");
   const [isMapFullScreen, setMapFullScreen] = useState(false);
+
+  // Mock data for crowdsourced reports
+  const crowdsourcedReports: CrowdsourcedReport[] = [
+    {
+      report_id: "usr-123",
+      type: "Laporan Pengguna",
+      severity: "Rendah",
+      depth_cm: 20,
+      timestamp: "2025-08-26T07:30:00Z",
+      notes: "Genangan se-mata kaki, masih bisa dilewati motor.",
+      upvotes: 15,
+      geometry: { type: "Point", coordinates: [106.827, -6.175] }, // [longitude, latitude]
+    },
+    {
+      report_id: "usr-124",
+      type: "Laporan Pengguna",
+      severity: "Sedang",
+      depth_cm: 50,
+      timestamp: "2025-08-26T08:00:00Z",
+      notes: "Banjir selutut, motor sulit lewat.",
+      upvotes: 8,
+      geometry: { type: "Point", coordinates: [106.850, -6.200] },
+    },
+  ];
+
+  // Mock data for official BPBD data
+  const officialBPBDData: OfficialBPBDData[] = [
+    {
+      report_id: "bpbd-456",
+      type: "Data Resmi BPBD",
+      severity: "Tinggi",
+      depth_cm: 110,
+      status: "Naik",
+      timestamp: "2025-08-26T08:00:00Z",
+      geometry: {
+        type: "Polygon",
+        coordinates: [
+          [
+            [106.800, -6.150],
+            [106.810, -6.150],
+            [106.810, -6.160],
+            [106.800, -6.160],
+            [106.800, -6.150],
+          ],
+        ],
+      },
+    },
+    {
+      report_id: "bpbd-457",
+      type: "Data Resmi BPBD",
+      severity: "Kritis",
+      depth_cm: 150,
+      status: "Naik",
+      timestamp: "2025-08-26T09:00:00Z",
+      geometry: {
+        type: "Polygon",
+        coordinates: [
+          [
+            [106.830, -6.180],
+            [106.840, -6.180],
+            [106.840, -6.190],
+            [106.830, -6.190],
+            [106.830, -6.180],
+          ],
+        ],
+      },
+    },
+  ];
 
   const MapLoader = () => (
     <div className="absolute inset-0 flex flex-col items-center justify-center bg-background/80 backdrop-blur-sm z-10">
@@ -48,9 +138,9 @@ const PetaBanjirPage = () => {
                 Geser ke bawah untuk menutup peta.
               </DrawerDescription>
             </DrawerHeader>
-            <div className="flex-1 p-0 overflow-hidden">
+            <div className="flex-1 p-0 overflow-hidden relative">
               <Suspense fallback={<MapLoader />}>
-                <FloodMap />
+                <FloodMap crowdsourcedReports={crowdsourcedReports} officialBPBDData={officialBPBDData} />
               </Suspense>
             </div>
           </DrawerContent>
@@ -60,9 +150,9 @@ const PetaBanjirPage = () => {
   }
 
   return (
-    <div className="w-full h-full">
+    <div className="w-full h-screen relative"> {/* Changed from min-h-screen to h-screen for full viewport height */}
       <Suspense fallback={<MapLoader />}>
-        <FloodMap />
+        <FloodMap crowdsourcedReports={crowdsourcedReports} officialBPBDData={officialBPBDData} />
       </Suspense>
     </div>
   );

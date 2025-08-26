@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase/admin';
+import { EvacuationLocation } from '@/types'; // Import the updated type
 
 export const runtime = 'nodejs';
 
@@ -17,12 +18,24 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
+    // Mocking the new fields for demonstration purposes
+    const mockedData: EvacuationLocation[] = data.map((item: any) => ({
+      ...item,
+      operational_status: (['Buka', 'Penuh', 'Tutup Sementara', 'Buka dan Menerima Pengungsi'])[Math.floor(Math.random() * 4)],
+      essential_services: {
+        clean_water: (['Tersedia', 'Terbatas', 'Tidak Tersedia'])[Math.floor(Math.random() * 3)],
+        electricity: (['Tersedia', 'Terbatas', 'Tidak Tersedia'])[Math.floor(Math.random() * 3)],
+        medical_support: (['Tersedia 24 Jam', 'Tersedia', 'Tidak Tersedia'])[Math.floor(Math.random() * 3)],
+      },
+      verified_by: (['BPBD DKI Jakarta', 'Palang Merah Indonesia', 'BNPB'])[Math.floor(Math.random() * 3)],
+    }));
+
     console.log(
-      '[API Evakuasi] Data fetched successfully:',
-      data ? data.length : 0,
+      '[API Evakuasi] Data fetched successfully (with mocked fields):',
+      mockedData ? mockedData.length : 0,
       'items.',
     );
-    return NextResponse.json(data, { status: 200 });
+    return NextResponse.json(mockedData, { status: 200 });
   } catch (error: any) {
     console.error('[API Evakuasi] Unexpected error in GET handler:', error);
     return NextResponse.json(

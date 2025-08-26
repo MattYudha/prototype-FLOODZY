@@ -30,7 +30,7 @@ import {
 
 import { useTheme } from '@/hooks/useTheme';
 import { SelectedLocation } from '@/types/location';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { RegionDropdown } from '@/components/region-selector/RegionDropdown';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';

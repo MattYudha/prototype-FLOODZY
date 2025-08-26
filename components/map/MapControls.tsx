@@ -15,8 +15,8 @@ import {
   AlertTriangle, // Import AlertTriangle untuk ikon peringatan
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
-import { Card } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { Card } from '@/components/ui/Card';
+import { Badge } from '@/components/ui/Badge';
 import { cn } from '@/lib/utils';
 
 interface MapControlsProps {
@@ -30,6 +30,10 @@ interface MapControlsProps {
   showWeatherStations: boolean;
   onRealtimeAlertsToggle: () => void; // Properti baru untuk toggle peringatan real-time
   showRealtimeAlerts: boolean; // Properti baru untuk status peringatan real-time
+  onCrowdsourcedReportsToggle: () => void; // NEW: Toggle for crowdsourced reports
+  showCrowdsourcedReports: boolean; // NEW: State for crowdsourced reports visibility
+  onOfficialBPBDDataToggle: () => void; // NEW: Toggle for official BPBD data
+  showOfficialBPBDData: boolean; // NEW: State for official BPBD data visibility
 }
 
 const mapLayers = [
@@ -49,6 +53,10 @@ export function MapControls({
   showWeatherStations,
   onRealtimeAlertsToggle, // Destrukturisasi properti baru
   showRealtimeAlerts, // Destrukturisasi properti baru
+  onCrowdsourcedReportsToggle, // NEW: Destructure new prop
+  showCrowdsourcedReports, // NEW: Destructure new prop
+  onOfficialBPBDDataToggle, // NEW: Destructure new prop
+  showOfficialBPBDData, // NEW: Destructure new prop
 }: MapControlsProps) {
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -171,6 +179,42 @@ export function MapControls({
                       <EyeOff size={14} className="text-muted-foreground" />
                     )}
                   </Button>
+
+                  {/* NEW: Tombol Toggle Laporan Pengguna */}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={onCrowdsourcedReportsToggle}
+                    className="w-full justify-between h-8 text-slate-900 dark:text-slate-100 border-slate-400 dark:border-slate-600"
+                  >
+                    <div className="flex items-center">
+                      <MapPin size={14} className="mr-2" />
+                      Laporan Pengguna
+                    </div>
+                    {showCrowdsourcedReports ? (
+                      <Eye size={14} className="text-success" />
+                    ) : (
+                      <EyeOff size={14} className="text-muted-foreground" />
+                    )}
+                  </Button>
+
+                  {/* NEW: Tombol Toggle Data Resmi BPBD */}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={onOfficialBPBDDataToggle}
+                    className="w-full justify-between h-8 text-slate-900 dark:text-slate-100 border-slate-400 dark:border-slate-600"
+                  >
+                    <div className="flex items-center">
+                      <AlertTriangle size={14} className="mr-2" />
+                      Data Resmi BPBD
+                    </div>
+                    {showOfficialBPBDData ? (
+                      <Eye size={14} className="text-success" />
+                    ) : (
+                      <EyeOff size={14} className="text-muted-foreground" />
+                    )}
+                  </Button>
                 </div>
               </div>
             </Card>
@@ -207,3 +251,4 @@ export function MapControls({
     </motion.div>
   );
 }
+

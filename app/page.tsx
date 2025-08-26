@@ -77,6 +77,7 @@ export default async function Home() {
     latestQuake,
     quakeError,
     realTimeAlerts,
+    // weatherSummary and airQuality will be fetched client-side
   };
 
   return <DashboardClientPage initialData={initialData} />;
