@@ -174,13 +174,7 @@ export function DashboardClientPage({ initialData }) {
     [fetchWeather, setSelectedLocation, setMapBounds, fetchDisasterAreas],
   );
 
-  useEffect(() => {
-    if (mapBounds && mapBounds.bounds) {
-      fetchDisasterAreas({ south: mapBounds.bounds[0][0], west: mapBounds.bounds[0][1], north: mapBounds.bounds[1][0], east: mapBounds.bounds[1][1] });
-    } else {
-      fetchDisasterAreas({ south: DEFAULT_MAP_CENTER[0] - 0.1, west: DEFAULT_MAP_CENTER[1] - 0.1, north: DEFAULT_MAP_CENTER[0] + 0.1, east: DEFAULT_MAP_CENTER[1] + 0.1 });
-    }
-  }, [mapBounds, fetchDisasterAreas]);
+  
 
   const refreshDisasterData = useCallback(() => {
     if (mapBounds && mapBounds.bounds) {
