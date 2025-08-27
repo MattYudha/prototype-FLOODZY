@@ -1,4 +1,4 @@
-import { Wind, Leaf } from 'lucide-react';
+import { Wind, Leaf, Loader2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 interface AirQualityCardProps {
@@ -11,6 +11,27 @@ interface AirQualityCardProps {
 }
 
 export function AirQualityCard({ airQuality }: AirQualityCardProps) {
+  if (!airQuality || !airQuality.level) {
+    // Return a placeholder or loading state instead of null
+    return (
+      <Card className="bg-slate-800/50 border-slate-700/30 backdrop-blur-sm rounded-xl shadow-lg text-white">
+        <CardHeader className="pb-4">
+          <CardTitle className="flex items-center space-x-2 text-lg font-medium text-white">
+            <div className="p-2 bg-gray-500/20 rounded-lg border border-gray-400/30">
+              <Leaf className="h-5 w-5 text-gray-400" />
+            </div>
+            <span>Kualitas Udara</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-4 pt-0 space-y-4">
+          <div className="flex items-center justify-center h-24">
+            <Loader2 className="h-8 w-8 animate-spin text-cyan-400" />
+            <p className="ml-2 text-gray-400">Memuat data kualitas udara...</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
   const getAqiLevelColor = (level: string) => {
     switch (level.toLowerCase()) {
       case 'baik':

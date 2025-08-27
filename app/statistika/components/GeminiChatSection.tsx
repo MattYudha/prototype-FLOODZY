@@ -16,7 +16,7 @@ import {
   Cloud,
   Info
 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/components/ui/Button';
 
 interface GeminiChatSectionProps {
   geminiQuestion: string;

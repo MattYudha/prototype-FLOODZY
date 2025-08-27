@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getIp } from '@/lib/getIp';
-import { rateLimit } from '@/lib/rateLimiter';
-import { getCache, setCache } from '@/lib/cache';
+import { getIp } from '@/src/lib/getIp';
+import { rateLimit } from '@/src/lib/rateLimiter';
+import { getCache, setCache } from '@/src/lib/cache';
 import * as Sentry from "@sentry/nextjs";
-import { logApi, now } from "@/lib/logger";
-import { getRequestId } from "@/lib/requestId";
+import { logApi, now } from '@/src/lib/logger';
+import { getRequestId } from '@/src/lib/requestId';
 
 export const runtime = "edge";
 

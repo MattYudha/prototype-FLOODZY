@@ -14,7 +14,7 @@ import {
   Settings,
   AlertTriangle, // Import AlertTriangle untuk ikon peringatan
 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';

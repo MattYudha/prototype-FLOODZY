@@ -9,7 +9,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/components/ui/Button';
 import { Loader2, AlertCircle, Cloud, Droplets, Wind, Thermometer, Eye, Clock } from 'lucide-react';
 import { useWeatherData } from '@/hooks/useWeatherData';
 import { format } from 'date-fns';

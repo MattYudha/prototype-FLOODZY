@@ -8,8 +8,8 @@ WORKDIR /app
 # Copy package.json and lock file
 COPY package*.json ./
 
-# Install dependencies using npm ci for faster, more reliable builds
-RUN npm ci
+# Force clean install for cross-platform compatibility
+RUN rm -rf node_modules package-lock.json && npm install
 
 # Copy the rest of the application source code
 COPY . .

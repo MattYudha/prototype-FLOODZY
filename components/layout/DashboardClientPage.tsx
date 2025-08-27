@@ -19,7 +19,7 @@ import { useAppStore } from '@/lib/store';
 import { WeatherDisplay } from '@/components/weather/WeatherDisplay';
 import { DashboardStats } from '@/components/dashboard/DashboardStats';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription } from '@/components/ui/drawer';
@@ -93,8 +93,8 @@ const FloodReportChart = dynamic(() => import('@/components/data-sensor/FloodRep
 export function DashboardClientPage({ initialData }) {
   const { selectedLocation, mapBounds, setSelectedLocation, setMapBounds } = useAppStore();
 
-  const [weatherSummary, setWeatherSummary] = useState(initialData.weatherSummary);
-  const [airQuality, setAirQuality] = useState(initialData.airQuality);
+  const [weatherSummary, setWeatherSummary] = useState(initialData.weatherSummary || null);
+  const [airQuality, setAirQuality] = useState(initialData.airQuality || null);
 
   const isMobile = useMediaQuery('(max-width: 768px)');
   const isLargeScreen = useMediaQuery('(min-width: 1024px)');
