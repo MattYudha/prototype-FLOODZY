@@ -20,7 +20,7 @@ import { WeatherDisplay } from '@/components/weather/WeatherDisplay';
 import { DashboardStats } from '@/components/dashboard/DashboardStats';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import { Badge } from '@/components/ui/badge';
+import { Badge } from '@/components/ui/Badge';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription } from '@/components/ui/drawer';
 import { toast } from 'sonner';
@@ -180,7 +180,7 @@ export function DashboardClientPage({ initialData }) {
     } else {
       fetchDisasterAreas({ south: DEFAULT_MAP_CENTER[0] - 0.1, west: DEFAULT_MAP_CENTER[1] - 0.1, north: DEFAULT_MAP_CENTER[0] + 0.1, east: DEFAULT_MAP_CENTER[1] + 0.1 });
     }
-  }, []);
+  }, [mapBounds, fetchDisasterAreas]);
 
   const refreshDisasterData = useCallback(() => {
     if (mapBounds && mapBounds.bounds) {
