@@ -9,10 +9,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
-    "test": "vitest",
-    "test:ui": "vitest --ui",
-    "preflight": "echo \"Running preflight checks...\" && echo \"✅ .env check, ✅ dependency check (placeholder)\""
+    "lint": "eslint . --ext .ts,.tsx --max-warnings=0",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
   },
   "dependencies": {
     "@floating-ui/react-dom": "2.1.6",

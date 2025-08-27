@@ -263,6 +263,80 @@ floodzy/
 ├── ts-errors.txt
 └── tsconfig.json
 ```
+## API Hardening: Rate Limiting & Caching
+
+To ensure API stability and prevent abuse, Floodzy APIs implement rate limiting and caching mechanisms.
+
+- **Rate Limiting**: APIs are limited to **60 requests per minute per IP address**. Exceeding this limit will result in a `429 Too Many Requests` response.
+- **Caching**: API responses are cached to reduce server load and improve response times. The default cache TTL (Time-To-Live) is **60 seconds**.
+
+Both features are powered by **Upstash Redis**. Ensure the following environment variables are set in your `.env.local` file:
+
+```
+UPSTASH_REDIS_REST_URL=YOUR_UPSTASH_REDIS_REST_URL
+UPSTASH_REDIS_REST_TOKEN=YOUR_UPSTASH_REDIS_REST_TOKEN
+```
+
+You can override the default cache TTL for specific routes by passing an `ttl` option to the caching function within the route handler. For example:
+
+```typescript
+await setCache(cacheKey, data, { ttl: 300 }); // Cache for 5 minutes
+```
+
+## Observability
+
+Floodzy integrates with Sentry for error monitoring and performance tracing, and implements structured logging for API routes to enhance observability.
+
+### Sentry Configuration
+
+Sentry helps in real-time error tracking and performance monitoring. To enable Sentry, set the following environment variables in your `.env.local` (for local development) and your deployment environment (e.g., Vercel) for preview and production stages:
+
+```
+SENTRY_DSN="https://<your-dsn>.ingest.sentry.io/<project-id>"
+SENTRY_TRACES_SAMPLE_RATE="0.1"
+SENTRY_PROFILES_SAMPLE_RATE="0.0"
+SENTRY_ENVIRONMENT="development" # or "production", "preview"
+```
+
+- `SENTRY_DSN`: Your project's DSN from Sentry.
+- `SENTRY_TRACES_SAMPLE_RATE`: Percentage of transactions to sample for performance monitoring (e.g., 0.1 for 10%).
+- `SENTRY_PROFILES_SAMPLE_RATE`: Percentage of transactions to sample for profiling (e.g., 0.0 for disabled).
+- `SENTRY_ENVIRONMENT`: The environment name (e.g., `development`, `production`, `preview`).
+
+You can view captured errors and performance traces in your Sentry dashboard under the "Issues" and "Performance" tabs, respectively.
+
+### Structured API Logging
+
+API routes (`/api/*`) now produce structured JSON logs to provide better insights into request processing. Each API response includes an `X-Request-Id` header, which can be used to correlate logs for a single request.
+
+Example log entry (you can `grep` for `X-Request-Id` in your Vercel logs):
+
+```json
+{
+  "level": "info",
+  "ts": "2025-08-27T12:34:56.789Z",
+  "route": "/api/petabencana",
+  "method": "GET",
+  "status": 200,
+  "ip": "192.168.1.1",
+  "cache": "HIT",
+  "rlRemaining": 59,
+  "durationMs": 15,
+  "requestId": "some-uuid-1234"
+}
+```
+
+Key fields in the logs:
+- `route`: The API endpoint path.
+- `method`: HTTP method (e.g., `GET`, `POST`).
+- `status`: HTTP response status code.
+- `ip`: Client IP address.
+- `cache`: Cache status (`HIT`, `MISS`, `BYPASS`).
+- `rlRemaining`: Remaining requests in the rate limit window.
+- `durationMs`: Request duration in milliseconds.
+- `error`: Error message if an error occurred.
+- `requestId`: Unique ID for the request (`X-Request-Id` header).
+
 ## 🌟 Roadmap
 
 - [x] 🌊 **Monitoring Banjir Dasar** – Peta interaktif & data ketinggian air.
