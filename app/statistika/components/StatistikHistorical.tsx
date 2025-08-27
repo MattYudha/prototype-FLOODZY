@@ -20,8 +20,8 @@ import {
   FileSearch,
   Filter,
 } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
-import { Button } from '@/components/ui/Button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { HistoricalIncident } from '../statistika.types';
 
 const getIncidentIcon = (type: string) => {

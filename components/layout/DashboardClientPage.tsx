@@ -18,9 +18,9 @@ import { useAppStore } from '@/lib/store';
 // UI Components
 import { WeatherDisplay } from '@/components/weather/WeatherDisplay';
 import { DashboardStats } from '@/components/dashboard/DashboardStats';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
-import { Button } from '@/components/ui/Button';
-import { Badge } from '@/components/ui/Badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription } from '@/components/ui/drawer';
 import { toast } from 'sonner';

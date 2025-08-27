@@ -20,7 +20,7 @@ import {
   History,
 } from 'lucide-react';
 
-import { Button } from '@/components/ui/Button';
+import { Button } from '@/components/ui/button';
 import { HistoricalIncident, ChartDataPoint, StatCard } from './statistika.types';
 import { generateChartData } from './statistika.utils';
 import GeminiChatSection from './components/GeminiChatSection';

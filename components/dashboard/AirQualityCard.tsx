@@ -1,5 +1,5 @@
 import { Wind, Leaf } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 interface AirQualityCardProps {
   airQuality: {

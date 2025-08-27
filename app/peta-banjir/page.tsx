@@ -3,7 +3,7 @@
 import React, { useState, Suspense } from 'react';
 import 'leaflet/dist/leaflet.css';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@/components/ui/button';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription } from '@/components/ui/drawer';
 import { MapIcon, Loader2 } from 'lucide-react';
 
