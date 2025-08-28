@@ -266,6 +266,13 @@ export function normalizeSeries<T extends ChartRow>(
       const v = Number(o[k]);
       o[k] = Number.isFinite(v) ? v : 0;
     }
-    return o as T;
+        return o as T;
   });
 }
+
+export const getBaseUrl = () => {
+  if (process.env.NEXT_PUBLIC_VERCEL_ENV === 'production' || process.env.NEXT_PUBLIC_VERCEL_ENV === 'preview') {
+    return '';
+  }
+  return process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+};

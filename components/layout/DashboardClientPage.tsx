@@ -61,7 +61,7 @@ import {
   DEFAULT_MAP_ZOOM,
   WEATHER_STATIONS_GLOBAL_MOCK,
 } from '@/lib/constants';
-import { cn, formatNumber } from '@/lib/utils';
+import { cn, formatNumber, getBaseUrl } from '@/lib/utils';
 
 // App Components
 import { RegionDropdown } from '@/components/region-selector/RegionDropdown';
@@ -125,7 +125,7 @@ export function DashboardClientPage({ initialData }) {
     const fetchDashboardWidgets = async () => {
       if (selectedLocation && selectedLocation.latitude != null && selectedLocation.longitude != null) {
         try {
-          const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/dashboard-widgets?lat=${selectedLocation.latitude}&lon=${selectedLocation.longitude}&locationName=${encodeURIComponent(selectedLocation.districtName || '')}`);
+          const response = await fetch(`${getBaseUrl()}/api/dashboard-widgets?lat=${selectedLocation.latitude}&lon=${selectedLocation.longitude}&locationName=${encodeURIComponent(selectedLocation.districtName || '')}`);
           if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
           }
