@@ -15,8 +15,13 @@ export async function GET(request: Request) {
     );
   }
 
-  const API_KEY = process.env.NEXT_PUBLIC_OPENWEATHERMAP_API_KEY;
+  const API_KEY = process.env.OPENWEATHER_API_KEY;
+
+  // Log for debugging to see if the key is being picked up by Vercel
+  console.log('Attempting to use OpenWeatherMap API Key:', API_KEY ? 'Key Found' : 'Key Not Found');
+
   if (!API_KEY) {
+    console.error('Server-side error: OpenWeatherMap API key is missing or not configured in Vercel project settings.');
     return NextResponse.json(
       { error: 'OpenWeatherMap API key not configured' },
       { status: 500 },
