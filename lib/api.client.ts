@@ -1,5 +1,6 @@
 // File: lib/api.client.ts
 import { safeFetch, UserFriendlyError } from './error-utils';
+import { getBaseUrl } from './utils';
 import {
   RegionData,
   OverpassResponse,
@@ -17,9 +18,7 @@ import {
   CombinedWeatherData,
 } from './api'; // Import necessary types from lib/api.ts
 
-const getBaseUrl = () => {
-  return process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
-};
+
 
 export async function fetchRegionsClient(
   type: 'provinces' | 'regencies' | 'districts' | 'villages',
