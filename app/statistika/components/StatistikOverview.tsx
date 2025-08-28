@@ -513,7 +513,7 @@ Pastikan setiap bagian analisis disajikan dalam paragraf singkat dan poin-poin y
                     fill="#8884d8"
                     dataKey="value"
                     nameKey="name"
-                    label={({ percent }) => `${(percent * 100).toFixed(0)}%`}
+                    label={true}
                   >
                     {pieData.map((entry, index) => (
                       <Cell 
@@ -532,7 +532,6 @@ Pastikan setiap bagian analisis disajikan dalam paragraf singkat dan poin-poin y
                       backdropFilter: 'blur(16px)',
                       boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
                     }}
-                    labelStyle={{ color: '#E2E8F0', fontWeight: 'bold' }}
                     itemStyle={{ color: '#CBD5E1' }}
                   />
                 </RechartsPieChart>

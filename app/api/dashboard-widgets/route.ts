@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 
-const OPENWEATHERMAP_API_KEY = process.env.OPENWEATHERMAP_API_KEY || 'YOUR_OPENWEATHERMAP_API_KEY'; // Replace with your actual API key
+const OPENWEATHERMAP_API_KEY = process.env.OPENWEATHER_API_KEY || 'YOUR_OPENWEATHERMAP_API_KEY'; // Replace with your actual API key
 const OPENWEATHERMAP_BASE_URL = 'https://api.openweathermap.org/data/2.5';
 const OPENWEATHERMAP_GEO_URL = 'https://api.openweathermap.org/geo/1.0';
 
