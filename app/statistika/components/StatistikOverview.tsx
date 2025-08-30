@@ -384,7 +384,7 @@ Pastikan setiap bagian analisis disajikan dalam paragraf singkat dan poin-poin y
                 </div>
               </CardTitle>
             </CardHeader>
-            <CardContent className="p-6 h-[350px]">
+            <CardContent className="p-6 h-auto sm:h-[350px]">
               {isClient && (
               <ResponsiveContainer width="100%" height={350}>
                 <AreaChart data={chartData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
@@ -481,7 +481,7 @@ Pastikan setiap bagian analisis disajikan dalam paragraf singkat dan poin-poin y
                 </div>
               </CardTitle>
             </CardHeader>
-            <CardContent className="flex justify-center items-center h-[350px] p-6 relative">
+            <CardContent className="flex justify-center items-center h-auto sm:h-[350px] p-6 relative">
               {/* Legend */}
               <div className="absolute top-4 right-4 space-y-2">
                 {pieData.map((item, index) => (

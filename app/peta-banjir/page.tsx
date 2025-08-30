@@ -5,7 +5,7 @@ import 'leaflet/dist/leaflet.css';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
 import { Button } from '@/components/ui/Button';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription } from '@/components/ui/drawer';
-import { MapIcon, Loader2 } from 'lucide-react';
+import { MapIcon, Loader2, Expand, Minimize } from 'lucide-react';
 
 // Lazy load the FloodMap component for better performance
 const FloodMap = React.lazy(() =>
@@ -37,6 +37,25 @@ interface OfficialBPBDData {
 const PetaBanjirPage = () => {
   const isMobile = useMediaQuery("(max-width: 768px)");
   const [isMapFullScreen, setMapFullScreen] = useState(false);
+
+  React.useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+        if (event.key === 'Escape' && isMapFullScreen) {
+          setMapFullScreen(false);
+        }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isMapFullScreen]);
+
+  React.useEffect(() => {
+      if (isMapFullScreen) {
+          document.body.classList.add('overflow-hidden');
+      } else {
+          document.body.classList.remove('overflow-hidden');
+      }
+      return () => document.body.classList.remove('overflow-hidden');
+  }, [isMapFullScreen]);
 
   // Mock data for crowdsourced reports
   const crowdsourcedReports: CrowdsourcedReport[] = [
@@ -138,7 +157,7 @@ const PetaBanjirPage = () => {
                 Geser ke bawah untuk menutup peta.
               </DrawerDescription>
             </DrawerHeader>
-            <div className="flex-1 p-0 overflow-hidden relative">
+            <div className="flex-1 p-0 overflow-hidden relative bg-slate-900">
               <Suspense fallback={<MapLoader />}>
                 <FloodMap crowdsourcedReports={crowdsourcedReports} officialBPBDData={officialBPBDData} />
               </Suspense>
@@ -150,9 +169,18 @@ const PetaBanjirPage = () => {
   }
 
   return (
-    <div className="w-full h-screen relative"> {/* Changed from min-h-screen to h-screen for full viewport height */}
+    <div className={isMapFullScreen ? "fixed inset-0 z-50 w-screen h-screen bg-slate-900" : "w-full h-screen relative"}>
+      <Button
+          onClick={() => setMapFullScreen(!isMapFullScreen)}
+          variant="outline"
+          size="icon"
+          className="absolute top-[10px] right-[10px] z-[1000] w-8 h-8 bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-600 rounded-sm flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 shadow-lg"
+          aria-label={isMapFullScreen ? 'Keluar dari layar penuh' : 'Masuk ke layar penuh'}
+      >
+          {isMapFullScreen ? <Minimize className="w-4 h-4" /> : <Expand className="w-4 h-4" />}
+      </Button>
       <Suspense fallback={<MapLoader />}>
-        <FloodMap crowdsourcedReports={crowdsourcedReports} officialBPBDData={officialBPBDData} />
+        <FloodMap key={isMapFullScreen ? 'fullscreen' : 'normal'} crowdsourcedReports={crowdsourcedReports} officialBPBDData={officialBPBDData} />
       </Suspense>
     </div>
   );

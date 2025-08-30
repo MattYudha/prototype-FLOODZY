@@ -43,6 +43,8 @@ import {
   LocateFixed,
   RefreshCw,
   Leaf,
+  Expand,
+  Minimize,
 } from 'lucide-react';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -447,83 +449,48 @@ export default function PrakiraanCuacaPage() {
     pressure: false,
   });
 
-  // ✅ PERBAIKAN TOTAL: Menggunakan 2 endpoint gratis dan menggabungkan datanya
+  const [isMapFullscreen, setIsMapFullscreen] = useState(false);
+
   useEffect(() => {
-    console.log(
-      'useEffect for weather data triggered. selectedLocation:',
-      selectedLocation,
-    );
+    const handleKeyDown = (event: KeyboardEvent) => {
+        if (event.key === 'Escape' && isMapFullscreen) {
+            setIsMapFullscreen(false);
+        }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isMapFullscreen]);
+
+  useEffect(() => {
+      if (isMapFullscreen) {
+          document.body.classList.add('overflow-hidden');
+      } else {
+          document.body.classList.remove('overflow-hidden');
+      }
+      return () => document.body.classList.remove('overflow-hidden');
+  }, [isMapFullscreen]);
+
+  useEffect(() => {
     if (selectedLocation) {
       const fetchWeatherData = async () => {
         setLoadingWeather(true);
         setWeatherError(null);
         setCurrentWeatherData(null);
 
-        const weatherUrl = 'https://api.openweathermap.org/data/2.5/weather';
-        const forecastUrl = 'https://api.openweathermap.org/data/2.5/forecast';
-        const airPollutionUrl = 'https://api.openweathermap.org/data/2.5/air_pollution';
-
-        const commonParams = {
-          lat: selectedLocation.lat,
-          lon: selectedLocation.lon,
-          appid: API_KEY,
-          units: 'metric',
-          lang: 'id',
-        };
-
         try {
-          // Lakukan 2 panggilan API secara bersamaan
-          const [weatherResponse, forecastResponse, airPollutionResponse] = await Promise.all([
-            axios.get(weatherUrl, { params: commonParams }),
-            axios.get(forecastUrl, { params: commonParams }),
-            axios.get(airPollutionUrl, { params: commonParams }),
-          ]);
-
-          console.log('Weather API Response:', weatherResponse.data);
-          console.log('Forecast API Response:', forecastResponse.data);
-          console.log('Air Pollution API Response:', airPollutionResponse.data);
-
-          const dailyForecasts = forecastResponse.data.list.filter(
-            (forecast: any) => forecast.dt_txt.includes('12:00:00'),
-          );
-
-          let airQualityData = null;
-          if (airPollutionResponse.data && airPollutionResponse.data.list && airPollutionResponse.data.list.length > 0) {
-            const aqi = airPollutionResponse.data.list[0].main.aqi;
-            const pm2_5 = airPollutionResponse.data.list[0].components.pm2_5;
-
-            let level = "Tidak Diketahui";
-            let recommendation = "Informasi kualitas udara tidak tersedia.";
-
-            if (aqi === 1) { level = "Baik"; recommendation = "Nikmati aktivitas di luar ruangan."; }
-            else if (aqi === 2) { level = "Sedang"; recommendation = "Kurangi aktivitas berat di luar ruangan jika Anda sensitif."; }
-            else if (aqi === 3) { level = "Tidak Sehat bagi Kelompok Sensitif"; recommendation = "Kelompok sensitif harus mengurangi aktivitas di luar ruangan."; }
-            else if (aqi === 4) { level = "Tidak Sehat"; recommendation = "Semua orang harus mengurangi aktivitas di luar ruangan."; }
-            else if (aqi === 5) { level = "Sangat Tidak Sehat"; recommendation = "Hindari semua aktivitas di luar ruangan."; }
-
-            airQualityData = {
-              aqi: aqi,
-              level: level,
-              pollutant: `PM2.5 (${pm2_5} µg/m³)` || "PM2.5",
-              recommendation: recommendation
-            };
-          }
-
-          const formattedData = {
-            current: weatherResponse.data,
-            daily: dailyForecasts,
-            airQuality: airQualityData,
-          };
-          setCurrentWeatherData(formattedData);
-          console.log('Formatted Weather Data (including AQI):', formattedData);
-                    setCurrentWeatherData(formattedData);
-          console.log('Formatted Weather Data (including AQI):', formattedData);
+          const response = await axios.get('/api/weather', {
+            params: {
+              lat: selectedLocation.lat,
+              lon: selectedLocation.lon,
+            },
+          });
+          setCurrentWeatherData(response.data);
           setCurrentMapCenter([selectedLocation.lat, selectedLocation.lon]);
           setCurrentMapZoom(12);
         } catch (error: any) {
           console.error('Error fetching weather data:', error);
           const errorMessage =
-            error.response?.data?.message ||
+            error.response?.data?.error ||
             'Gagal mengambil data cuaca. Coba lagi nanti.';
           setWeatherError(errorMessage);
         } finally {
@@ -893,9 +860,9 @@ export default function PrakiraanCuacaPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="lg:col-span-5"
+            className={isMapFullscreen ? 'fixed inset-0 z-50 w-screen h-screen bg-slate-900' : 'lg:col-span-5'}
           >
-            <Card className="h-full bg-slate-800/60 backdrop-blur-xl border border-slate-700/50 rounded-2xl shadow-2xl">
+            <Card className={`h-full bg-slate-800/60 backdrop-blur-xl border border-slate-700/50 shadow-2xl ${isMapFullscreen ? 'rounded-none' : 'rounded-2xl'}`}>
               <CardHeader className="bg-gradient-to-r from-slate-800/50 to-slate-700/50 border-b border-slate-700/50">
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-white flex items-center space-x-2 truncate">
@@ -906,8 +873,17 @@ export default function PrakiraanCuacaPage() {
                   </CardTitle>
                 </div>
               </CardHeader>
-              <CardContent className="p-0">
-                <div className="h-[500px] lg:h-[calc(100vh-140px)]">
+              <CardContent className="p-0 relative">
+                <Button
+                    onClick={() => setIsMapFullscreen(!isMapFullscreen)}
+                    variant="outline"
+                    size="icon"
+                    className="absolute top-[78px] left-[10px] z-[1000] w-8 h-8 bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-600 rounded-sm flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 shadow-lg"
+                    aria-label={isMapFullscreen ? 'Keluar dari layar penuh' : 'Masuk ke layar penuh'}
+                >
+                    {isMapFullscreen ? <Minimize className="w-4 h-4" /> : <Expand className="w-4 h-4" />}
+                </Button>
+                <div className={`${isMapFullscreen ? 'h-screen' : 'h-[500px] lg:h-[calc(100vh-140px)]'} bg-slate-900`}>
                   {API_KEY ? (
                     <>
                       {console.log('Rendering WeatherMap with props:')}
@@ -917,6 +893,7 @@ export default function PrakiraanCuacaPage() {
                       {console.log('  selectedLocation:', selectedLocation)}
                       {console.log('  apiKey:', API_KEY)}
                       <WeatherMap
+                        key={isMapFullscreen ? 'fullscreen' : 'normal'}
                         center={currentMapCenter}
                         zoom={currentMapZoom}
                         weatherLayers={weatherLayers}

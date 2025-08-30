@@ -3,13 +3,20 @@
 
 import { useState } from 'react';
 import { useRegionData } from '@/hooks/useRegionData';
+import { Button } from '@/components/ui/button';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from '@/components/ui/command';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -19,7 +26,7 @@ import {
   Building2,
   Globe,
   Map,
-  ChevronDown,
+  ChevronsUpDown,
   CheckCircle,
   Info,
   Loader2,
@@ -180,63 +187,93 @@ export function RegionDropdown({
     valueKey: string,
     nameKey: string,
     currentDisplayName: string | null,
-  ) => (
-    <div className="space-y-1.5">
-      <div className="flex items-center gap-1.5 text-xs font-medium text-gray-300">
-        {icon}
-        <span>{placeholder}</span>
-        {loading && <Loader2 className="h-3 w-3 animate-spin text-cyan-400" />}
-      </div>
-      <Select
-        value={selectedValue || ''}
-        onValueChange={onValueChange}
-        disabled={disabled}
-      >
-        <SelectTrigger className="w-full h-9 sm:h-10 bg-gray-800/40 border-gray-700/50 text-white rounded-lg hover:bg-gray-800/60 hover:border-gray-600/50 transition-all duration-300 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50 disabled:opacity-50 disabled:cursor-not-allowed backdrop-blur-sm">
-          <SelectValue
-            placeholder={
-              loading ? (
+  ) => {
+    const [open, setOpen] = useState(false);
+
+    return (
+      <div className="space-y-1.5">
+        <div className="flex items-center gap-1.5 text-xs font-medium text-gray-300">
+          {icon}
+          <span>{placeholder}</span>
+          {loading && <Loader2 className="h-3 w-3 animate-spin text-cyan-400" />}
+        </div>
+        <Popover open={open} onOpenChange={setOpen}>
+          <PopoverTrigger asChild>
+            <Button
+              variant="outline"
+              role="combobox"
+              aria-expanded={open}
+              disabled={disabled}
+              className="w-full justify-between h-9 sm:h-10 bg-gray-800/40 border-gray-700/50 text-white rounded-lg hover:bg-gray-800/60 hover:border-gray-600/50 transition-all duration-300 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50 disabled:opacity-50 disabled:cursor-not-allowed backdrop-blur-sm"
+            >
+              {currentDisplayName ? (
                 <div className="flex items-center gap-1.5">
-                  <Skeleton className="h-3 w-3 bg-gray-600 rounded" />
-                  <Skeleton className="h-3 w-16 bg-gray-600 rounded" />
+                  <CheckCircle className="h-3 w-3 text-green-400 flex-shrink-0" />
+                  <span className="text-white text-xs sm:text-sm truncate">
+                    {currentDisplayName}
+                  </span>
                 </div>
               ) : (
                 <span className="text-gray-400 text-xs sm:text-sm">{`Pilih ${placeholder}`}</span>
-              )
-            }
-          >
-            {currentDisplayName && (
-              <div className="flex items-center gap-1.5">
-                <CheckCircle className="h-3 w-3 text-green-400 flex-shrink-0" />
-                <span className="text-white text-xs sm:text-sm truncate">
-                  {currentDisplayName}
-                </span>
-              </div>
-            )}
-          </SelectValue>
-          <ChevronDown className="h-3 w-3 text-gray-400 flex-shrink-0" />
-        </SelectTrigger>
-        <SelectContent className="bg-gray-800/95 border-gray-700/50 text-white max-h-40 sm:max-h-48 overflow-y-auto backdrop-blur-md rounded-lg">
-          {data.map((item, index) => (
-            <SelectItem
-              key={item[valueKey]}
-              value={String(item[valueKey])}
-              className="hover:bg-gray-700/50 focus:bg-gray-700/50 transition-colors duration-200 cursor-pointer py-1.5 sm:py-2 px-2 sm:px-3 rounded-md mx-0.5 my-0.5"
-            >
-              <div className="flex items-center gap-2 w-full">
-                <span className="text-xs text-gray-400 min-w-[20px] sm:min-w-[24px] bg-gray-700/50 px-1 sm:px-1.5 py-0.5 rounded-sm flex-shrink-0">
-                  {String(index + 1).padStart(2, '0')}
-                </span>
-                <span className="text-xs sm:text-sm font-medium truncate">
-                  {item[nameKey]}
-                </span>
-              </div>
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-    </div>
-  );
+              )}
+              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-[--radix-popover-trigger-width] p-0 bg-gray-800/95 border-gray-700/50 text-white backdrop-blur-md rounded-lg">
+            <Command>
+              <CommandInput
+                placeholder={`Cari ${placeholder}...`}
+                className="h-9 border-0 bg-transparent text-white ring-offset-0 focus:ring-0"
+              />
+              <CommandEmpty>Tidak ada {placeholder} ditemukan.</CommandEmpty>
+              <CommandList>
+                <CommandGroup>
+                  {loading ? (
+                    <div className="p-2 text-center text-xs text-gray-400">
+                      Memuat data...
+                    </div>
+                  ) : (
+                    data.map((item, index) => (
+                      <CommandItem
+                        key={item[valueKey]}
+                        value={item[nameKey]}
+                        onSelect={(currentValue) => {
+                          const selected = data.find(
+                            (d) => d[nameKey].toLowerCase() === currentValue,
+                          );
+                          if (selected) {
+                            onValueChange(String(selected[valueKey]));
+                          }
+                          setOpen(false);
+                        }}
+                        className="hover:bg-gray-700/50 focus:bg-gray-700/50 transition-colors duration-200 cursor-pointer py-1.5 sm:py-2 px-2 sm:px-3 rounded-md mx-0.5 my-0.5"
+                      >
+                        <div className="flex items-center gap-2 w-full">
+                          <span className="text-xs text-gray-400 min-w-[20px] sm:min-w-[24px] bg-gray-700/50 px-1 sm:px-1.5 py-0.5 rounded-sm flex-shrink-0">
+                            {String(index + 1).padStart(2, '0')}
+                          </span>
+                          <span className="text-xs sm:text-sm font-medium truncate">
+                            {item[nameKey]}
+                          </span>
+                        </div>
+                        <CheckCircle
+                          className={`ml-auto h-4 w-4 ${
+                            selectedValue === String(item[valueKey])
+                              ? 'opacity-100 text-cyan-400'
+                              : 'opacity-0'
+                          }`}
+                        />
+                      </CommandItem>
+                    ))
+                  )}
+                </CommandGroup>
+              </CommandList>
+            </Command>
+          </PopoverContent>
+        </Popover>
+      </div>
+    );
+  };
 
   const isComplete =
     selectedDistrictCode &&

@@ -23,7 +23,7 @@ interface GeminiChatSectionProps {
   setGeminiQuestion: (value: string) => void;
   geminiResponse: string | null;
   isGeminiLoading: boolean;
-  handleGeminiAnalysis: () => void;
+  handleGeminiAnalysis: (question: string) => void;
 }
 
 interface ChatMessage {
@@ -108,7 +108,8 @@ export default function GeminiChatSection({
       }]);
       
       setShowSuggestions(false); // Sembunyikan saran setelah pesan pertama dikirim
-      handleGeminiAnalysis(); // Panggil fungsi analisis dari props
+      handleGeminiAnalysis(geminiQuestion); // Panggil fungsi analisis dari props
+      setGeminiQuestion(''); // Kosongkan input setelah dikirim
     }
   };
 
@@ -126,10 +127,7 @@ export default function GeminiChatSection({
     }]);
     
     // Langsung panggil analisis setelah mengklik saran
-    // Kita perlu sedikit delay agar state geminiQuestion sempat terupdate sebelum dipanggil
-    setTimeout(() => {
-        handleGeminiAnalysis();
-    }, 100);
+    handleGeminiAnalysis(suggestionText);
   };
 
   // Kirim pesan saat menekan tombol Enter

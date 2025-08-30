@@ -326,7 +326,7 @@ export default function StatistikHistorical({
                               <div className="flex-1 min-w-0">
                                 <div className="flex items-start justify-between mb-2">
                                   <div>
-                                    <h3 className="text-xl font-bold text-slate-100 group-hover:text-white transition-colors duration-300 mb-1">
+                                    <h3 className="text-xl font-bold text-slate-100 group-hover:text-white transition-colors duration-300 mb-1 truncate">
                                       {incident.type} di {incident.location}
                                     </h3>
                                     <div className="flex items-center space-x-4 text-sm text-slate-400">

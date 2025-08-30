@@ -1,35 +1,24 @@
-// src/app/api/weather/route.ts
+
 import { NextResponse } from 'next/server';
 import axios from 'axios';
 
-export const runtime = 'nodejs';
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const lat = searchParams.get('lat');
   const lon = searchParams.get('lon');
+  const API_KEY = process.env.NEXT_PUBLIC_OPENWEATHERMAP_API_KEY;
 
   if (!lat || !lon) {
-    return NextResponse.json(
-      { error: 'Latitude and longitude are required' },
-      { status: 400 },
-    );
+    return NextResponse.json({ error: 'Latitude and longitude are required' }, { status: 400 });
   }
 
-  const API_KEY = process.env.OPENWEATHER_API_KEY;
-
-  // Log for debugging to see if the key is being picked up by Vercel
-  console.log('Attempting to use OpenWeatherMap API Key:', API_KEY ? 'Key Found' : 'Key Not Found');
-
   if (!API_KEY) {
-    console.error('Server-side error: OpenWeatherMap API key is missing or not configured in Vercel project settings.');
-    return NextResponse.json(
-      { error: 'OpenWeatherMap API key not configured' },
-      { status: 500 },
-    );
+    return NextResponse.json({ error: 'OpenWeatherMap API Key not found' }, { status: 500 });
   }
 
   const weatherUrl = 'https://api.openweathermap.org/data/2.5/weather';
   const forecastUrl = 'https://api.openweathermap.org/data/2.5/forecast';
+  const airPollutionUrl = 'https://api.openweathermap.org/data/2.5/air_pollution';
 
   const commonParams = {
     lat,
@@ -40,26 +29,48 @@ export async function GET(request: Request) {
   };
 
   try {
-    // Melakukan dua panggilan API secara bersamaan
-    const [weatherResponse, forecastResponse] = await Promise.all([
+    const [weatherResponse, forecastResponse, airPollutionResponse] = await Promise.all([
       axios.get(weatherUrl, { params: commonParams }),
       axios.get(forecastUrl, { params: commonParams }),
+      axios.get(airPollutionUrl, { params: commonParams }),
     ]);
 
-    // Memproses data prakiraan untuk mendapatkan satu data per hari (misalnya, pada jam 12:00:00)
-    const dailyForecasts = forecastResponse.data.list.filter((forecast: any) =>
-      forecast.dt_txt.includes('12:00:00'),
+    const dailyForecasts = forecastResponse.data.list.filter(
+      (forecast: any) => forecast.dt_txt.includes('12:00:00'),
     );
 
-    // Menggabungkan hasil dari kedua API
-    const combinedData = {
+    let airQualityData = null;
+    if (airPollutionResponse.data && airPollutionResponse.data.list && airPollutionResponse.data.list.length > 0) {
+      const aqi = airPollutionResponse.data.list[0].main.aqi;
+      const pm2_5 = airPollutionResponse.data.list[0].components.pm2_5;
+
+      let level = "Tidak Diketahui";
+      let recommendation = "Informasi kualitas udara tidak tersedia.";
+
+      if (aqi === 1) { level = "Baik"; recommendation = "Nikmati aktivitas di luar ruangan."; }
+      else if (aqi === 2) { level = "Sedang"; recommendation = "Kurangi aktivitas berat di luar ruangan jika Anda sensitif."; }
+      else if (aqi === 3) { level = "Tidak Sehat bagi Kelompok Sensitif"; recommendation = "Kelompok sensitif harus mengurangi aktivitas di luar ruangan."; }
+      else if (aqi === 4) { level = "Tidak Sehat"; recommendation = "Semua orang harus mengurangi aktivitas di luar ruangan."; }
+      else if (aqi === 5) { level = "Sangat Tidak Sehat"; recommendation = "Hindari semua aktivitas di luar ruangan."; }
+
+      airQualityData = {
+        aqi: aqi,
+        level: level,
+        pollutant: `PM2.5 (${pm2_5} µg/m³)` || "PM2.5",
+        recommendation: recommendation
+      };
+    }
+
+    const formattedData = {
       current: weatherResponse.data,
       daily: dailyForecasts,
+      airQuality: airQualityData,
     };
 
-    return NextResponse.json(combinedData);
+    return NextResponse.json(formattedData);
+
   } catch (error: any) {
-    console.error('Error fetching weather data:', error);
+    console.error('Error fetching weather data in API route:', error);
     const errorMessage =
       error.response?.data?.message ||
       'Gagal mengambil data cuaca. Coba lagi nanti.';

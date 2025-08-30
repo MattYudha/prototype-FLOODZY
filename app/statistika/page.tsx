@@ -135,8 +135,8 @@ export default function StatistikPage() {
     });
 
   // Gemini handler
-  const handleGeminiAnalysis = useCallback(async () => {
-    if (!geminiQuestion.trim()) {
+  const handleGeminiAnalysis = useCallback(async (question: string) => {
+    if (!question.trim()) {
       setGeminiResponse('Silakan masukkan pertanyaan Anda.');
       return;
     }
@@ -149,7 +149,7 @@ export default function StatistikPage() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ prompt: geminiQuestion }),
+        body: JSON.stringify({ prompt: question }),
       });
 
       if (!response.ok) {
@@ -164,7 +164,7 @@ export default function StatistikPage() {
     } finally {
       setIsGeminiLoading(false);
     }
-  }, [geminiQuestion]);
+  }, []);
 
   // Render loading & error
   if (isLoading) {
@@ -188,9 +188,9 @@ export default function StatistikPage() {
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-white">
       <div className="container mx-auto px-6 py-8">
         {/* Header */}
-        <div className="flex justify-between items-center mb-6">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
           <h1 className="text-2xl font-bold">Dashboard Statistika</h1>
-          <div className="flex gap-3">
+          <div className="flex flex-wrap gap-2 sm:gap-3">
             <Button onClick={() => setActiveTab('overview')} variant={activeTab === 'overview' ? 'default' : 'outline'}>
               Overview
             </Button>
@@ -222,7 +222,7 @@ export default function StatistikPage() {
               className="bg-slate-800 rounded-lg p-4 mb-6"
             >
               {/* Filter Panel */}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="text-sm">Start Date</label>
                   <input

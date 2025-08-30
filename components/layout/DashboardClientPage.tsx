@@ -583,7 +583,7 @@ export function DashboardClientPage({ initialData }) {
               Gunakan dua jari untuk navigasi. Geser ke bawah untuk menutup.
             </DrawerDescription>
           </DrawerHeader>
-          <div className="flex-1 p-0 overflow-hidden">
+          <div className="flex-1 p-0 overflow-hidden" vaul-no-drag>
             <FloodMap
               center={mapBounds?.center || DEFAULT_MAP_CENTER}
               zoom={mapBounds?.zoom || DEFAULT_MAP_ZOOM}

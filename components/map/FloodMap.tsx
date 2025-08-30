@@ -160,33 +160,7 @@ function MapUpdater({ center, zoom }: MapUpdaterProps) {
 }
 
 // Map reset component (tetap sama)
-function MapReset({
-  center,
-  zoom,
-}: {
-  center: LatLngExpression;
-  zoom: number;
-}) {
-  const map = useMap();
 
-  const resetView = () => {
-    map.setView(center, zoom, {
-      animate: true,
-      duration: 0.5,
-    });
-  };
-
-  return (
-    <Button
-      variant="glass"
-      size="icon"
-      onClick={resetView}
-      className="absolute top-24 sm:top-20 right-4 z-[1000]"
-    >
-      <RotateCcw size={16} />
-    </Button>
-  );
-}
 
 interface MapEventsProps {
   onLocationSelect: (latlng: LatLngExpression) => void;
@@ -481,12 +455,13 @@ export const FloodMap = React.memo(function FloodMap({
 
   return (
     <motion.div
+      vaul-no-drag
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
       className={cn(
         'relative rounded-lg overflow-hidden shadow-lg',
-        isFullscreen && 'fixed inset-0 z-50 rounded-none',
+        isFullscreen && 'fixed inset-0 z-50 rounded-none bg-slate-900',
         className,
       )}
       style={{ height: isFullscreen ? '100vh' : height }}
@@ -519,8 +494,12 @@ export const FloodMap = React.memo(function FloodMap({
         zoom={zoom}
         scrollWheelZoom={true}
         className="w-full h-full"
+        style={{ backgroundColor: '#0F172A' }}
         ref={mapRef as any}
         zoomControl={false}
+        whenCreated={(map) => {
+          map.removeControl(map.zoomControl);
+        }}
       >
         <TileLayer
           key={selectedLayer}
@@ -529,7 +508,6 @@ export const FloodMap = React.memo(function FloodMap({
         />
 
         <MapUpdater center={center} zoom={zoom} />
-        <MapReset center={DEFAULT_MAP_CENTER} zoom={DEFAULT_MAP_ZOOM} />
         <MapEvents
           onLocationSelect={() => {}}
           onReverseGeocode={handleMapClick}
@@ -1068,7 +1046,7 @@ export const FloodMap = React.memo(function FloodMap({
         variant="glass"
         size="icon"
         onClick={toggleFullscreen}
-        className="absolute top-24 sm:top-4 right-4 z-[1000]"
+        className="absolute top-[78px] left-[10px] z-[1000] w-8 h-8 bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 rounded-sm flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 shadow-lg"
       >
         {isFullscreen ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
       </Button>
