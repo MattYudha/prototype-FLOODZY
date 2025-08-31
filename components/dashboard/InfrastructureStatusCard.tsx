@@ -1,27 +1,21 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Waves, Zap, Clock, ShieldCheck, ShieldAlert, Shield, Activity, TrendingUp, AlertTriangle, ChevronsUpDown, Search } from 'lucide-react';
+import { Waves, Zap, Clock, ShieldCheck, ShieldAlert, Shield, Activity, TrendingUp, AlertTriangle, ChevronsUpDown, Search, CircleDot, CircleOff, Wrench } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { WaterLevelPost, PumpData } from '@/lib/api';
 import { getTimeAgo } from '@/lib/utils';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import { Button } from '@/components/ui/Button'; // Ensure Button is imported
-import { Input } from '@/components/ui/input'; // Import Input
-import {
-  Table,
-  TableHeader,
-  TableBody,
-  TableRow,
-  TableHead,
-  TableCell,
-} from '@/components/ui/table'; // Import Table components
+import { Button } from '@/components/ui/Button';
+import { Input } from '@/components/ui/input';
+// Removed Table components as we are using CSS Grid for layout
+import { useVirtualizer } from '@tanstack/react-virtual';
 
 // Props interface
 interface InfrastructureStatusCardProps {
@@ -32,10 +26,19 @@ interface InfrastructureStatusCardProps {
 // Helper functions
 const getStatusBadgeVariant = (status: string = '') => {
   const lowerStatus = status.toLowerCase();
-  if (lowerStatus.includes('normal') || lowerStatus.includes('aman')) return 'success';
-  if (lowerStatus.includes('siaga') || lowerStatus.includes('waspada')) return 'warning';
-  if (lowerStatus.includes('bahaya') || lowerStatus.includes('awas')) return 'danger';
-  return 'default';
+  if (lowerStatus.includes('online') || lowerStatus.includes('normal') || lowerStatus.includes('aman') || lowerStatus.includes('aktif')) return 'success'; // Hijau
+  if (lowerStatus.includes('offline') || lowerStatus.includes('bahaya') || lowerStatus.includes('awas') || lowerStatus.includes('siaga i')) return 'destructive'; // Merah
+  if (lowerStatus.includes('maintenance') || lowerStatus.includes('warning') || lowerStatus.includes('siaga') || lowerStatus.includes('waspada') || lowerStatus.includes('siaga ii')) return 'warning'; // Kuning/Oranye
+  if (lowerStatus.includes('siaga iii')) return 'destructive'; // Merah
+  return 'default'; // Warna default jika tidak ada yang cocok
+};
+
+const getStatusIcon = (status: string = '') => {
+  const lowerStatus = status.toLowerCase();
+  if (lowerStatus.includes('online') || lowerStatus.includes('aktif')) return <CircleDot className="h-3 w-3 text-emerald-500" />;
+  if (lowerStatus.includes('offline')) return <CircleOff className="h-3 w-3 text-red-500" />;
+  if (lowerStatus.includes('maintenance')) return <Wrench className="h-3 w-3 text-amber-500" />;
+  return null;
 };
 
 const getWaterLevelIcon = (status: string = '') => {
@@ -56,17 +59,15 @@ const getPumpStatusIcon = (status: string = '') => {
   return <Shield className="h-4 w-4 text-gray-500" />;
 };
 
-const ITEMS_PER_LOAD = 10; // Define how many items to load at once
-
 // Main component with new layout
 export function InfrastructureStatusCard({ waterLevelPosts, pumpStatusData }: InfrastructureStatusCardProps) {
   // State for Water Level section
   const [waterLevelSearchTerm, setWaterLevelSearchTerm] = useState('');
-  const [waterLevelVisibleCount, setWaterLevelVisibleCount] = useState(ITEMS_PER_LOAD);
+  const [isWaterLevelExpanded, setIsWaterLevelExpanded] = useState(false);
 
   // State for Pump Status section
   const [pumpSearchTerm, setPumpSearchTerm] = useState('');
-  const [pumpVisibleCount, setPumpVisibleCount] = useState(ITEMS_PER_LOAD);
+  const [isPumpExpanded, setIsPumpExpanded] = useState(false);
 
   // Filtered data for Water Level
   const filteredWaterLevelPosts = waterLevelPosts.filter(post =>
@@ -77,33 +78,36 @@ export function InfrastructureStatusCard({ waterLevelPosts, pumpStatusData }: In
   // Filtered data for Pump Status
   const filteredPumpData = pumpStatusData.filter(pump =>
     pump.nama_infrastruktur.toLowerCase().includes(pumpSearchTerm.toLowerCase()) ||
-    pump.kondisi_bangunan?.toLowerCase().includes(pumpSearchTerm.toLowerCase())
+    pump.kondisi_bangunan?.toLowerCase().includes(pumpSearchTerm.toLowerCase()) ||
+    pump.lokasi?.toLowerCase().includes(pumpSearchTerm.toLowerCase()) // Added location search
   );
 
-  // Handlers for "Load More"
-  const loadMoreWaterLevels = () => {
-    setWaterLevelVisibleCount(prevCount => prevCount + ITEMS_PER_LOAD);
-  };
+  // Virtualizer for Water Level Table
+  const waterLevelParentRef = useRef<HTMLDivElement>(null);
+  const waterLevelRowVirtualizer = useVirtualizer({
+    count: filteredWaterLevelPosts.length,
+    getScrollElement: () => waterLevelParentRef.current,
+    estimateSize: () => 48, // Estimate row height in pixels
+    overscan: 5, // Render 5 items above and below the visible area
+  });
 
-  const loadMorePumps = () => {
-    setPumpVisibleCount(prevCount => prevCount + ITEMS_PER_LOAD);
-  };
+  // Virtualizer for Pump Status Table
+  const pumpParentRef = useRef<HTMLDivElement>(null);
+  const pumpRowVirtualizer = useVirtualizer({
+    count: filteredPumpData.length,
+    getScrollElement: () => pumpParentRef.current,
+    estimateSize: () => 48, // Estimate row height in pixels
+    overscan: 5, // Render 5 items above and below the visible area
+  });
 
   if (!waterLevelPosts || !pumpStatusData) {
     return null;
   }
 
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: { staggerChildren: 0.1 }
-    }
-  };
-
-  const itemVariants = {
-    hidden: { y: 20, opacity: 0 },
-    visible: { y: 0, opacity: 1 }
+  const collapsibleContentVariants = {
+    initial: { opacity: 0, height: 0 },
+    animate: { opacity: 1, height: "auto", transition: { opacity: { duration: 0.3 }, height: { duration: 0.4, ease: "easeOut" } } },
+    exit: { opacity: 0, height: 0, transition: { opacity: { duration: 0.2 }, height: { duration: 0.3, ease: "easeIn" } } },
   };
 
   return (
@@ -129,8 +133,8 @@ export function InfrastructureStatusCard({ waterLevelPosts, pumpStatusData }: In
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           
           {/* Left Column: Water Level */}
-          <Collapsible defaultOpen={false}> {/* Changed to false for initial closed state */}
-            <CollapsibleTrigger className="w-full">
+          <Collapsible open={isWaterLevelExpanded} onOpenChange={setIsWaterLevelExpanded}>
+            <CollapsibleTrigger asChild>
               <div className="flex items-center justify-between p-4 rounded-lg bg-slate-800 hover:bg-slate-700/80 cursor-pointer transition-colors border border-slate-700">
                 <div className="flex items-center space-x-3">
                   <Waves className="h-6 w-6 text-sky-400" />
@@ -139,55 +143,82 @@ export function InfrastructureStatusCard({ waterLevelPosts, pumpStatusData }: In
                 <ChevronsUpDown className="h-5 w-5 text-slate-400" />
               </div>
             </CollapsibleTrigger>
-            <CollapsibleContent className="pt-4">
-              <div className="relative mb-4">
-                <Input
-                  type="text"
-                  placeholder="Cari pos air..."
-                  value={waterLevelSearchTerm}
-                  onChange={(e) => setWaterLevelSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 rounded-lg bg-slate-900/80 border-slate-700/50 text-sm text-white placeholder:text-slate-400 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
-                />
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-              </div>
-              <div className="overflow-x-auto"> {/* Added overflow-x-auto for table responsiveness */}
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="text-slate-400">Pos</TableHead>
-                      <TableHead className="text-slate-400">Tinggi</TableHead>
-                      <TableHead className="text-slate-400">Status</TableHead>
-                      <TableHead className="text-slate-400">Update</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredWaterLevelPosts.slice(0, waterLevelVisibleCount).map((post) => (
-                      <TableRow key={post.id} className="border-slate-700/50">
-                        <TableCell className="font-medium text-white">{post.name}</TableCell>
-                        <TableCell className="text-white">{post.water_level} {post.unit}</TableCell>
-                        <TableCell><Badge variant={getStatusBadgeVariant(post.status)}>{post.status}</Badge></TableCell>
-                        <TableCell className="text-slate-400 text-sm">{getTimeAgo(post.timestamp)}</TableCell>
-                      </TableRow>
-                    ))}
-                    {filteredWaterLevelPosts.length === 0 && (
-                      <TableRow>
-                        <TableCell colSpan={4} className="text-center text-slate-400">Tidak ada data pos air.</TableCell>
-                      </TableRow>
-                    )}
-                  </TableBody>
-                </Table>
-              </div>
-              {filteredWaterLevelPosts.length > waterLevelVisibleCount && (
-                <Button onClick={loadMoreWaterLevels} variant="outline" className="w-full mt-4 bg-slate-800 border-slate-700 text-white hover:bg-slate-700">
-                  Muat Lebih Banyak ({filteredWaterLevelPosts.length - waterLevelVisibleCount} tersisa)
-                </Button>
+            <AnimatePresence>
+              {isWaterLevelExpanded && (
+                <motion.div
+                  key="water-level-content"
+                  initial="initial"
+                  animate="animate"
+                  exit="exit"
+                  variants={collapsibleContentVariants}
+                  className="overflow-hidden" // Important for height animation
+                >
+                  <CollapsibleContent className="pt-4">
+                    <div className="relative mb-4">
+                      <Input
+                        type="text"
+                        placeholder="Cari pos air..."
+                        value={waterLevelSearchTerm}
+                        onChange={(e) => setWaterLevelSearchTerm(e.target.value)}
+                        className="w-full pl-10 pr-4 py-2 rounded-lg bg-slate-900/80 border-slate-700/50 text-sm text-white placeholder:text-slate-400 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
+                      />
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                    </div>
+                    <div ref={waterLevelParentRef} className="overflow-y-auto h-[250px] custom-scrollbar rounded-lg border border-slate-700/50">
+                      <div className="grid grid-cols-4 gap-4 px-4 py-3 text-xs font-semibold text-slate-400 border-b border-slate-700/50 sticky top-0 bg-slate-800/90 z-10">
+                        <div className="whitespace-nowrap">Pos</div>
+                        <div className="whitespace-nowrap">Tinggi</div>
+                        <div className="whitespace-nowrap">Status</div>
+                        <div className="whitespace-nowrap">Update</div>
+                      </div>
+                      <div style={{ height: waterLevelRowVirtualizer.getTotalSize(), position: 'relative' }}>
+                        {waterLevelRowVirtualizer.getVirtualItems().map((virtualItem) => {
+                          const post = filteredWaterLevelPosts[virtualItem.index];
+                          return (
+                            <div
+                              key={post.id}
+                              data-index={virtualItem.index}
+                              ref={waterLevelRowVirtualizer.measureElement}
+                              className="grid grid-cols-4 items-center gap-4 p-2 border-b border-slate-700/50 hover:bg-slate-700/50 transition-colors"
+                              style={{
+                                position: 'absolute',
+                                top: 0,
+                                left: 0,
+                                width: '100%',
+                                height: virtualItem.size,
+                                transform: `translateY(${virtualItem.start}px)`,
+                              }}
+                            >
+                              <span className="font-medium text-white whitespace-nowrap truncate">{post.name}</span>
+                              <span className="text-white whitespace-nowrap truncate">{post.water_level} {post.unit}</span>
+                              <div className="whitespace-nowrap">
+                                <Badge variant={getStatusBadgeVariant(post.status)} className="flex items-center gap-1">
+                                  {getStatusIcon(post.status)} {post.status}
+                                </Badge>
+                              </div>
+                              <span className="text-slate-400 text-sm whitespace-nowrap truncate">{getTimeAgo(post.timestamp)}</span>
+                            </div>
+                          );
+                        })}
+                        {filteredWaterLevelPosts.length === 0 && (
+                          <div className="grid grid-cols-4 text-center text-slate-400 py-4">
+                            <div className="col-span-4 flex flex-col items-center justify-center">
+                              <Search className="h-6 w-6 mb-2" />
+                              Tidak ada data pos air yang ditemukan.
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </CollapsibleContent>
+                </motion.div>
               )}
-            </CollapsibleContent>
+            </AnimatePresence>
           </Collapsible>
 
           {/* Right Column: Pump Status */}
-          <Collapsible defaultOpen={false}> {/* Changed to false for initial closed state */}
-            <CollapsibleTrigger className="w-full">
+          <Collapsible open={isPumpExpanded} onOpenChange={setIsPumpExpanded}>
+            <CollapsibleTrigger asChild>
               <div className="flex items-center justify-between p-4 rounded-lg bg-slate-800 hover:bg-slate-700/80 cursor-pointer transition-colors border border-slate-700">
                 <div className="flex items-center space-x-3">
                   <Zap className="h-6 w-6 text-amber-400" />
@@ -196,50 +227,75 @@ export function InfrastructureStatusCard({ waterLevelPosts, pumpStatusData }: In
                 <ChevronsUpDown className="h-5 w-5 text-slate-400" />
               </div>
             </CollapsibleTrigger>
-            <CollapsibleContent className="pt-4">
-              <div className="relative mb-4">
-                <Input
-                  type="text"
-                  placeholder="Cari pompa..."
-                  value={pumpSearchTerm}
-                  onChange={(e) => setPumpSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 rounded-lg bg-slate-900/80 border-slate-700/50 text-sm text-white placeholder:text-slate-400 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
-                />
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-              </div>
-              <div className="overflow-x-auto"> {/* Added overflow-x-auto for table responsiveness */}
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="text-slate-400">Nama Pompa</TableHead>
-                      <TableHead className="text-slate-400">Status</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredPumpData.slice(0, pumpVisibleCount).map((pump) => (
-                      <TableRow key={pump.id} className="border-slate-700/50">
-                        <TableCell className="font-medium text-white">{pump.nama_infrastruktur}</TableCell>
-                        <TableCell>
-                          <Badge variant={pump.kondisi_bangunan?.toLowerCase() === 'aktif' ? 'success' : 'default'}>
-                            {pump.kondisi_bangunan || 'Tidak Diketahui'}
-                          </Badge>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                    {filteredPumpData.length === 0 && (
-                      <TableRow>
-                        <TableCell colSpan={2} className="text-center text-slate-400">Tidak ada data pompa.</TableCell>
-                      </TableRow>
-                    )}
-                  </TableBody>
-                </Table>
-              </div>
-              {filteredPumpData.length > pumpVisibleCount && (
-                <Button onClick={loadMorePumps} variant="outline" className="w-full mt-4 bg-slate-800 border-slate-700 text-white hover:bg-slate-700">
-                  Muat Lebih Banyak ({filteredPumpData.length - pumpVisibleCount} tersisa)
-                </Button>
+            <AnimatePresence>
+              {isPumpExpanded && (
+                <motion.div
+                  key="pump-status-content"
+                  initial="initial"
+                  animate="animate"
+                  exit="exit"
+                  variants={collapsibleContentVariants}
+                  className="overflow-hidden" // Important for height animation
+                >
+                  <CollapsibleContent className="pt-4">
+                    <div className="relative mb-4">
+                      <Input
+                        type="text"
+                        placeholder="Cari pompa..."
+                        value={pumpSearchTerm}
+                        onChange={(e) => setPumpSearchTerm(e.target.value)}
+                        className="w-full pl-10 pr-4 py-2 rounded-lg bg-slate-900/80 border-slate-700/50 text-sm text-white placeholder:text-slate-400 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
+                      />
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                    </div>
+                    <div ref={pumpParentRef} className="overflow-y-auto h-[250px] custom-scrollbar rounded-lg border border-slate-700/50">
+                      <div className="grid grid-cols-3 gap-4 px-4 py-3 text-xs font-semibold text-slate-400 border-b border-slate-700/50 sticky top-0 bg-slate-800/90 z-10">
+                        <div className="whitespace-nowrap">Nama Pompa</div>
+                        <div className="whitespace-nowrap">Lokasi</div>
+                        <div className="whitespace-nowrap">Status</div>
+                      </div>
+                      <div style={{ height: pumpRowVirtualizer.getTotalSize(), position: 'relative' }}>
+                        {pumpRowVirtualizer.getVirtualItems().map((virtualItem) => {
+                          const pump = filteredPumpData[virtualItem.index];
+                          return (
+                            <div
+                              key={pump.id}
+                              data-index={virtualItem.index}
+                              ref={pumpRowVirtualizer.measureElement}
+                              className="grid grid-cols-3 items-center gap-4 p-2 border-b border-slate-700/50 hover:bg-slate-700/50 transition-colors"
+                              style={{
+                                position: 'absolute',
+                                top: 0,
+                                left: 0,
+                                width: '100%',
+                                height: virtualItem.size,
+                                transform: `translateY(${virtualItem.start}px)`,
+                              }}
+                            >
+                              <span className="font-medium text-white whitespace-nowrap truncate">{pump.nama_infrastruktur}</span>
+                              <span className="text-slate-400 text-sm whitespace-nowrap truncate">{pump.lokasi || 'N/A'}</span>
+                              <div className="whitespace-nowrap">
+                                <Badge variant={getStatusBadgeVariant(pump.kondisi_bangunan)} className="flex items-center gap-1">
+                                  {getStatusIcon(pump.kondisi_bangunan)} {pump.kondisi_bangunan || 'Tidak Diketahui'}
+                                </Badge>
+                              </div>
+                            </div>
+                          );
+                        })}
+                        {filteredPumpData.length === 0 && (
+                          <div className="grid grid-cols-3 text-center text-slate-400 py-4">
+                            <div className="col-span-3 flex flex-col items-center justify-center">
+                              <Search className="h-6 w-6 mb-2" />
+                              Tidak ada data pompa yang ditemukan.
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </CollapsibleContent>
+                </motion.div>
               )}
-            </CollapsibleContent>
+            </AnimatePresence>
           </Collapsible>
 
         </div>

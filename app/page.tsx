@@ -17,16 +17,20 @@ export default async function Home() {
   try {
     const { data, error } = await supabase.from('posdugaair').select('*');
     if (error) throw error;
-    waterLevelPosts = (data ?? []).map((item: any) => ({
-      id: item.id,
-      name: item.nama_hidrologi,
-      lat: parseFloat(item.latitude),
-      lon: parseFloat(item.longitude),
-      water_level: item.water_level,
-      unit: item.unit || 'm',
-      timestamp: item.updated_at ? new Date(Number(item.updated_at)).toISOString() : new Date().toISOString(),
-      status: item.status || 'Normal',
-    })).filter(p => p.lat && p.lon);
+    waterLevelPosts = (data ?? [])
+      .map((item: any) => ({
+        id: item.id,
+        name: item.nama_hidrologi,
+        lat: parseFloat(item.latitude),
+        lon: parseFloat(item.longitude),
+        water_level: item.water_level,
+        unit: item.unit || 'm',
+        timestamp: item.updated_at
+          ? new Date(Number(item.updated_at)).toISOString()
+          : new Date().toISOString(),
+        status: item.status || 'Normal',
+      }))
+      .filter((p) => p.lat && p.lon);
   } catch (error: any) {
     waterLevelError = error.message;
     console.error('Error fetching water level data:', error);
@@ -60,7 +64,10 @@ export default async function Home() {
       timestamp: quakeTimestampISO,
       isActive: true,
       affectedAreas: latestQuake.Wilayah.split(',').map((s) => s.trim()),
-      coordinates: [parseFloat(latestQuake.Lintang), parseFloat(latestQuake.Bujur)], // Add coordinates
+      coordinates: [
+        parseFloat(latestQuake.Lintang),
+        parseFloat(latestQuake.Bujur),
+      ], // Add coordinates
       actions: [],
     });
   }

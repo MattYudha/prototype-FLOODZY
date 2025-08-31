@@ -327,7 +327,7 @@ export function DashboardClientPage({ initialData }) {
                   </Button>
                 </div>
               </motion.div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mt-16 md:mt-20">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mt-16 md:mt-20 items-start">
                 {heroCards.map((card, index) => (
                   <motion.div
                     key={card.title}
