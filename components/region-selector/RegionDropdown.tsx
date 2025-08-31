@@ -1,9 +1,9 @@
 // src/components/region-selector/RegionDropdown.tsx
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRegionData } from '@/hooks/useRegionData';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/components/ui/Button';
 import {
   Command,
   CommandEmpty,
@@ -38,7 +38,7 @@ import { SelectedLocation } from '@/types/location';
 
 interface RegionDropdownProps {
   onSelectDistrict?: (location: SelectedLocation) => void;
-  selectedLocationCoords?: { lat?: number; lng?: number; name: string } | null;
+  selectedLocation?: SelectedLocation | null;
   currentWeatherData?: CombinedWeatherData | null;
   loadingWeather?: boolean;
   weatherError?: string | null;
@@ -46,7 +46,7 @@ interface RegionDropdownProps {
 
 export function RegionDropdown({
   onSelectDistrict,
-  selectedLocationCoords,
+  selectedLocation,
   currentWeatherData,
   loadingWeather,
   weatherError,
@@ -96,6 +96,45 @@ export function RegionDropdown({
     parentCode: selectedRegencyCode,
     enabled: !!selectedRegencyCode,
   });
+
+  // Effect to synchronize internal state with the selectedLocation prop
+  useEffect(() => {
+    if (selectedLocation) {
+      // Set codes based on the external prop
+      setSelectedProvinceCode(selectedLocation.provinceCode);
+      setSelectedRegencyCode(selectedLocation.regencyCode);
+      setSelectedDistrictCode(selectedLocation.districtCode);
+      setDisplayDistrictName(selectedLocation.districtName);
+    } else {
+      // If the external prop is null, reset everything
+      setSelectedProvinceCode(null);
+      setDisplayProvinceName(null);
+      setSelectedRegencyCode(null);
+      setDisplayRegencyName(null);
+      setSelectedDistrictCode(null);
+      setDisplayDistrictName(null);
+    }
+  }, [selectedLocation]); // Only run when the prop changes
+
+  // Effect to update province display name when data is available
+  useEffect(() => {
+    if (selectedProvinceCode && provinces.length > 0) {
+      const provinceName =
+        provinces.find((p) => String(p.province_code) === selectedProvinceCode)
+          ?.province_name || null;
+      setDisplayProvinceName(provinceName);
+    }
+  }, [selectedProvinceCode, provinces]);
+
+  // Effect to update regency display name when data is available
+  useEffect(() => {
+    if (selectedRegencyCode && regencies.length > 0) {
+      const regencyName =
+        regencies.find((r) => String(r.city_code) === selectedRegencyCode)
+          ?.city_name || null;
+      setDisplayRegencyName(regencyName);
+    }
+  }, [selectedRegencyCode, regencies]);
 
   const handleProvinceChange = (value: string) => {
     setSelectedProvinceCode(value);
@@ -232,6 +271,10 @@ export function RegionDropdown({
                     <div className="p-2 text-center text-xs text-gray-400">
                       Memuat data...
                     </div>
+                  ) : data.length === 0 ? (
+                    <div className="p-2 text-center text-xs text-gray-400">
+                      Tidak ada {placeholder} ditemukan.
+                    </div>
                   ) : (
                     data.map((item, index) => (
                       <CommandItem
@@ -239,7 +282,8 @@ export function RegionDropdown({
                         value={item[nameKey]}
                         onSelect={(currentValue) => {
                           const selected = data.find(
-                            (d) => d[nameKey].toLowerCase() === currentValue,
+                            (d) =>
+                              d[nameKey].toLowerCase() === currentValue.toLowerCase(),
                           );
                           if (selected) {
                             onValueChange(String(selected[valueKey]));
@@ -503,14 +547,14 @@ export function RegionDropdown({
 
             <CardContent className="p-3 sm:p-6 h-full">
               <div className="h-full min-h-[250px] sm:min-h-[400px] lg:min-h-[500px]">
-                {selectedLocationCoords &&
-                typeof selectedLocationCoords.lat === 'number' &&
-                typeof selectedLocationCoords.lng === 'number' ? (
+                {selectedLocation &&
+                typeof selectedLocation.latitude === 'number' &&
+                typeof selectedLocation.longitude === 'number' ? (
                   <WeatherMapIframe
-                    selectedLocationCoords={{
-                      lat: selectedLocationCoords.lat,
-                      lng: selectedLocationCoords.lng,
-                      name: selectedLocationCoords.name,
+                    selectedLocation={{
+                      lat: selectedLocation.latitude,
+                      lng: selectedLocation.longitude,
+                      name: selectedLocation.districtName,
                     }}
                     currentWeatherData={currentWeatherData}
                     loadingWeather={loadingWeather}

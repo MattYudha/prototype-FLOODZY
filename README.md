@@ -18,6 +18,7 @@
 ---
 
 ## 🚀 Overview
+
 Floodzy adalah sistem pemantauan banjir dan peringatan dini real-time yang memanfaatkan teknologi modern seperti **Next.js**, **TypeScript**, **Tailwind CSS**, dan **Supabase**.  
 Platform ini menyediakan data ketinggian air, status pompa, prakiraan cuaca, analisis bencana, dan peta interaktif untuk mendukung mitigasi bencana di Indonesia.
 
@@ -26,32 +27,37 @@ Platform ini menyediakan data ketinggian air, status pompa, prakiraan cuaca, ana
 ## ✨ Features
 
 ### 🗺️ Mapping & Visualization
+
 - Peta interaktif berbasis Leaflet dengan marker sensor.
 - Layer banjir, cuaca, dan titik evakuasi.
 - Map legend dan kontrol interaktif.
 
 ### 🌡️ Weather & Flood Data
+
 - Data cuaca real-time (temperatur, kelembapan, kecepatan angin).
 - Integrasi OpenWeatherMap.
 - Riwayat cuaca & banjir.
 
 ### 🚨 Alerts & Analysis
+
 - Peringatan bencana dengan sumber data terintegrasi.
 - Analisis bencana otomatis menggunakan Gemini API.
 - Ringkasan berita bencana.
 
 ### 📍 Region & Evacuation
+
 - Pilihan wilayah hingga tingkat kota/kecamatan.
 - Informasi jalur & titik evakuasi.
 
 ### 💬 User Interaction
+
 - Laporan banjir langsung dari pengguna.
 - Chatbot informasi banjir & cuaca.
 
 ### 🛠 Developer Friendly
+
 - API publik (`/api`) untuk integrasi data.
 - Custom hooks untuk pengelolaan state & UI.
-
 
 ## 📁 Project Structure
 
@@ -263,6 +269,7 @@ floodzy/
 ├── ts-errors.txt
 └── tsconfig.json
 ```
+
 ## API Hardening: Rate Limiting & Caching
 
 To ensure API stability and prevent abuse, Floodzy APIs implement rate limiting and caching mechanisms.
@@ -327,6 +334,7 @@ Example log entry (you can `grep` for `X-Request-Id` in your Vercel logs):
 ```
 
 Key fields in the logs:
+
 - `route`: The API endpoint path.
 - `method`: HTTP method (e.g., `GET`, `POST`).
 - `status`: HTTP response status code.
@@ -337,6 +345,10 @@ Key fields in the logs:
 - `error`: Error message if an error occurred.
 - `requestId`: Unique ID for the request (`X-Request-Id` header).
 
+  ```plaintext
+
+  ```
+
 ## 🌟 Roadmap
 
 - [x] 🌊 **Monitoring Banjir Dasar** – Peta interaktif & data ketinggian air.
@@ -345,6 +357,8 @@ Key fields in the logs:
 - [x] 🤖 **Prediksi AI Banjir** – Analisis risiko banjir berbasis Machine Learning.
 - [x] 📡 **Integrasi IoT Sensor** – Data real-time dari sensor fisik lapangan.
 - [x] 🗣 **Laporan Komunitas** – Sistem pelaporan banjir berbasis partisipasi warga.
+
+````
 
 ```plaintext
 | Endpoint                 | Deskripsi                              | Parameter            |
@@ -363,7 +377,8 @@ Key fields in the logs:
 | `/api/weather-history`   | Riwayat cuaca                          | `regionId`           |
 
 
-```
+````
+
 ```plaintext
 ## Custom Hooks
 
@@ -418,6 +433,7 @@ OPENWEATHER_API_KEY=...
 NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN=...
 
 ```
+
 ```plaintext
 📊 Performance
 
@@ -436,8 +452,6 @@ Validasi input di server
 API key aman di environment variables
 ```
 
-
-
 ```plaintext
 🎉 Acknowledgments
 
@@ -451,7 +465,6 @@ BMKG
 
 Kementerian PUPR
 ```
-
 
 MIT License
 
@@ -474,4 +487,3 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
-

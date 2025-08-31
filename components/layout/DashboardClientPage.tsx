@@ -112,6 +112,8 @@ export function DashboardClientPage({ initialData }) {
     fetchDisasterAreas,
   } = useDisasterData();
 
+  const [isLoadingWidgets, setIsLoadingWidgets] = useState(false);
+
   const [chatInput, setChatInput] = useState('');
   const [chatHistory, setChatHistory] = useState([]);
   const [isChatLoading, setIsChatLoading] = useState(false);
@@ -119,11 +121,41 @@ export function DashboardClientPage({ initialData }) {
   const [isTyping, setIsTyping] = useState(false);
   const [isChatbotOpen, setIsChatbotOpen] = useState(false);
   const [isMapDrawerOpen, setMapDrawerOpen] = useState(false);
+  const [isDashboardMapFullscreen, setIsDashboardMapFullscreen] = useState(false);
   const chatScrollRef = useRef<HTMLDivElement>(null);
+  const mobileMapRef = useRef<any>(null);
+
+  React.useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+        if (event.key === 'Escape' && isDashboardMapFullscreen) {
+          setIsDashboardMapFullscreen(false);
+        }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isDashboardMapFullscreen]);
+
+  React.useEffect(() => {
+    if (isMapDrawerOpen) {
+      setTimeout(() => {
+        mobileMapRef.current?.invalidateSize();
+      }, 300); // Wait for drawer animation to complete
+    }
+  }, [isMapDrawerOpen]);
+
+  React.useEffect(() => {
+      if (isDashboardMapFullscreen) {
+          document.body.classList.add('overflow-hidden');
+      } else {
+          document.body.classList.remove('overflow-hidden');
+      }
+      return () => document.body.classList.remove('overflow-hidden');
+  }, [isDashboardMapFullscreen]);
 
   useEffect(() => {
     const fetchDashboardWidgets = async () => {
       if (selectedLocation && selectedLocation.latitude != null && selectedLocation.longitude != null) {
+        setIsLoadingWidgets(true);
         try {
           const response = await fetch(`${getBaseUrl()}/api/dashboard-widgets?lat=${selectedLocation.latitude}&lon=${selectedLocation.longitude}&locationName=${encodeURIComponent(selectedLocation.districtName || '')}`);
           if (!response.ok) {
@@ -136,6 +168,8 @@ export function DashboardClientPage({ initialData }) {
           console.error('Error fetching dashboard widgets data:', error);
           setWeatherSummary(null);
           setAirQuality(null);
+        } finally {
+          setIsLoadingWidgets(false);
         }
       } else {
         setWeatherSummary(null);
@@ -332,16 +366,7 @@ export function DashboardClientPage({ initialData }) {
             <CardContent className="p-4">
               <RegionDropdown
                 onSelectDistrict={handleRegionSelect}
-                selectedLocationCoords={
-                  selectedLocation?.latitude != null &&
-                  selectedLocation?.longitude != null
-                    ? {
-                        lat: selectedLocation.latitude,
-                        lng: selectedLocation.longitude,
-                        name: selectedLocation.districtName,
-                      }
-                    : null
-                }
+                selectedLocation={selectedLocation}
                 currentWeatherData={weatherData}
                 loadingWeather={isLoadingWeather}
                 weatherError={weatherError}
@@ -414,9 +439,9 @@ export function DashboardClientPage({ initialData }) {
                       </Button>
                     </CardTitle>
                   </CardHeader>
-                  <CardContent>
+                  <CardContent className="p-0">
                     <div
-                      className="h-72 lg:h-[600px] w-full rounded-lg border border-slate-800/50 relative overflow-hidden"
+                      className="h-72 lg:h-[600px] w-full rounded-b-lg relative overflow-hidden"
                     >
                       <FloodMap
                         center={mapBounds?.center || DEFAULT_MAP_CENTER}
@@ -428,6 +453,8 @@ export function DashboardClientPage({ initialData }) {
                         onMapBoundsChange={handleMapBoundsChange}
                         selectedLocation={selectedLocation}
                         globalWeatherStations={WEATHER_STATIONS_GLOBAL_MOCK as WeatherStation[]}
+                        isFullscreen={isDashboardMapFullscreen}
+                        onFullscreenToggle={() => setIsDashboardMapFullscreen(true)}
                       />
                     </div>
                   </CardContent>
@@ -436,7 +463,21 @@ export function DashboardClientPage({ initialData }) {
             )}
 
             <div className="lg:col-span-1 flex flex-col gap-8">
-              {selectedLocation ? (
+              {!selectedLocation ? (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: 0.5 }}
+                  className="flex-1"
+                >
+                  <LocationPromptCard />
+                </motion.div>
+              ) : isLoadingWidgets ? (
+                <Card className="flex h-full min-h-[150px] flex-col items-center justify-center p-6 bg-slate-900/80 border-slate-800/50">
+                  <Loader2 className="h-8 w-8 animate-spin text-cyan-400 mb-3" />
+                  <p className="text-white">Memuat data cuaca...</p>
+                </Card>
+              ) : weatherSummary || airQuality ? (
                 <>
                   {weatherSummary && (
                     <motion.div
@@ -460,24 +501,11 @@ export function DashboardClientPage({ initialData }) {
                   )}
                 </>
               ) : (
-                <>
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5, delay: 0.5 }}
-                    className="flex-1"
-                  >
-                    <LocationPromptCard />
-                  </motion.div>
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5, delay: 0.6 }}
-                    className="flex-1"
-                  >
-                    <LocationPromptCard />
-                  </motion.div>
-                </>
+                <Card className="flex h-full min-h-[150px] flex-col items-center justify-center text-center p-6 bg-slate-900/80 border-slate-800/50">
+                  <Info className="h-8 w-8 text-yellow-400 mb-3" />
+                  <h4 className="text-white font-semibold mb-1">Data Tidak Tersedia</h4>
+                  <p className="text-slate-400 text-sm">Data cuaca atau kualitas udara tidak dapat dimuat untuk lokasi ini.</p>
+                </Card>
               )}
 
               <motion.div
@@ -583,7 +611,7 @@ export function DashboardClientPage({ initialData }) {
               Gunakan dua jari untuk navigasi. Geser ke bawah untuk menutup.
             </DrawerDescription>
           </DrawerHeader>
-          <div className="flex-1 p-0 overflow-hidden" vaul-no-drag>
+          <div className="flex-1 p-0 overflow-hidden" data-vaul-no-drag="true">
             <FloodMap
               center={mapBounds?.center || DEFAULT_MAP_CENTER}
               zoom={mapBounds?.zoom || DEFAULT_MAP_ZOOM}
@@ -594,10 +622,57 @@ export function DashboardClientPage({ initialData }) {
               onMapBoundsChange={handleMapBoundsChange}
               selectedLocation={selectedLocation}
               globalWeatherStations={WEATHER_STATIONS_GLOBAL_MOCK as WeatherStation[]}
+              onMapLoad={(map) => {
+                mobileMapRef.current = map;
+              }}
+              isFullscreen={false}
+              onFullscreenToggle={() => {}}
+              showFullscreenButton={false}
             />
           </div>
         </DrawerContent>
       </Drawer>
+
+      <AnimatePresence>
+        {isDashboardMapFullscreen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] bg-background p-4"
+          >
+            <Card className="h-full w-full flex flex-col">
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  Peta Banjir Interaktif
+                  <Button
+                    onClick={() => setIsDashboardMapFullscreen(false)}
+                    variant="ghost"
+                    size="sm"
+                    className="ml-auto"
+                  >
+                    <X className="h-5 w-5" />
+                    <span className="sr-only">Tutup Peta</span>
+                  </Button>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="flex-1 h-0">
+                <FloodMap
+                  center={mapBounds?.center || DEFAULT_MAP_CENTER}
+                  zoom={mapBounds?.zoom || DEFAULT_MAP_ZOOM}
+                  className="h-full w-full"
+                  floodProneData={disasterProneAreas}
+                  loadingFloodData={isLoadingDisaster}
+                  floodDataError={disasterError}
+                  onMapBoundsChange={handleMapBoundsChange}
+                  selectedLocation={selectedLocation}
+                  globalWeatherStations={WEATHER_STATIONS_GLOBAL_MOCK as WeatherStation[]}
+                />
+              </CardContent>
+            </Card>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

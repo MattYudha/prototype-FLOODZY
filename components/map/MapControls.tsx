@@ -34,6 +34,7 @@ interface MapControlsProps {
   showCrowdsourcedReports: boolean; // NEW: State for crowdsourced reports visibility
   onOfficialBPBDDataToggle: () => void; // NEW: Toggle for official BPBD data
   showOfficialBPBDData: boolean; // NEW: State for official BPBD data visibility
+  showFullscreenButton?: boolean; // NEW: To hide the fullscreen button
 }
 
 const mapLayers = [
@@ -57,6 +58,7 @@ export function MapControls({
   showCrowdsourcedReports, // NEW: Destructure new prop
   onOfficialBPBDDataToggle, // NEW: Destructure new prop
   showOfficialBPBDData, // NEW: Destructure new prop
+  showFullscreenButton = true, // NEW: Destructure with default value
 }: MapControlsProps) {
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -79,14 +81,16 @@ export function MapControls({
             <Settings size={16} />
           </Button>
 
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={onFullscreenToggle}
-            className="h-10 w-10 border-slate-400 text-slate-900 dark:border-slate-600 dark:text-slate-100"
-          >
-            {isFullscreen ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
-          </Button>
+          {showFullscreenButton && (
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={onFullscreenToggle}
+              className="h-10 w-10 border-slate-400 text-slate-900 dark:border-slate-600 dark:text-slate-100"
+            >
+              {isFullscreen ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
+            </Button>
+          )}
         </div>
       </Card>
 

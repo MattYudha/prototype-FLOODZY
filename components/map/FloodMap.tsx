@@ -225,7 +225,10 @@ interface FloodMapProps {
   onMapBoundsChange?: (bounds: MapBounds) => void;
   selectedLocation?: SelectedLocation;
   globalWeatherStations?: WeatherStation[];
-
+  isFullscreen: boolean; // Prop for fullscreen state
+  onFullscreenToggle: () => void; // Prop for fullscreen toggle function
+  onMapLoad?: (map: L.Map) => void; // NEW: Callback to get map instance
+  showFullscreenButton?: boolean; // NEW: To hide the fullscreen button
 }
 
 export const FloodMap = React.memo(function FloodMap({
@@ -247,8 +250,11 @@ export const FloodMap = React.memo(function FloodMap({
   onMapBoundsChange, // Add this line
   selectedLocation, // Add this prop
   globalWeatherStations = [], // Initialize new prop
+  isFullscreen, // Prop for fullscreen state
+  onFullscreenToggle, // Prop for fullscreen toggle function
+  onMapLoad, // NEW: Destructure onMapLoad
+  showFullscreenButton, // NEW: Destructure showFullscreenButton
 }: FloodMapProps) {
-  const [isFullscreen, setIsFullscreen] = useState(false);
   const [selectedLayer, setSelectedLayer] = useState('street');
 
   const layerConfig = {
@@ -309,16 +315,10 @@ export const FloodMap = React.memo(function FloodMap({
     });
   };
 
-  const toggleFullscreen = () => {
-    setIsFullscreen(!isFullscreen);
-  };
-
   const getPolygonColor = (riskLevel: FloodZone['riskLevel']) => {
     return FLOOD_RISK_COLORS[riskLevel];
   };
 
-  // Fungsi helper untuk mendapatkan warna dan judul popup berdasarkan tags elemen Overpass
-  // Fungsi ini sekarang mengembalikan objek info bencana yang lebih spesifik
   const getDisasterInfo = (element: OverpassElement) => {
     let iconToUse;
     let color;
@@ -455,7 +455,7 @@ export const FloodMap = React.memo(function FloodMap({
 
   return (
     <motion.div
-      vaul-no-drag
+      data-vaul-no-drag="true"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
@@ -493,12 +493,22 @@ export const FloodMap = React.memo(function FloodMap({
         center={center}
         zoom={zoom}
         scrollWheelZoom={true}
-        className="w-full h-full"
-        style={{ backgroundColor: '#0F172A' }}
+        doubleClickZoom={false}
+        boxZoom={false}
+        dragging={true}
+        keyboard={false}
+        tap={false}
+        touchZoom={true}
+        className="w-full h-full bg-slate-900"
         ref={mapRef as any}
         zoomControl={false}
         whenCreated={(map) => {
+          mapRef.current = map;
+          if (onMapLoad) {
+            onMapLoad(map);
+          }
           map.removeControl(map.zoomControl);
+          map.removeControl(map.attributionControl);
         }}
       >
         <TileLayer
@@ -1020,7 +1030,7 @@ export const FloodMap = React.memo(function FloodMap({
 
       {/* Map Controls */}
       <MapControls
-        onFullscreenToggle={toggleFullscreen}
+        onFullscreenToggle={onFullscreenToggle}
         isFullscreen={isFullscreen}
         onLayerChange={setSelectedLayer}
         selectedLayer={selectedLayer}
@@ -1036,20 +1046,13 @@ export const FloodMap = React.memo(function FloodMap({
         showCrowdsourcedReports={showCrowdsourcedReports} // NEW: Pass state
         onOfficialBPBDDataToggle={() => setShowOfficialBPBDData(!showOfficialBPBDData)} // NEW: Pass toggle function
         showOfficialBPBDData={showOfficialBPBDData} // NEW: Pass state
+        showFullscreenButton={showFullscreenButton}
       />
 
       {/* Map Legend */}
       <MapLegend />
 
-      {/* Fullscreen Toggle */}
-      <Button
-        variant="glass"
-        size="icon"
-        onClick={toggleFullscreen}
-        className="absolute top-[78px] left-[10px] z-[1000] w-8 h-8 bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 rounded-sm flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 shadow-lg"
-      >
-        {isFullscreen ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
-      </Button>
+      
     </motion.div>
   );
 });

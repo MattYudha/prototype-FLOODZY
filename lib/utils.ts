@@ -271,8 +271,14 @@ export function normalizeSeries<T extends ChartRow>(
 }
 
 export const getBaseUrl = () => {
-  if (process.env.NEXT_PUBLIC_VERCEL_ENV === 'production' || process.env.NEXT_PUBLIC_VERCEL_ENV === 'preview') {
+  if (typeof window !== 'undefined') {
+    // Client-side requests can use relative paths
     return '';
   }
-  return process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+  // Server-side requests need the full URL
+  if (process.env.VERCEL_URL) {
+    return `https://floodzzy.vercel.app`;
+  }
+  // Default for local development SSR
+  return 'http://localhost:3000';
 };
