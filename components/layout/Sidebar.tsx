@@ -109,7 +109,7 @@ export function Sidebar({ isOpen, onClose, isCollapsed, setIsCollapsed }: Sideba
       </AnimatePresence>
 
       <motion.aside
-        initial="closed"
+        initial={isOpen ? 'open' : 'closed'}
         animate={isOpen ? 'open' : 'closed'}
         variants={sidebarVariants}
         transition={{ type: 'spring', damping: 20, stiffness: 300 }}

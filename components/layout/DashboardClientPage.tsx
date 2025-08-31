@@ -70,6 +70,7 @@ import { PeringatanBencanaCard } from '@/components/flood/PeringatanBencanaCard'
 import { WeatherSummaryCard } from '@/components/dashboard/WeatherSummaryCard';
 import { AirQualityCard } from '@/components/dashboard/AirQualityCard';
 import { LocationPromptCard } from '@/components/dashboard/LocationPromptCard';
+import { InfrastructureStatusCard } from '@/components/dashboard/InfrastructureStatusCard';
 
 // Types
 import type { FloodAlert as FloodAlertType, WeatherStation } from '@/types';
@@ -599,7 +600,10 @@ export function DashboardClientPage({ initialData }) {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.8 }}
           >
-            <FloodReportChart />
+            <InfrastructureStatusCard
+              waterLevelPosts={initialData.waterLevelPosts}
+              pumpStatusData={initialData.pumpStatusData}
+            />
           </motion.div>
         </section>
       </main>

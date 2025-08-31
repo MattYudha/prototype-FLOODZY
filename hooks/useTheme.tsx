@@ -20,7 +20,7 @@ interface ThemeContextType {
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setThemeState] = useState<Theme>('light'); // default aman untuk SSR
+  const [theme, setThemeState] = useState<Theme>('dark'); // default to dark mode
   const [isDark, setIsDark] = useState(false);
   const [mounted, setMounted] = useState(false);
 
