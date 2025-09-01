@@ -18,7 +18,7 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "jsx": "preserve",
-    "types": ["vitest", "node"],
+    "types": ["node"],
     "baseUrl": ".",
     "paths": {
       "@/*": ["./*"]
