@@ -509,55 +509,20 @@ export function DashboardClientPage({ initialData }) {
                 </Card>
               )}
 
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.7 }}
-                className="flex-1"
-              >
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center space-x-2">
-                      <Activity className="h-5 w-5 text-secondary" />
-                      <span>Aksi Cepat</span>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <Button
-                        variant="outline"
-                        className="h-12 flex-col space-y-1"
-                      >
-                        <AlertTriangle className="h-4 w-4" />
-                        <span className="text-xs">Lapor Banjir</span>
-                      </Button>
-                      <Button
-                        variant="outline"
-                        className="h-12 flex-col space-y-1"
-                      >
-                        <Users className="h-4 w-4" />
-                        <span className="text-xs">Evakuasi</span>
-                      </Button>
-                      <Button
-                        variant="outline"
-                        className="h-12 flex-col space-y-1"
-                      >
-                        <CloudRain className="h-4 w-4" />
-                        <span className="text-xs">Cuaca</span>
-                      </Button>
-                      <Button
-                        variant="outline"
-                        className="h-12 flex-col space-y-1"
-                      >
-                        <Waves className="h-4 w-4" />
-                        <span className="text-xs">Sensor</span>
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              </motion.div>
+              
             </div>
           </div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.8 }}
+          >
+            <InfrastructureStatusCard
+              waterLevelPosts={initialData.waterLevelPosts}
+              pumpStatusData={initialData.pumpStatusData}
+            />
+          </motion.div>
 
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -593,17 +558,6 @@ export function DashboardClientPage({ initialData }) {
                 </div>
               </CardContent>
             </Card>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.8 }}
-          >
-            <InfrastructureStatusCard
-              waterLevelPosts={initialData.waterLevelPosts}
-              pumpStatusData={initialData.pumpStatusData}
-            />
           </motion.div>
         </section>
       </main>
@@ -671,6 +625,8 @@ export function DashboardClientPage({ initialData }) {
                   onMapBoundsChange={handleMapBoundsChange}
                   selectedLocation={selectedLocation}
                   globalWeatherStations={WEATHER_STATIONS_GLOBAL_MOCK as WeatherStation[]}
+                  isFullscreen={isDashboardMapFullscreen}
+                  onFullscreenToggle={() => setIsDashboardMapFullscreen(false)}
                 />
               </CardContent>
             </Card>

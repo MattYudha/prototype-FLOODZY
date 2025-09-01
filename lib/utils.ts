@@ -12,7 +12,10 @@ export function formatNumber(num: number): string {
   if (num >= 1000) {
     return (num / 1000).toFixed(1) + 'K';
   }
-  return num.toString();
+  // FIX: Changed num.toString() to String(num) for safer type conversion.
+  // This prevents potential errors if 'num' is ever perceived as non-numeric
+  // by a strict TypeScript configuration, even with the type annotation.
+  return String(num);
 }
 
 export function formatDate(date: string | Date): string {
@@ -143,23 +146,35 @@ export function isValidPhone(phone: string): boolean {
 }
 
 export function sanitizeHtml(html: string): string {
+  // This function only works in a browser environment
+  if (typeof document === 'undefined') {
+    return html;
+  }
   const div = document.createElement('div');
   div.textContent = html;
   return div.innerHTML;
 }
 
 export function copyToClipboard(text: string): Promise<void> {
-  if (navigator.clipboard) {
+    // This function only works in a browser environment
+    if (typeof navigator === 'undefined' || !navigator.clipboard) {
+        if (typeof document === 'undefined') {
+             return Promise.reject('Clipboard API not available');
+        }
+        const textArea = document.createElement('textarea');
+        textArea.value = text;
+        document.body.appendChild(textArea);
+        textArea.select();
+        try {
+            document.execCommand('copy');
+            document.body.removeChild(textArea);
+            return Promise.resolve();
+        } catch (err) {
+            document.body.removeChild(textArea);
+            return Promise.reject(err);
+        }
+    }
     return navigator.clipboard.writeText(text);
-  }
-
-  const textArea = document.createElement('textarea');
-  textArea.value = text;
-  document.body.appendChild(textArea);
-  textArea.select();
-  document.execCommand('copy');
-  document.body.removeChild(textArea);
-  return Promise.resolve();
 }
 
 export function downloadFile(
@@ -167,6 +182,10 @@ export function downloadFile(
   filename: string,
   type: string = 'text/plain',
 ): void {
+  // This function only works in a browser environment
+  if (typeof window === 'undefined' || typeof document === 'undefined') {
+    return;
+  }
   const blob = new Blob([data], { type });
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
@@ -179,6 +198,10 @@ export function downloadFile(
 }
 
 export function getDeviceType(): 'mobile' | 'tablet' | 'desktop' {
+  // This function only works in a browser environment
+  if (typeof window === 'undefined') {
+      return 'desktop';
+  }
   const width = window.innerWidth;
   if (width < 768) return 'mobile';
   if (width < 1024) return 'tablet';
@@ -186,10 +209,18 @@ export function getDeviceType(): 'mobile' | 'tablet' | 'desktop' {
 }
 
 export function isTouchDevice(): boolean {
+  // This function only works in a browser environment
+  if (typeof window === 'undefined' || typeof navigator === 'undefined') {
+      return false;
+  }
   return 'ontouchstart' in window || navigator.maxTouchPoints > 0;
 }
 
 export function getStorageItem<T>(key: string, defaultValue: T): T {
+  // This function only works in a browser environment
+  if (typeof localStorage === 'undefined') {
+      return defaultValue;
+  }
   try {
     const item = localStorage.getItem(key);
     return item ? JSON.parse(item) : defaultValue;
@@ -199,6 +230,10 @@ export function getStorageItem<T>(key: string, defaultValue: T): T {
 }
 
 export function setStorageItem<T>(key: string, value: T): void {
+  // This function only works in a browser environment
+  if (typeof localStorage === 'undefined') {
+      return;
+  }
   try {
     localStorage.setItem(key, JSON.stringify(value));
   } catch (error) {
@@ -207,6 +242,10 @@ export function setStorageItem<T>(key: string, value: T): void {
 }
 
 export function removeStorageItem(key: string): void {
+  // This function only works in a browser environment
+  if (typeof localStorage === 'undefined') {
+      return;
+  }
   try {
     localStorage.removeItem(key);
   } catch (error) {

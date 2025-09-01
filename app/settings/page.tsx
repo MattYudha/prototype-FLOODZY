@@ -315,7 +315,7 @@ export default function SettingsPage() {
               <div className="space-y-4">
                 <RegionDropdown
                   onSelectDistrict={handleLocationSelect}
-                  selectedLocationCoords={preferences.default_location ? { lat: preferences.default_location.latitude, lng: preferences.default_location.longitude, name: preferences.default_location.districtName } : null}
+                  selectedLocation={preferences.default_location}
                 />
                 {preferences.default_location && (
                   <div className="p-3 bg-gradient-to-r from-emerald-500/10 to-green-500/10 border border-emerald-500/20 rounded-lg">
@@ -368,7 +368,7 @@ export default function SettingsPage() {
               </div>
               <div className="space-y-3 p-4 bg-slate-700/10 border border-slate-600/20 rounded-lg">
                 <input type="text" placeholder="Nama Lokasi (mis. Rumah, Kantor)" value={newFavoriteLocationName} onChange={(e) => setNewFavoriteLocationName(e.target.value)} className="w-full p-3 bg-slate-700/30 border border-slate-600/50 rounded-lg text-slate-200 placeholder-slate-400 text-sm focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 focus:outline-none" />
-                <RegionDropdown onSelectDistrict={setNewFavoriteLocationCoords} selectedLocationCoords={newFavoriteLocationCoords ? { lat: newFavoriteLocationCoords.latitude, lng: newFavoriteLocationCoords.longitude, name: newFavoriteLocationCoords.districtName } : null} />
+                <RegionDropdown onSelectDistrict={setNewFavoriteLocationCoords} selectedLocation={newFavoriteLocationCoords} />
                 <button onClick={handleAddFavoriteLocation} disabled={!newFavoriteLocationName || !newFavoriteLocationCoords} className="w-full flex items-center justify-center space-x-2 p-3 bg-gradient-to-r from-cyan-500 to-blue-500 text-white rounded-lg text-sm font-medium hover:from-cyan-600 hover:to-blue-600 disabled:opacity-50 disabled:cursor-not-allowed">
                   <Plus className="w-4 h-4" />
                   <span>Tambah Lokasi Favorit</span>

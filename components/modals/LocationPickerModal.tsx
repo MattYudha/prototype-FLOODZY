@@ -39,7 +39,7 @@ export function LocationPickerModal({ isOpen, onClose, onSave, initialLocation }
         <div className="py-4">
           <RegionDropdown
             onSelectDistrict={setSelectedLocation}
-            selectedLocationCoords={selectedLocation ? { lat: selectedLocation.latitude, lng: selectedLocation.longitude, name: selectedLocation.districtName } : null}
+            selectedLocation={selectedLocation}
           />
           {selectedLocation && (
             <p className="mt-4 text-sm text-muted-foreground">

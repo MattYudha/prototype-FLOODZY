@@ -159,7 +159,7 @@ const PetaBanjirPage = () => {
             </DrawerHeader>
             <div className="flex-1 p-0 overflow-hidden relative bg-slate-900">
               <Suspense fallback={<MapLoader />}>
-                <FloodMap crowdsourcedReports={crowdsourcedReports} officialBPBDData={officialBPBDData} />
+                <FloodMap crowdsourcedReports={crowdsourcedReports} officialBPBDData={officialBPBDData} isFullscreen={false} onFullscreenToggle={() => {}} />
               </Suspense>
             </div>
           </DrawerContent>
@@ -180,7 +180,7 @@ const PetaBanjirPage = () => {
           {isMapFullScreen ? <Minimize className="w-4 h-4" /> : <Expand className="w-4 h-4" />}
       </Button>
       <Suspense fallback={<MapLoader />}>
-        <FloodMap key={isMapFullScreen ? 'fullscreen' : 'normal'} crowdsourcedReports={crowdsourcedReports} officialBPBDData={officialBPBDData} />
+        <FloodMap key={isMapFullScreen ? 'fullscreen' : 'normal'} crowdsourcedReports={crowdsourcedReports} officialBPBDData={officialBPBDData} isFullscreen={isMapFullScreen} onFullscreenToggle={() => setMapFullScreen(prev => !prev)} />
       </Suspense>
     </div>
   );

@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
 import { Sidebar } from './Sidebar';
 import { Header } from './Header';
+import { SplashScreen } from './SplashScreen';
 
 export default function ClientLayoutWrapper({
   children,
@@ -13,6 +14,30 @@ export default function ClientLayoutWrapper({
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const isDesktop = useMediaQuery('(min-width: 768px)');
+
+  const [showSplash, setShowSplash] = useState(true);
+  const [isFadingOut, setIsFadingOut] = useState(false);
+
+  useEffect(() => {
+    if (sessionStorage.getItem('splashShown')) {
+      setShowSplash(false);
+      return;
+    }
+
+    const fadeTimer = setTimeout(() => {
+      setIsFadingOut(true);
+    }, 3000);
+
+    const hideTimer = setTimeout(() => {
+      setShowSplash(false);
+      sessionStorage.setItem('splashShown', 'true');
+    }, 3500);
+
+    return () => {
+      clearTimeout(fadeTimer);
+      clearTimeout(hideTimer);
+    };
+  }, []);
 
   useEffect(() => {
     if (isDesktop) {
@@ -30,6 +55,10 @@ export default function ClientLayoutWrapper({
   const toggleCollapsedState = () => {
     setIsCollapsed(!isCollapsed);
   };
+
+  if (showSplash) {
+    return <SplashScreen isFadingOut={isFadingOut} />;
+  }
 
   return (
     <div className="flex min-h-screen bg-background">

@@ -102,10 +102,13 @@ export interface PumpData {
   longitude: number;
   kondisi_bangunan: string;
   tipe_hidrologi: string;
+  jenis_infrastruktur?: string;
   provinsi?: string;
   kota_kabupaten?: string;
   kecamatan?: string;
   kelurahan?: string;
+  lokasi?: string;
+  status_pompa?: any[];
   updated_at?: number;
 }
 

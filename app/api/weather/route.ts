@@ -6,7 +6,7 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const lat = searchParams.get('lat');
   const lon = searchParams.get('lon');
-  const API_KEY = process.env.NEXT_PUBLIC_OPENWEATHERMAP_API_KEY;
+  const API_KEY = process.env.OPENWEATHER_API_KEY;
 
   if (!lat || !lon) {
     return NextResponse.json({ error: 'Latitude and longitude are required' }, { status: 400 });

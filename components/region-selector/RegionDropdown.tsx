@@ -36,6 +36,125 @@ import { WeatherMapIframe } from '@/components/weather/WeatherMapIframe';
 
 import { SelectedLocation } from '@/types/location';
 
+// Define props for the new component
+interface RegionSelectFieldProps {
+  selectedValue: string | null;
+  onValueChange: (value: string) => void;
+  placeholder: string;
+  loading: boolean;
+  disabled: boolean;
+  data: any[];
+  icon: React.ReactNode;
+  valueKey: string;
+  nameKey: string;
+  currentDisplayName: string | null;
+}
+
+// Create a dedicated component for the select field
+function RegionSelectField({
+  selectedValue,
+  onValueChange,
+  placeholder,
+  loading,
+  disabled,
+  data,
+  icon,
+  valueKey,
+  nameKey,
+  currentDisplayName,
+}: RegionSelectFieldProps) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <div className="space-y-1.5">
+      <div className="flex items-center gap-1.5 text-xs font-medium text-gray-300">
+        {icon}
+        <span>{placeholder}</span>
+        {loading && <Loader2 className="h-3 w-3 animate-spin text-cyan-400" />}
+      </div>
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <Button
+            variant="outline"
+            role="combobox"
+            aria-expanded={open}
+            disabled={disabled}
+            className="w-full justify-between h-9 sm:h-10 bg-gray-800/40 border-gray-700/50 text-white rounded-lg hover:bg-gray-800/60 hover:border-gray-600/50 transition-all duration-300 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50 disabled:opacity-50 disabled:cursor-not-allowed backdrop-blur-sm"
+          >
+            {currentDisplayName ? (
+              <div className="flex items-center gap-1.5">
+                <CheckCircle className="h-3 w-3 text-green-400 flex-shrink-0" />
+                <span className="text-white text-xs sm:text-sm truncate">
+                  {currentDisplayName}
+                </span>
+              </div>
+            ) : (
+              <span className="text-gray-400 text-xs sm:text-sm">{`Pilih ${placeholder}`}</span>
+            )}
+            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-[--radix-popover-trigger-width] p-0 bg-gray-800/95 border-gray-700/50 text-white backdrop-blur-md rounded-lg">
+          <Command>
+            <CommandInput
+              placeholder={`Cari ${placeholder}...`}
+              className="h-9 border-0 bg-transparent text-white ring-offset-0 focus:ring-0"
+            />
+            <CommandEmpty>Tidak ada {placeholder} ditemukan.</CommandEmpty>
+            <CommandList>
+              <CommandGroup>
+                {loading ? (
+                  <div className="p-2 text-center text-xs text-gray-400">
+                    Memuat data...
+                  </div>
+                ) : data.length === 0 ? (
+                  <div className="p-2 text-center text-xs text-gray-400">
+                    Tidak ada {placeholder} ditemukan.
+                  </div>
+                ) : (
+                  data.map((item, index) => (
+                    <CommandItem
+                      key={item[valueKey]}
+                      value={item[nameKey]}
+                      onSelect={(currentValue) => {
+                        const selected = data.find(
+                          (d) =>
+                            d[nameKey].toLowerCase() === currentValue.toLowerCase(),
+                        );
+                        if (selected) {
+                          onValueChange(String(selected[valueKey]));
+                        }
+                        setOpen(false);
+                      }}
+                      className="hover:bg-gray-700/50 focus:bg-gray-700/50 transition-colors duration-200 cursor-pointer py-1.5 sm:py-2 px-2 sm:px-3 rounded-md mx-0.5 my-0.5"
+                    >
+                      <div className="flex items-center gap-2 w-full">
+                        <span className="text-xs text-gray-400 min-w-[20px] sm:min-w-[24px] bg-gray-700/50 px-1 sm:px-1.5 py-0.5 rounded-sm flex-shrink-0">
+                          {String(index + 1).padStart(2, '0')}
+                        </span>
+                        <span className="text-xs sm:text-sm font-medium truncate">
+                          {item[nameKey]}
+                        </span>
+                      </div>
+                      <CheckCircle
+                        className={`ml-auto h-4 w-4 ${
+                          selectedValue === String(item[valueKey])
+                            ? 'opacity-100 text-cyan-400'
+                            : 'opacity-0'
+                        }`}
+                      />
+                    </CommandItem>
+                  ))
+                )}
+              </CommandGroup>
+            </CommandList>
+          </Command>
+        </PopoverContent>
+      </Popover>
+    </div>
+  );
+}
+
 interface RegionDropdownProps {
   onSelectDistrict?: (location: SelectedLocation) => void;
   selectedLocation?: SelectedLocation | null;
@@ -215,110 +334,6 @@ export function RegionDropdown({
     </Alert>
   );
 
-  const renderSelectField = (
-    selectedValue: string | null,
-    onValueChange: (value: string) => void,
-    placeholder: string,
-    loading: boolean,
-    disabled: boolean,
-    data: any[],
-    icon: React.ReactNode,
-    valueKey: string,
-    nameKey: string,
-    currentDisplayName: string | null,
-  ) => {
-    const [open, setOpen] = useState(false);
-
-    return (
-      <div className="space-y-1.5">
-        <div className="flex items-center gap-1.5 text-xs font-medium text-gray-300">
-          {icon}
-          <span>{placeholder}</span>
-          {loading && <Loader2 className="h-3 w-3 animate-spin text-cyan-400" />}
-        </div>
-        <Popover open={open} onOpenChange={setOpen}>
-          <PopoverTrigger asChild>
-            <Button
-              variant="outline"
-              role="combobox"
-              aria-expanded={open}
-              disabled={disabled}
-              className="w-full justify-between h-9 sm:h-10 bg-gray-800/40 border-gray-700/50 text-white rounded-lg hover:bg-gray-800/60 hover:border-gray-600/50 transition-all duration-300 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50 disabled:opacity-50 disabled:cursor-not-allowed backdrop-blur-sm"
-            >
-              {currentDisplayName ? (
-                <div className="flex items-center gap-1.5">
-                  <CheckCircle className="h-3 w-3 text-green-400 flex-shrink-0" />
-                  <span className="text-white text-xs sm:text-sm truncate">
-                    {currentDisplayName}
-                  </span>
-                </div>
-              ) : (
-                <span className="text-gray-400 text-xs sm:text-sm">{`Pilih ${placeholder}`}</span>
-              )}
-              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-[--radix-popover-trigger-width] p-0 bg-gray-800/95 border-gray-700/50 text-white backdrop-blur-md rounded-lg">
-            <Command>
-              <CommandInput
-                placeholder={`Cari ${placeholder}...`}
-                className="h-9 border-0 bg-transparent text-white ring-offset-0 focus:ring-0"
-              />
-              <CommandEmpty>Tidak ada {placeholder} ditemukan.</CommandEmpty>
-              <CommandList>
-                <CommandGroup>
-                  {loading ? (
-                    <div className="p-2 text-center text-xs text-gray-400">
-                      Memuat data...
-                    </div>
-                  ) : data.length === 0 ? (
-                    <div className="p-2 text-center text-xs text-gray-400">
-                      Tidak ada {placeholder} ditemukan.
-                    </div>
-                  ) : (
-                    data.map((item, index) => (
-                      <CommandItem
-                        key={item[valueKey]}
-                        value={item[nameKey]}
-                        onSelect={(currentValue) => {
-                          const selected = data.find(
-                            (d) =>
-                              d[nameKey].toLowerCase() === currentValue.toLowerCase(),
-                          );
-                          if (selected) {
-                            onValueChange(String(selected[valueKey]));
-                          }
-                          setOpen(false);
-                        }}
-                        className="hover:bg-gray-700/50 focus:bg-gray-700/50 transition-colors duration-200 cursor-pointer py-1.5 sm:py-2 px-2 sm:px-3 rounded-md mx-0.5 my-0.5"
-                      >
-                        <div className="flex items-center gap-2 w-full">
-                          <span className="text-xs text-gray-400 min-w-[20px] sm:min-w-[24px] bg-gray-700/50 px-1 sm:px-1.5 py-0.5 rounded-sm flex-shrink-0">
-                            {String(index + 1).padStart(2, '0')}
-                          </span>
-                          <span className="text-xs sm:text-sm font-medium truncate">
-                            {item[nameKey]}
-                          </span>
-                        </div>
-                        <CheckCircle
-                          className={`ml-auto h-4 w-4 ${
-                            selectedValue === String(item[valueKey])
-                              ? 'opacity-100 text-cyan-400'
-                              : 'opacity-0'
-                          }`}
-                        />
-                      </CommandItem>
-                    ))
-                  )}
-                </CommandGroup>
-              </CommandList>
-            </Command>
-          </PopoverContent>
-        </Popover>
-      </div>
-    );
-  };
-
   const isComplete =
     selectedDistrictCode &&
     displayProvinceName &&
@@ -428,46 +443,46 @@ export function RegionDropdown({
               {/* Selection Fields */}
               <div className="space-y-3 sm:space-y-6">
                 {/* Province Selection */}
-                {renderSelectField(
-                  selectedProvinceCode,
-                  handleProvinceChange,
-                  'Provinsi',
-                  loadingProvinces,
-                  loadingProvinces,
-                  provinces,
-                  <Globe className="h-3 w-3 text-cyan-400" />,
-                  'province_code',
-                  'province_name',
-                  displayProvinceName,
-                )}
+                <RegionSelectField
+                  selectedValue={selectedProvinceCode}
+                  onValueChange={handleProvinceChange}
+                  placeholder='Provinsi'
+                  loading={loadingProvinces}
+                  disabled={loadingProvinces}
+                  data={provinces}
+                  icon={<Globe className="h-3 w-3 text-cyan-400" />}
+                  valueKey='province_code'
+                  nameKey='province_name'
+                  currentDisplayName={displayProvinceName}
+                />
 
                 {/* Regency Selection */}
-                {renderSelectField(
-                  selectedRegencyCode,
-                  handleRegencyChange,
-                  'Kabupaten/Kota',
-                  loadingRegencies,
-                  !selectedProvinceCode || loadingRegencies,
-                  regencies,
-                  <Building2 className="h-3 w-3 text-cyan-400" />,
-                  'city_code',
-                  'city_name',
-                  displayRegencyName,
-                )}
+                <RegionSelectField
+                  selectedValue={selectedRegencyCode}
+                  onValueChange={handleRegencyChange}
+                  placeholder='Kabupaten/Kota'
+                  loading={loadingRegencies}
+                  disabled={!selectedProvinceCode || loadingRegencies}
+                  data={regencies}
+                  icon={<Building2 className="h-3 w-3 text-cyan-400" />}
+                  valueKey='city_code'
+                  nameKey='city_name'
+                  currentDisplayName={displayRegencyName}
+                />
 
                 {/* District Selection */}
-                {renderSelectField(
-                  selectedDistrictCode,
-                  handleDistrictChange,
-                  'Kecamatan',
-                  loadingDistricts,
-                  !selectedRegencyCode || loadingDistricts,
-                  districts,
-                  <MapPin className="h-3 w-3 text-cyan-400" />,
-                  'sub_district_code',
-                  'sub_district_name',
-                  displayDistrictName,
-                )}
+                <RegionSelectField
+                  selectedValue={selectedDistrictCode}
+                  onValueChange={handleDistrictChange}
+                  placeholder='Kecamatan'
+                  loading={loadingDistricts}
+                  disabled={!selectedRegencyCode || loadingDistricts}
+                  data={districts}
+                  icon={<MapPin className="h-3 w-3 text-cyan-400" />}
+                  valueKey='sub_district_code'
+                  nameKey='sub_district_name'
+                  currentDisplayName={displayDistrictName}
+                />
               </div>
 
               {/* Selection Summary */}
@@ -551,7 +566,7 @@ export function RegionDropdown({
                 typeof selectedLocation.latitude === 'number' &&
                 typeof selectedLocation.longitude === 'number' ? (
                   <WeatherMapIframe
-                    selectedLocation={{
+                    selectedLocationCoords={{
                       lat: selectedLocation.latitude,
                       lng: selectedLocation.longitude,
                       name: selectedLocation.districtName,

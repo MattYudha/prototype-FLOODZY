@@ -497,19 +497,24 @@ export const FloodMap = React.memo(function FloodMap({
         boxZoom={false}
         dragging={true}
         keyboard={false}
-        tap={false}
+        
         touchZoom={true}
         className="w-full h-full bg-slate-900"
         ref={mapRef as any}
         zoomControl={false}
-        whenCreated={(map) => {
+        // @ts-ignore
+        whenReady={((map: L.Map) => {
           mapRef.current = map;
           if (onMapLoad) {
             onMapLoad(map);
           }
-          map.removeControl(map.zoomControl);
-          map.removeControl(map.attributionControl);
-        }}
+          if (map.zoomControl) {
+            map.removeControl(map.zoomControl);
+          }
+          if (map.attributionControl) {
+            map.removeControl(map.attributionControl);
+          }
+        })}
       >
         <TileLayer
           key={selectedLayer}
