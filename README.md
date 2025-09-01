@@ -1,4 +1,4 @@
-# 🌊 Floodzy - Real-time Flood Detection & Weather Monitoring System
+# 🌊 Floodzy - Real-time Pendeteksi Banjir  & Monitoring Cuaca
 
 <div align="center">
   <img src="public/assets/banjir.png" alt="Floodzy Logo" width="200"/>
