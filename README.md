@@ -1,4 +1,4 @@
-# 🌊 Floodzy - Real-time Pendeteksi Banjir  & Monitoring Cuaca
+a# 🌊 Floodzy - Real-time Pendeteksi Banjir  & Monitoring Cuaca
 
 <div align="center">
   <img src="public/assets/banjir.png" alt="Floodzy Logo" width="200"/>
@@ -24,13 +24,19 @@ Platform ini menyediakan data ketinggian air, status pompa, prakiraan cuaca, ana
 
 ---
 
-## ✨ Features
+### ✨ Features
 
-### 🗺️ Mapping & Visualization
+Floodzy menyediakan serangkaian fitur lengkap untuk pemantauan bencana yang komprehensif:
 
-- Peta interaktif berbasis Leaflet dengan marker sensor.
-- Layer banjir, cuaca, dan titik evakuasi.
-- Map legend dan kontrol interaktif.
+-   **🗺️ Peta Bencana Interaktif**: Visualisasi data banjir, cuaca, dan sensor secara real-time menggunakan Leaflet, lengkap dengan marker, layer, dan legenda yang interaktif.
+-   **📊 Dashboard Statistik & Analisis**: Halaman dashboard (`/statistika`) yang menampilkan statistik historis bencana, grafik curah hujan, dan laporan banjir dalam bentuk visual yang mudah dipahami.
+-   **🤖 Analisis Bencana Berbasis AI**: Integrasi dengan Gemini API untuk memberikan analisis otomatis terhadap data bencana, peringatan dini, dan ringkasan berita terkini.
+-   **🚨 Peringatan Dini Multi-Sumber**: Mengagregasi data peringatan dari berbagai sumber terpercaya untuk memberikan notifikasi bencana yang akurat.
+-   **🌦️ Prakiraan & Riwayat Cuaca**: Menyajikan data cuaca real-time (suhu, kelembapan, angin) dari OpenWeatherMap dan riwayat cuaca untuk analisis tren.
+-   **🌬️ Pemantauan Kualitas Udara**: Fitur untuk memantau tingkat polusi udara di wilayah terpilih, memberikan informasi kesehatan lingkungan yang krusial.
+-   **🌍 Informasi Gempa Bumi**: Menampilkan data gempa bumi terkini langsung dari BMKG untuk meningkatkan kesiapsiagaan terhadap bencana geologi.
+-   **📱 Dukungan Progressive Web App (PWA)**: Floodzy dapat diinstal di perangkat mobile layaknya aplikasi native, serta mendukung fungsionalitas offline untuk akses di kondisi darurat.
+-   **💬 Laporan Pengguna & Chatbot**: Memungkinkan pengguna melaporkan kejadian banjir secara langsung dan menyediakan chatbot interaktif untuk menjawab pertanyaan seputar cuaca dan bencana.
 
 ### 🌡️ Weather & Flood Data
 
@@ -361,20 +367,23 @@ Key fields in the logs:
 ````
 
 ```plaintext
-| Endpoint                 | Deskripsi                              | Parameter            |
-| ------------------------ | -------------------------------------- | -------------------- |
-| `/api/analysis`          | Analisis data bencana berbasis AI      | -                    |
-| `/api/alerts-data`       | Data peringatan bencana                | -                    |
-| `/api/chatbot`           | Chatbot informasi banjir & cuaca       | `message`            |
-| `/api/evakuasi`          | Titik evakuasi terdekat                | `regionId`           |
-| `/api/gemini-alerts`     | Peringatan otomatis berbasis Gemini AI | -                    |
-| `/api/gemini-analysis`   | Analisis mendalam banjir berbasis AI   | -                    |
-| `/api/laporan`           | Laporan banjir pengguna                | `location`, `status` |
-| `/api/pump-status-proxy` | Status pompa banjir                    | `pumpId`             |
-| `/api/regions`           | Daftar wilayah monitoring              | -                    |
-| `/api/water-level-proxy` | Ketinggian air                         | `stationId`          |
-| `/api/weather`           | Cuaca terkini                          | `lat`, `lon`         |
-| `/api/weather-history`   | Riwayat cuaca                          | `regionId`           |
+### 🌐 Endpoints API
+
+| Endpoint                | Deskripsi                                      | Parameter              |
+| ----------------------- | ---------------------------------------------- | ---------------------- |
+| `/api/analysis`         | Analisis data bencana berbasis AI              | -                      |
+| `/api/alerts-data`      | Data peringatan bencana                        | -                      |
+| `/api/chatbot`          | Chatbot informasi banjir & cuaca               | `message` (POST)       |
+| `/api/evakuasi`         | Titik evakuasi terdekat                        | `regionId`             |
+| `/api/gemini-alerts`    | Peringatan otomatis berbasis Gemini AI         | -                      |
+| `/api/gemini-analysis`  | Analisis mendalam banjir berbasis AI           | -                      |
+| `/api/laporan`          | Laporan banjir pengguna                        | `location`, `status`   |
+| `/api/pump-status-proxy`| Status pompa banjir                            | `pumpId`               |
+| `/api/regions`          | Daftar wilayah monitoring                      | -                      |
+| `/api/water-level-proxy`| Ketinggian air                                 | `stationId`            |
+| `/api/weather`          | Cuaca terkini                                  | `lat`, `lon`           |
+| `/api/weather-history`  | Riwayat cuaca                                  | `regionId`             |
+
 
 
 ````
@@ -403,26 +412,89 @@ use-toast → Notifikasi toast
 ```
 
 ```plaintext
-💻 Usage
+## 🚀 Panduan Memulai (Getting Started)
 
-Basic
+Ikuti langkah-langkah ini untuk menjalankan Floodzy di lingkungan pengembangan lokal Anda.
 
-Jalankan npm run dev
+### 1. Prasyarat
 
-Buka http://localhost:3000
+-   Node.js (v18 atau lebih baru)
+-   npm / yarn / pnpm
+-   Supabase CLI (untuk setup database lokal)
 
-Pilih wilayah di dropdown/map
+### 2. Instalasi
 
-Lihat data banjir, cuaca, dan analisis
+1.  **Clone repositori ini:**
+    ```bash
+    git clone [https://github.com/mattyudha/floodzy.git](https://github.com/mattyudha/floodzy.git)
+    cd floodzy
+    ```
 
-Advanced
+2.  **Install dependensi:**
+    ```bash
+    npm install
+    ```
 
-Kirim laporan banjir via menu Lapor Banjir
+### 3. Konfigurasi Lingkungan
 
-Gunakan chatbot untuk informasi cepat
+1.  **Buat file `.env.local`** dari contoh yang ada:
+    ```bash
+    cp .env.example .env.local
+    ```
 
-Lihat analisis bencana di dashboard
-```
+2.  **Isi semua variabel lingkungan** di dalam file `.env.local`. Pastikan semua variabel terisi, karena banyak fitur yang bergantung pada kunci API ini.
+    ```env
+    # Supabase (Wajib)
+    NEXT_PUBLIC_SUPABASE_URL=...
+    NEXT_PUBLIC_SUPABASE_ANON_KEY=...
+    SUPABASE_SERVICE_ROLE_KEY=...
+
+    # API Pihak Ketiga (Wajib)
+    OPENWEATHER_API_KEY=...
+    NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN=...
+    GEMINI_API_KEY=...
+
+    # Upstash Redis for Caching & Rate Limiting (Wajib)
+    UPSTASH_REDIS_REST_URL=...
+    UPSTASH_REDIS_REST_TOKEN=...
+
+    # Sentry for Error Monitoring (Opsional)
+    SENTRY_DSN=...
+    SENTRY_ENVIRONMENT="development"
+    ```
+
+### 4. Setup Database (Supabase)
+
+1.  **Login ke Supabase CLI:**
+    ```bash
+    npx supabase login
+    ```
+
+2.  **Mulai Supabase di lokal:**
+    ```bash
+    npx supabase start
+    ```
+
+3.  **Terapkan migrasi database.** Skema tabel dan fungsi akan dibuat secara otomatis.
+    ```bash
+    npx supabase db reset
+    ```
+    *Catatan: Perintah ini juga akan menjalankan `seed.sql` untuk mengisi data awal.*
+
+### 5. Jalankan Aplikasi
+
+1.  **Jalankan server pengembangan:**
+    ```bash
+    npm run dev
+    ```
+
+2.  Buka **http://localhost:3000** di browser Anda.
+
+### Perintah Lainnya
+
+-   `npm run build`: Membuat build produksi.
+-   `npm run test`: Menjalankan pengujian dengan Vitest.
+-   `npm run lint`: Mengecek kualitas kode dengan ESLint.
 
 ```plaintext
 Buat file .env.local:
@@ -451,6 +523,19 @@ Validasi input di server
 
 API key aman di environment variables
 ```
+
+```plaintext
+## 🛠️ Arsitektur & Teknologi
+
+Floodzy dibangun di atas tumpukan teknologi modern yang dirancang untuk skalabilitas, performa, dan kemudahan pengembangan.
+
+-   **Frontend**: Dibangun dengan **Next.js 13+ (App Router)** dan **TypeScript**. Antarmuka pengguna (UI) menggunakan **Tailwind CSS** dan komponen-komponen dari **shadcn/ui** yang *reusable* dan aksesibel.
+-   **State Management**: Menggunakan **React Query (`@tanstack/react-query`)** untuk manajemen *server state*, termasuk caching, re-fetching, dan sinkronisasi data, sehingga memastikan UI selalu up-to-date dengan data terbaru.
+-   **Backend**: Memanfaatkan **Next.js API Routes** sebagai backend, didukung oleh **Supabase** untuk database PostgreSQL, otentikasi, dan *Row Level Security* (RLS).
+-   **Testing**: Proyek ini dilengkapi dengan *smoke tests* menggunakan **Vitest** untuk memastikan fungsionalitas inti berjalan sesuai harapan.
+-   **CI/CD**: Proses *Continuous Integration* diotomatisasi menggunakan **GitHub Actions**, yang menjalankan proses linting dan testing setiap kali ada perubahan kode untuk menjaga kualitas kode.
+```
+
 
 ```plaintext
 🎉 Acknowledgments
