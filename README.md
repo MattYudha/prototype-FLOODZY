@@ -6,7 +6,7 @@ a# 🌊 Floodzy - Real-time Pendeteksi Banjir  & Monitoring Cuaca
   <p align="center">
     <strong>Comprehensive flood monitoring, weather tracking, and early warning platform for Indonesia</strong>
   </p>
-  
+
   <p align="center">
     <img src="https://img.shields.io/badge/Next.js-13-black?style=for-the-badge&logo=next.js" alt="Next.js"/>
     <img src="https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript" alt="TypeScript"/>
