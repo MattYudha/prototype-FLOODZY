@@ -77,13 +77,15 @@ export function SplashScreen({ isFadingOut }: SplashScreenProps) {
             </motion.p>
 
             <motion.div
-              className="absolute bottom-10 sm:bottom-16 left-1/2 -translate-x-1/2 flex items-center space-x-2"
+              className="absolute bottom-10 left-0 right-0 flex justify-center items-center"
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 1.5, duration: 0.8 }}
             >
-              <Loader className="h-5 w-5 animate-spin text-secondary" />
-              <span className="text-sm text-white/60">Memuat data...</span>
+              <div className="flex items-center space-x-2">
+                <Loader className="h-5 w-5 animate-spin text-secondary" />
+                <span className="text-sm text-white/60">Memuat data...</span>
+              </div>
             </motion.div>
           </motion.div>
         </motion.div>
