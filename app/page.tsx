@@ -4,6 +4,7 @@ import { fetchBmkgLatestQuake } from '@/lib/api.client';
 export const revalidate = 300;
 import { BmkgGempaData } from '@/lib/api';
 import { DashboardClientPage } from '@/components/layout/DashboardClientPage';
+import Footer from '@/components/layout/Footer';
 import { generateMockWaterLevels, generateMockPumpStatus, generateMockAlerts } from '@/lib/mock-data';
 
 export default async function Home() {
@@ -67,6 +68,11 @@ export default async function Home() {
     realTimeAlerts, // Gunakan data mockup yang baru
   };
 
-  return <DashboardClientPage initialData={initialData} />;
+  return (
+    <>
+      <DashboardClientPage initialData={initialData} />
+      <Footer />
+    </>
+  );
 }
 
