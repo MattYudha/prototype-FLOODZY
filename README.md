@@ -1,7 +1,7 @@
 # 🌊 Floodzy - Real-time Pendeteksi Banjir  & Monitoring Cuaca
 
 <div align="center">
-  <img src="public/assets/banjir.png" alt="Floodzy Logo" width="200"/>
+  <img src="public/assets/ChatGPT Image 4 Sep 2025, 08.50.45.png" alt="Floodzy Logo" width="200"/>
   
   <p align="center">
     <strong>Comprehensive flood monitoring, weather tracking, and early warning platform for Indonesia</strong>
