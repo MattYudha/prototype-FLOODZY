@@ -7,11 +7,27 @@ import { Toaster } from 'react-hot-toast';
 import { AlertCountProvider } from '@/components/contexts/AlertCountContext';
 import 'leaflet/dist/leaflet.css';
 import ReactQueryProvider from '@/components/providers/ReactQueryProvider';
-import ClientLayoutWrapper from '@/components/layout/ClientLayoutWrapper'; // Import the new component
+import ClientLayoutWrapper from '@/components/layout/ClientLayoutWrapper';
 
-// ... sisa kode layout Anda
-
+// font
 const inter = Inter({ subsets: ['latin'] });
+
+// ✅ Tambahkan metadata dengan favicon
+export const metadata = {
+  title: "Floodzy",
+  description: "Real-time flood detection and alert system",
+  icons: {
+    icon: [
+      { url: "/favicon.ico", sizes: "any", type: "image/x-icon" },
+      { url: "/logo.png", type: "image/png" },
+    ],
+    shortcut: ["/logo.png"],
+    apple: [
+      { url: "/logo.png" },
+    ],
+  },
+};
+
 
 export default function RootLayout({
   children,
