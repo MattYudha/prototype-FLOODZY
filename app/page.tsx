@@ -22,12 +22,12 @@ export default async function Home() {
   // Note: In a real app, this data would come from a database or a live API.
   const waterLevelPosts = generateMockWaterLevels(100);
   const pumpStatusData = generateMockPumpStatus(100);
-  const realTimeAlerts = generateMockAlerts(5); // Generate 5 active alerts for demonstration
+  const realTimeAlerts = generateMockAlerts(); // Generate 5 active alerts for demonstration
 
   // === LANGKAH 2: Kalkulasi Statistik Dinamis & Inovatif ===
 
   // Total Wilayah: Hitung jumlah kota/kabupaten unik dari semua infrastruktur
-  const allLocations = [...waterLevelPosts.map(p => p.location), ...pumpStatusData.map(p => p.lokasi)];
+  const allLocations = [...waterLevelPosts.map(p => p.name), ...pumpStatusData.map(p => p.lokasi)];
   const uniqueRegions = new Set(allLocations.map(loc => loc?.split(',')[0].trim())).size;
 
   // Peringatan Aktif: Jumlah peringatan real-time yang sedang berlangsung
