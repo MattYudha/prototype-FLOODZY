@@ -1,4 +1,4 @@
-a# 🌊 Floodzy - Real-time Pendeteksi Banjir  & Monitoring Cuaca
+# 🌊 Floodzy - Real-time Pendeteksi Banjir  & Monitoring Cuaca
 
 <div align="center">
   <img src="public/assets/banjir.png" alt="Floodzy Logo" width="200"/>
