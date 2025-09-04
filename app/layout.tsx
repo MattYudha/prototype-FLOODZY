@@ -12,19 +12,16 @@ import ClientLayoutWrapper from '@/components/layout/ClientLayoutWrapper';
 // font
 const inter = Inter({ subsets: ['latin'] });
 
-// ✅ Tambahkan metadata dengan favicon
+// ✅ Konfigurasi disesuaikan dengan file yang ada
 export const metadata = {
   title: "Floodzy",
   description: "Real-time flood detection and alert system",
   icons: {
     icon: [
-      { url: "/favicon.ico", sizes: "any", type: "image/x-icon" },
-      { url: "/logo.png", type: "image/png" },
+        { url: '/web-app-manifest-192x192.png', sizes: '192x192' },
+        { url: '/web-app-manifest-512x512.png', sizes: '512x512' },
     ],
-    shortcut: ["/logo.png"],
-    apple: [
-      { url: "/logo.png" },
-    ],
+    apple: { url: '/apple-icon.png' },
   },
 };
 
