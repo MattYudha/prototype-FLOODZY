@@ -8,6 +8,7 @@ import { AlertCountProvider } from '@/components/contexts/AlertCountContext';
 import 'leaflet/dist/leaflet.css';
 import ReactQueryProvider from '@/components/providers/ReactQueryProvider';
 import ClientLayoutWrapper from '@/components/layout/ClientLayoutWrapper';
+import Footer from '@/components/layout/Footer';
 
 // font
 const inter = Inter({ subsets: ['latin'] });
@@ -38,6 +39,7 @@ export default function RootLayout({
           <ThemeProvider>
             <AlertCountProvider>
               <ClientLayoutWrapper>{children}</ClientLayoutWrapper>
+              <Footer />
               <Toaster
                 position="top-right"
                 toastOptions={{
