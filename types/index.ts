@@ -95,6 +95,13 @@ export interface MapBounds {
   bounds: [[number, number], [number, number]];
 }
 
+export interface SelectedLocation {
+  provinceName: string;
+  districtName: string;
+  latitude: number;
+  longitude: number;
+}
+
 export interface ThemeConfig {
   isDark: boolean;
   colors: {

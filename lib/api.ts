@@ -108,6 +108,7 @@ export interface PumpData {
   kecamatan?: string;
   kelurahan?: string;
   lokasi?: string;
+  kapasitas_liter_per_detik?: number;
   status_pompa?: any[];
   updated_at?: number;
 }

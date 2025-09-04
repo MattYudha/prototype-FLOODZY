@@ -72,16 +72,6 @@ const DetailPopup = ({ item, onClose }: { item: WaterLevelPost | PumpData, onClo
   const isWaterLevel = 'water_level' in item;
 
   let title: string;
-  if (isWaterLevel) {
-    title = item.name;
-  } else {
-    title = (item as PumpData).nama_infrastruktur;
-  }
-
-  const DetailPopup = ({ item, onClose }: { item: WaterLevelPost | PumpData, onClose: () => void }) => {
-  const isWaterLevel = 'water_level' in item;
-
-  let title: string;
   let lastUpdated: string;
 
   if (isWaterLevel) {
@@ -89,7 +79,7 @@ const DetailPopup = ({ item, onClose }: { item: WaterLevelPost | PumpData, onClo
     lastUpdated = getTimeAgo(item.timestamp || new Date().toISOString()); // Provide default for timestamp
   } else {
     title = (item as PumpData).nama_infrastruktur;
-    lastUpdated = getTimeAgo((item as PumpData).updated_at || new Date().getTime()); // Use updated_at for PumpData
+    lastUpdated = getTimeAgo(new Date((item as PumpData).updated_at || new Date().getTime())); // Use updated_at for PumpData
   }
 
   const details = isWaterLevel 
@@ -102,20 +92,7 @@ const DetailPopup = ({ item, onClose }: { item: WaterLevelPost | PumpData, onClo
         { label: "Lokasi", value: (item as PumpData).lokasi || 'N/A', icon: <MapPin className="w-4 h-4 text-slate-400" /> },
         { label: "Status Pompa", value: (item as PumpData).kondisi_bangunan, icon: <ShieldCheck className="w-4 h-4 text-slate-400" /> },
         { label: "Kapasitas", value: `${(item as PumpData).kapasitas_liter_per_detik} L/detik`, icon: <Droplets className="w-4 h-4 text-slate-400" /> },
-        { label: "ID Pompa", value: (item as PumpData).id_infrastruktur, icon: <Info className="w-4 h-4 text-slate-400" /> },
-      ];
-
-  const details = isWaterLevel 
-    ? [
-        { label: "Tinggi Air", value: `${item.water_level} ${item.unit}`, icon: <Waves className="w-4 h-4 text-slate-400" /> },
-        { label: "Status", value: item.status, icon: <ShieldCheck className="w-4 h-4 text-slate-400" /> },
-        { label: "ID Sensor", value: item.id, icon: <Info className="w-4 h-4 text-slate-400" /> },
-      ]
-    : [
-        { label: "Lokasi", value: item.lokasi || 'N/A', icon: <MapPin className="w-4 h-4 text-slate-400" /> },
-        { label: "Status Pompa", value: item.kondisi_bangunan, icon: <ShieldCheck className="w-4 h-4 text-slate-400" /> },
-        { label: "Kapasitas", value: `${item.kapasitas_liter_per_detik} L/detik`, icon: <Droplets className="w-4 h-4 text-slate-400" /> },
-        { label: "ID Pompa", value: item.id_infrastruktur, icon: <Info className="w-4 h-4 text-slate-400" /> },
+        { label: "ID Pompa", value: (item as PumpData).id, icon: <Info className="w-4 h-4 text-slate-400" /> },
       ];
 
   return (

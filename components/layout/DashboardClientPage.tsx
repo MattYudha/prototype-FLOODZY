@@ -327,7 +327,7 @@ export function DashboardClientPage({ initialData }) {
                   </Button>
                 </div>
               </motion.div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mt-16 md:mt-20 items-start">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mt-12 md:mt-16 items-start">
                 {heroCards.map((card, index) => (
                   <motion.div
                     key={card.title}
@@ -336,16 +336,16 @@ export function DashboardClientPage({ initialData }) {
                     transition={{ duration: 0.5, delay: 0.2 + index * 0.1 }}
                   >
                     <Card className="bg-white/5 border-white/10 backdrop-blur-md text-white hover:bg-white/10 transition-colors h-full">
-                      <CardContent className="p-5 flex flex-col h-full">
-                        <div className="flex-shrink-0 mb-4">
-                          <div className={cn('p-3 rounded-lg inline-block', card.bgColor)}>
-                            <card.icon className={cn('h-7 w-7', card.color)} />
+                      <CardContent className="p-4 flex flex-col h-full">
+                        <div className="flex-shrink-0 mb-3">
+                          <div className={cn('p-2 rounded-lg inline-block', card.bgColor)}>
+                            <card.icon className={cn('h-6 w-6', card.color)} />
                           </div>
                         </div>
                         <div className="mt-auto">
-                          <p className="text-4xl font-bold">{card.count}</p>
-                          <h3 className="text-md font-semibold mt-1">{card.title}</h3>
-                          <p className="text-sm text-white/70 mt-1">{card.description}</p>
+                          <p className="text-3xl font-bold">{card.count}</p>
+                          <h3 className="text-sm font-semibold mt-1">{card.title}</h3>
+                          <p className="text-xs text-white/70 mt-1">{card.description}</p>
                         </div>
                       </CardContent>
                     </Card>

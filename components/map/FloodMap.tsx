@@ -96,6 +96,16 @@ import {
 } from '@/lib/geocodingService';
 import { GeocodingResponse } from '@/types/geocoding';
 
+const isValidLatLng = (latlng: any): latlng is [number, number] | { lat: number; lng: number; } => {
+  if (Array.isArray(latlng) && latlng.length === 2 && typeof latlng[0] === 'number' && typeof latlng[1] === 'number') {
+    return true;
+  }
+  if (typeof latlng === 'object' && latlng !== null && typeof latlng.lat === 'number' && typeof latlng.lng === 'number') {
+    return true;
+  }
+  return false;
+};
+
 // Custom marker icons
 const createCustomIcon = (color: string, iconHtml: string) => {
   // Ganti icon menjadi iconHtml
@@ -298,12 +308,13 @@ export const FloodMap = React.memo(function FloodMap({
 
   const handleSearch = async () => {
     if (searchQuery.trim() !== '') {
-      const result = await getCoordsByLocationName(searchQuery);
-      if (result) {
-        setSearchedLocation(result);
+      const results = await getCoordsByLocationName(searchQuery);
+      if (results && results.length > 0) {
+        const firstResult = results[0];
+        setSearchedLocation(firstResult);
         const map = mapRef.current;
         if (map) {
-          const newCenter: [number, number] = [result.lat, result.lon];
+          const newCenter: [number, number] = [firstResult.lat, firstResult.lon];
           const newZoom = 13;
           map.setView(newCenter, newZoom);
 
@@ -586,31 +597,31 @@ export const FloodMap = React.memo(function FloodMap({
             ),
         )}
 
-        {searchedLocation && (
+        {searchedLocation && isValidLatLng([searchedLocation.lat, searchedLocation.lon]) && (
           <Marker position={[searchedLocation.lat, searchedLocation.lon]}>
             <Popup>{searchedLocation.name}</Popup>
           </Marker>
         )}
 
-        {clickedLocation && (
+        {clickedLocation && isValidLatLng(clickedLocation.latlng) && (
           <Marker position={clickedLocation.latlng}>
             <Popup>{clickedLocation.name}</Popup>
           </Marker>
         )}
 
         {/* Marker di lokasi yang dipilih (dari RegionDropdown) */}
-        {selectedLocation?.latitude != null && selectedLocation?.longitude != null ? (
+        {selectedLocation?.latitude != null && selectedLocation?.longitude != null && isValidLatLng([selectedLocation.latitude, selectedLocation.longitude]) && (
           <Marker position={[selectedLocation.latitude, selectedLocation.longitude]} icon={floodIcon}>
             <Popup>
               Lokasi Terpilih: {selectedLocation.districtName || 'Tidak Diketahui'} <br /> Lat: {selectedLocation.latitude.toFixed(6)}, Lng:{' '}
               {selectedLocation.longitude.toFixed(6)}
             </Popup>
           </Marker>
-        ) : null}
+        )}
 
         {/* NEW: Crowdsourced Reports (Markers) - Temporarily commented out for debugging */}
         {/* {showCrowdsourcedReports && crowdsourcedReports.map((report) => (
-          <Marker
+          isValidLatLng([report.geometry.coordinates[1], report.geometry.coordinates[0]]) && <Marker
             key={report.report_id}
             position={[report.geometry.coordinates[1], report.geometry.coordinates[0]]} // [latitude, longitude]
             icon={userReportIcon}
@@ -742,7 +753,7 @@ export const FloodMap = React.memo(function FloodMap({
 
         {/* Weather Stations (global data) */}
         {showWeatherStations && globalWeatherStations.map((station) => (
-          <Marker key={station.id} position={station.coordinates} icon={weatherIcon}>
+          isValidLatLng(station.coordinates) && <Marker key={station.id} position={station.coordinates} icon={weatherIcon}>
             <Popup>
               <Card className="min-w-[180px] sm:min-w-[250px] p-4">
                 <div className="space-y-3">
@@ -878,7 +889,7 @@ export const FloodMap = React.memo(function FloodMap({
               );
             }
             // RENDER MARKER UNTUK NODE
-            else if (element.type === 'node' && element.lat && element.lon) {
+            else if (element.type === 'node' && element.lat && element.lon && isValidLatLng([element.lat, element.lon])) {
               return (
                 <Marker
                   key={`overpass-node-${element.id}`}
@@ -1023,7 +1034,7 @@ export const FloodMap = React.memo(function FloodMap({
               );
             }
             // Render Marker jika ada coordinates (dan tidak ada polygon)
-            else if (alert.coordinates) {
+            else if (alert.coordinates && isValidLatLng(alert.coordinates)) {
               return (
                 <Marker
                   key={`alert-marker-${alert.id}`}

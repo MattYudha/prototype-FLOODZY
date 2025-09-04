@@ -1,6 +1,20 @@
 import { create } from 'zustand';
-import { SelectedLocation } from '@/types/location';
-import { MapBounds } from '@/types';
+
+export interface SelectedLocation {
+  latitude: number;
+  longitude: number;
+  districtName: string;
+  districtCode?: string;
+  regencyCode?: string;
+  provinceCode?: string;
+  geometry?: string;
+}
+
+export interface MapBounds {
+  center: [number, number];
+  zoom: number;
+  bounds: [[number, number], [number, number]];
+}
 
 interface AppState {
   selectedLocation: SelectedLocation | null;
