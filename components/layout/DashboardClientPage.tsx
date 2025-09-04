@@ -61,7 +61,7 @@ import {
   DEFAULT_MAP_ZOOM,
   WEATHER_STATIONS_GLOBAL_MOCK,
 } from '@/lib/constants';
-import { cn, formatNumber, getBaseUrl } from '@/lib/utils';
+import { cn, formatPopulation, getBaseUrl } from '@/lib/utils';
 
 // App Components
 import { RegionDropdown } from '@/components/region-selector/RegionDropdown';
@@ -234,35 +234,35 @@ export function DashboardClientPage({ initialData }) {
     () => [
       {
         title: 'Total Wilayah',
-        description: 'Wilayah yang dipantau',
+        description: 'Wilayah unik yang dipantau',
         count: initialData.stats.totalRegions,
         icon: MapPin,
-        color: 'text-primary',
-        bgColor: 'bg-primary/20',
+        color: 'text-blue-400',
+        bgColor: 'bg-blue-500/20',
       },
       {
         title: 'Peringatan Aktif',
-        description: 'Peringatan banjir saat ini',
+        description: 'Peringatan real-time saat ini',
         count: initialData.stats.activeAlerts,
         icon: Bell,
-        color: 'text-warning',
-        bgColor: 'bg-warning/20',
+        color: 'text-amber-400',
+        bgColor: 'bg-amber-500/20',
       },
       {
         title: 'Zona Rawan',
-        description: 'Area yang teridentifikasi',
+        description: 'Pos pemantau level Siaga/Awas',
         count: initialData.stats.floodZones,
         icon: Shield,
-        color: 'text-danger',
-        bgColor: 'bg-danger/20',
+        color: 'text-red-400',
+        bgColor: 'bg-red-500/20',
       },
       {
         title: 'Orang Berisiko',
-        description: 'Estimasi populasi berisiko',
-        count: formatNumber(initialData.stats.peopleAtRisk),
+        description: 'Estimasi populasi terdampak',
+        count: formatPopulation(initialData.stats.peopleAtRisk),
         icon: Users,
-        color: 'text-purple-500',
-        bgColor: 'bg-secondary/20',
+        color: 'text-purple-400',
+        bgColor: 'bg-purple-500/20',
       },
     ],
     [initialData.stats],
@@ -336,24 +336,17 @@ export function DashboardClientPage({ initialData }) {
                     transition={{ duration: 0.5, delay: 0.2 + index * 0.1 }}
                   >
                     <Card className="bg-white/5 border-white/10 backdrop-blur-md text-white hover:bg-white/10 transition-colors h-full">
-                      <CardContent className="p-5">
-                        <div className="flex items-center justify-between mb-4">
-                          <div className={cn('p-2 rounded-lg', card.bgColor)}>
-                            <card.icon className={cn('h-6 w-6', card.color)} />
+                      <CardContent className="p-5 flex flex-col h-full">
+                        <div className="flex-shrink-0 mb-4">
+                          <div className={cn('p-3 rounded-lg inline-block', card.bgColor)}>
+                            <card.icon className={cn('h-7 w-7', card.color)} />
                           </div>
-                          <Badge
-                            variant="outline"
-                            className="text-white border-white/20"
-                          >
-                            {card.count}
-                          </Badge>
                         </div>
-                        <h3 className="text-md font-semibold mb-1">
-                          {card.title}
-                        </h3>
-                        <p className="text-sm text-white/80">
-                          {card.description}
-                        </p>
+                        <div className="mt-auto">
+                          <p className="text-4xl font-bold">{card.count}</p>
+                          <h3 className="text-md font-semibold mt-1">{card.title}</h3>
+                          <p className="text-sm text-white/70 mt-1">{card.description}</p>
+                        </div>
                       </CardContent>
                     </Card>
                   </motion.div>

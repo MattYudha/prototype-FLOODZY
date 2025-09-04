@@ -18,6 +18,10 @@ export function formatNumber(num: number): string {
   return String(num);
 }
 
+export function formatPopulation(num: number): string {
+  return new Intl.NumberFormat('id-ID').format(num);
+}
+
 export function formatDate(date: string | Date): string {
   const d = new Date(date);
   return d.toLocaleDateString('id-ID', {

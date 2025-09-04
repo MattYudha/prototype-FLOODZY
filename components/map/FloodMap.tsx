@@ -49,6 +49,7 @@ import {
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { toast } from 'react-hot-toast';
 import { Input } from '@/components/ui/input';
 import { MapControls } from './MapControls';
 import { MapLegend } from './MapLegend';
@@ -302,8 +303,52 @@ export const FloodMap = React.memo(function FloodMap({
         setSearchedLocation(result);
         const map = mapRef.current;
         if (map) {
-          map.setView([result.lat, result.lon], 13);
+          const newCenter: [number, number] = [result.lat, result.lon];
+          const newZoom = 13;
+          map.setView(newCenter, newZoom);
+
+          // NEW: Update parent state via callback to prevent reversion
+          if (onMapBoundsChange) {
+            const newBounds = map.getBounds();
+            onMapBoundsChange({
+              center: newCenter,
+              zoom: newZoom,
+              bounds: [[newBounds.getSouth(), newBounds.getWest()], [newBounds.getNorth(), newBounds.getEast()]],
+            });
+          }
         }
+      } else {
+        toast.custom(
+          (t) => (
+            <div
+              className={`${t.visible ? 'animate-enter' : 'animate-leave'} max-w-md w-full bg-slate-900/90 backdrop-blur-sm shadow-lg rounded-lg pointer-events-auto flex ring-1 ring-red-500/50`}
+            >
+              <div className="flex-1 w-0 p-4">
+                <div className="flex items-start">
+                  <div className="flex-shrink-0 pt-0.5">
+                    <AlertTriangle className="h-6 w-6 text-red-500" />
+                  </div>
+                  <div className="ml-3 flex-1">
+                    <p className="text-sm font-medium text-white">
+                      Lokasi Tidak Ditemukan
+                    </p>
+                    <p className="mt-1 text-sm text-white/70">
+                      Harap masukkan nama kota atau provinsi yang valid.
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <div className="flex border-l border-slate-700">
+                <button
+                  onClick={() => toast.dismiss(t.id)}
+                  className="w-full border border-transparent rounded-none rounded-r-lg p-4 flex items-center justify-center text-sm font-medium text-red-500 hover:text-red-400 focus:outline-none focus:ring-2 focus:ring-red-500"
+                >
+                  Tutup
+                </button>
+              </div>
+            </div>
+          )
+        );
       }
     }
   };

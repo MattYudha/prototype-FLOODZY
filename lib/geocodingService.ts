@@ -5,22 +5,27 @@ const BASE_URL = 'http://api.openweathermap.org/geo/1.0';
 
 export async function getCoordsByLocationName(
   locationName: string,
-): Promise<GeocodingResponse | null> {
+  limit: number = 5,
+): Promise<GeocodingResponse[] | null> {
   if (!API_KEY) {
-    throw new Error('OpenWeatherMap API key is not configured.');
+    console.error('OpenWeatherMap API key is not configured.');
+    return null;
   }
 
-  const url = `${BASE_URL}/direct?q=${encodeURIComponent(locationName)}&limit=1&appid=${API_KEY}`;
+  const url = `${BASE_URL}/direct?q=${encodeURIComponent(
+    locationName,
+  )}&limit=${limit}&appid=${API_KEY}`;
 
   try {
     const response = await fetch(url);
     if (!response.ok) {
-      throw new Error(
+      console.error(
         `Geocoding API request failed with status ${response.status}`,
       );
+      return null;
     }
     const data = await response.json();
-    return data.length > 0 ? data[0] : null;
+    return data; // The API returns an array directly
   } catch (error) {
     console.error('Error fetching geocoding data:', error);
     return null;
