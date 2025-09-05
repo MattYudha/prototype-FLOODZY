@@ -22,7 +22,13 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription } from '@/components/ui/drawer';
+import {
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerDescription,
+} from '@/components/ui/drawer';
 import { toast } from 'sonner';
 
 // Icons
@@ -77,24 +83,33 @@ import type { FloodAlert as FloodAlertType, WeatherStation } from '@/types';
 import { SelectedLocation } from '@/types/location';
 import { MapBounds } from '@/types';
 
-const FloodMap = dynamic(() => import('@/components/map/FloodMap').then(mod => mod.FloodMap), {
-  ssr: false,
-});
+const FloodMap = dynamic(
+  () => import('@/components/map/FloodMap').then((mod) => mod.FloodMap),
+  {
+    ssr: false,
+  },
+);
 
-const FloodReportChart = dynamic(() => import('@/components/data-sensor/FloodReportChart'), {
-  ssr: false,
-  loading: () => (
-    <div className="bg-gray-800 rounded-xl border border-gray-700 p-6 text-center">
-      <Loader2 className="h-8 w-8 animate-spin text-cyan-400 mx-auto mb-3" />
-      <p className="text-gray-400">Memuat grafik laporan...</p>
-    </div>
-  ),
-});
+const FloodReportChart = dynamic(
+  () => import('@/components/data-sensor/FloodReportChart'),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="bg-gray-800 rounded-xl border border-gray-700 p-6 text-center">
+        <Loader2 className="h-8 w-8 animate-spin text-cyan-400 mx-auto mb-3" />
+        <p className="text-gray-400">Memuat grafik laporan...</p>
+      </div>
+    ),
+  },
+);
 
 export function DashboardClientPage({ initialData }) {
-  const { selectedLocation, mapBounds, setSelectedLocation, setMapBounds } = useAppStore();
+  const { selectedLocation, mapBounds, setSelectedLocation, setMapBounds } =
+    useAppStore();
 
-  const [weatherSummary, setWeatherSummary] = useState(initialData.weatherSummary || null);
+  const [weatherSummary, setWeatherSummary] = useState(
+    initialData.weatherSummary || null,
+  );
   const [airQuality, setAirQuality] = useState(initialData.airQuality || null);
 
   const isMobile = useMediaQuery('(max-width: 768px)');
@@ -122,15 +137,16 @@ export function DashboardClientPage({ initialData }) {
   const [isTyping, setIsTyping] = useState(false);
   const [isChatbotOpen, setIsChatbotOpen] = useState(false);
   const [isMapDrawerOpen, setMapDrawerOpen] = useState(false);
-  const [isDashboardMapFullscreen, setIsDashboardMapFullscreen] = useState(false);
+  const [isDashboardMapFullscreen, setIsDashboardMapFullscreen] =
+    useState(false);
   const chatScrollRef = useRef<HTMLDivElement>(null);
   const mobileMapRef = useRef<any>(null);
 
   React.useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-        if (event.key === 'Escape' && isDashboardMapFullscreen) {
-          setIsDashboardMapFullscreen(false);
-        }
+      if (event.key === 'Escape' && isDashboardMapFullscreen) {
+        setIsDashboardMapFullscreen(false);
+      }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
@@ -140,25 +156,31 @@ export function DashboardClientPage({ initialData }) {
     if (isMapDrawerOpen) {
       setTimeout(() => {
         mobileMapRef.current?.invalidateSize();
-      }, 300); // Wait for drawer animation to complete
+      }, 5000); // Wait for drawer animation to complete
     }
   }, [isMapDrawerOpen]);
 
   React.useEffect(() => {
-      if (isDashboardMapFullscreen) {
-          document.body.classList.add('overflow-hidden');
-      } else {
-          document.body.classList.remove('overflow-hidden');
-      }
-      return () => document.body.classList.remove('overflow-hidden');
+    if (isDashboardMapFullscreen) {
+      document.body.classList.add('overflow-hidden');
+    } else {
+      document.body.classList.remove('overflow-hidden');
+    }
+    return () => document.body.classList.remove('overflow-hidden');
   }, [isDashboardMapFullscreen]);
 
   useEffect(() => {
     const fetchDashboardWidgets = async () => {
-      if (selectedLocation && selectedLocation.latitude != null && selectedLocation.longitude != null) {
+      if (
+        selectedLocation &&
+        selectedLocation.latitude != null &&
+        selectedLocation.longitude != null
+      ) {
         setIsLoadingWidgets(true);
         try {
-          const response = await fetch(`${getBaseUrl()}/api/dashboard-widgets?lat=${selectedLocation.latitude}&lon=${selectedLocation.longitude}&locationName=${encodeURIComponent(selectedLocation.districtName || '')}`);
+          const response = await fetch(
+            `${getBaseUrl()}/api/dashboard-widgets?lat=${selectedLocation.latitude}&lon=${selectedLocation.longitude}&locationName=${encodeURIComponent(selectedLocation.districtName || '')}`,
+          );
           if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
           }
@@ -197,23 +219,34 @@ export function DashboardClientPage({ initialData }) {
         const newMapBounds: MapBounds = {
           center: [latitude, longitude],
           zoom: 12,
-          bounds: [[south, west], [north, east]],
+          bounds: [
+            [south, west],
+            [north, east],
+          ],
         };
         setMapBounds(newMapBounds);
         fetchDisasterAreas({ south, west, north, east });
       } else {
         setMapBounds(null);
-        fetchDisasterAreas({ south: DEFAULT_MAP_CENTER[0] - 0.1, west: DEFAULT_MAP_CENTER[1] - 0.1, north: DEFAULT_MAP_CENTER[0] + 0.1, east: DEFAULT_MAP_CENTER[1] + 0.1 });
+        fetchDisasterAreas({
+          south: DEFAULT_MAP_CENTER[0] - 0.1,
+          west: DEFAULT_MAP_CENTER[1] - 0.1,
+          north: DEFAULT_MAP_CENTER[0] + 0.1,
+          east: DEFAULT_MAP_CENTER[1] + 0.1,
+        });
       }
     },
     [fetchWeather, setSelectedLocation, setMapBounds, fetchDisasterAreas],
   );
 
-  
-
   const refreshDisasterData = useCallback(() => {
     if (mapBounds && mapBounds.bounds) {
-      fetchDisasterAreas({ south: mapBounds.bounds[0][0], west: mapBounds.bounds[0][1], north: mapBounds.bounds[1][0], east: mapBounds.bounds[1][1] });
+      fetchDisasterAreas({
+        south: mapBounds.bounds[0][0],
+        west: mapBounds.bounds[0][1],
+        north: mapBounds.bounds[1][0],
+        east: mapBounds.bounds[1][1],
+      });
       toast.success('Data bencana diperbarui!');
     } else {
       toast.error('Tidak dapat memperbarui data: Peta belum dimuat.');
@@ -226,9 +259,12 @@ export function DashboardClientPage({ initialData }) {
     }
   }, [chatHistory, isTyping]);
 
-  const handleMapBoundsChange = useCallback((bounds) => {
-    setMapBounds(bounds);
-  }, [setMapBounds]);
+  const handleMapBoundsChange = useCallback(
+    (bounds) => {
+      setMapBounds(bounds);
+    },
+    [setMapBounds],
+  );
 
   const heroCards = useMemo(
     () => [
@@ -278,82 +314,91 @@ export function DashboardClientPage({ initialData }) {
     <div className="bg-background">
       <main className="flex-1">
         <section className="relative overflow-hidden text-white">
-            <div className="absolute inset-0">
-              <Image
-                src="/assets/banjir.png"
-                alt="Latar belakang banjir"
-                fill
-                priority
-                quality={80}
-                className="object-cover"
-              />
-              <div className="absolute inset-0 bg-black/60" />
-            </div>
-            <div className="relative z-10 container mx-auto px-4 sm:px-6 py-20 md:py-28">
-              <motion.div
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8 }}
-                className="text-center"
-              >
-                <div className="flex items-center justify-center space-x-2 mb-4">
-                  <Shield className="h-8 w-8 text-secondary" />
-                  <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold">
-                    Flood<span className="text-secondary">zie</span>
-                  </h1>
-                </div>
-
-                <p className="text-lg sm:text-xl md:text-2xl text-white/90 max-w-3xl mx-auto mt-4">
-                  Sistem Deteksi Banjir & Monitoring Cuaca Real-time untuk
-                  Indonesia
-                </p>
-
-                <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mt-8 max-w-xs sm:max-w-md mx-auto">
-                  <Button
-                    size="lg"
-                    variant="secondary"
-                    className="w-full sm:w-auto"
-                  >
-                    <MapPin className="mr-2 h-5 w-5" />
-                    Lihat Peta Banjir
-                  </Button>
-                  <Button
-                    size="lg"
-                    variant="outline"
-                    className="text-white border-white/50 hover:bg-white/10 w-full sm:w-auto"
-                  >
-                    <Bell className="mr-2 h-5 w-5" />
-                    Peringatan Terkini
-                  </Button>
-                </div>
-              </motion.div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mt-12 md:mt-16 items-start">
-                {heroCards.map((card, index) => (
-                  <motion.div
-                    key={card.title}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5, delay: 0.2 + index * 0.1 }}
-                  >
-                    <Card className="bg-white/5 border-white/10 backdrop-blur-md text-white hover:bg-white/10 transition-colors h-full">
-                      <CardContent className="p-4 flex flex-col h-full">
-                        <div className="flex-shrink-0 mb-3">
-                          <div className={cn('p-2 rounded-lg inline-block', card.bgColor)}>
-                            <card.icon className={cn('h-6 w-6', card.color)} />
-                          </div>
-                        </div>
-                        <div className="mt-auto">
-                          <p className="text-3xl font-bold">{card.count}</p>
-                          <h3 className="text-sm font-semibold mt-1">{card.title}</h3>
-                          <p className="text-xs text-white/70 mt-1">{card.description}</p>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </motion.div>
-                ))}
+          <div className="absolute inset-0">
+            <Image
+              src="/assets/banjir.png"
+              alt="Latar belakang banjir"
+              fill
+              priority
+              quality={80}
+              className="object-cover"
+            />
+            <div className="absolute inset-0 bg-black/60" />
+          </div>
+          <div className="relative z-10 container mx-auto px-4 sm:px-6 py-20 md:py-28">
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8 }}
+              className="text-center"
+            >
+              <div className="flex items-center justify-center space-x-2 mb-4">
+                <Shield className="h-8 w-8 text-secondary" />
+                <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold">
+                  Flood<span className="text-secondary">zie</span>
+                </h1>
               </div>
+
+              <p className="text-lg sm:text-xl md:text-2xl text-white/90 max-w-3xl mx-auto mt-4">
+                Sistem Deteksi Banjir & Monitoring Cuaca Real-time untuk
+                Indonesia
+              </p>
+
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mt-8 max-w-xs sm:max-w-md mx-auto">
+                <Button
+                  size="lg"
+                  variant="secondary"
+                  className="w-full sm:w-auto"
+                >
+                  <MapPin className="mr-2 h-5 w-5" />
+                  Lihat Peta Banjir
+                </Button>
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="text-white border-white/50 hover:bg-white/10 w-full sm:w-auto"
+                >
+                  <Bell className="mr-2 h-5 w-5" />
+                  Peringatan Terkini
+                </Button>
+              </div>
+            </motion.div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mt-12 md:mt-16 items-start">
+              {heroCards.map((card, index) => (
+                <motion.div
+                  key={card.title}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: 0.2 + index * 0.1 }}
+                >
+                  <Card className="bg-white/5 border-white/10 backdrop-blur-md text-white hover:bg-white/10 transition-colors h-full">
+                    <CardContent className="p-4 flex flex-col h-full">
+                      <div className="flex-shrink-0 mb-3">
+                        <div
+                          className={cn(
+                            'p-2 rounded-lg inline-block',
+                            card.bgColor,
+                          )}
+                        >
+                          <card.icon className={cn('h-6 w-6', card.color)} />
+                        </div>
+                      </div>
+                      <div className="mt-auto">
+                        <p className="text-3xl font-bold">{card.count}</p>
+                        <h3 className="text-sm font-semibold mt-1">
+                          {card.title}
+                        </h3>
+                        <p className="text-xs text-white/70 mt-1">
+                          {card.description}
+                        </p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              ))}
             </div>
-          </section>
+          </div>
+        </section>
 
         <section className="container mx-auto px-4 py-8 space-y-4">
           <Card className="bg-slate-900/80 border-slate-800/50 backdrop-blur-lg rounded-xl shadow-xl overflow-hidden">
@@ -395,7 +440,8 @@ export function DashboardClientPage({ initialData }) {
                   </CardHeader>
                   <CardContent>
                     <p className="text-muted-foreground mb-6">
-                      Visualisasikan data banjir, zona rawan, dan peringatan secara real-time. Buka peta untuk eksplorasi mendalam.
+                      Visualisasikan data banjir, zona rawan, dan peringatan
+                      secara real-time. Buka peta untuk eksplorasi mendalam.
                     </p>
                     <Button size="lg" onClick={() => setMapDrawerOpen(true)}>
                       <Eye className="mr-2 h-5 w-5" />
@@ -407,7 +453,7 @@ export function DashboardClientPage({ initialData }) {
             ) : (
               <motion.div
                 initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
+                animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: 0.4 }}
                 className="lg:col-span-2"
               >
@@ -434,9 +480,7 @@ export function DashboardClientPage({ initialData }) {
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="p-0">
-                    <div
-                      className="h-72 lg:h-[600px] w-full rounded-b-lg relative overflow-hidden"
-                    >
+                    <div className="h-72 lg:h-[600px] w-full rounded-b-lg relative overflow-hidden">
                       <FloodMap
                         center={mapBounds?.center || DEFAULT_MAP_CENTER}
                         zoom={mapBounds?.zoom || DEFAULT_MAP_ZOOM}
@@ -446,9 +490,13 @@ export function DashboardClientPage({ initialData }) {
                         floodDataError={disasterError}
                         onMapBoundsChange={handleMapBoundsChange}
                         selectedLocation={selectedLocation}
-                        globalWeatherStations={WEATHER_STATIONS_GLOBAL_MOCK as WeatherStation[]}
+                        globalWeatherStations={
+                          WEATHER_STATIONS_GLOBAL_MOCK as WeatherStation[]
+                        }
                         isFullscreen={isDashboardMapFullscreen}
-                        onFullscreenToggle={() => setIsDashboardMapFullscreen(true)}
+                        onFullscreenToggle={() =>
+                          setIsDashboardMapFullscreen(true)
+                        }
                       />
                     </div>
                   </CardContent>
@@ -497,12 +545,15 @@ export function DashboardClientPage({ initialData }) {
               ) : (
                 <Card className="flex h-full min-h-[150px] flex-col items-center justify-center text-center p-6 bg-slate-900/80 border-slate-800/50">
                   <Info className="h-8 w-8 text-yellow-400 mb-3" />
-                  <h4 className="text-white font-semibold mb-1">Data Tidak Tersedia</h4>
-                  <p className="text-slate-400 text-sm">Data cuaca atau kualitas udara tidak dapat dimuat untuk lokasi ini.</p>
+                  <h4 className="text-white font-semibold mb-1">
+                    Data Tidak Tersedia
+                  </h4>
+                  <p className="text-slate-400 text-sm">
+                    Data cuaca atau kualitas udara tidak dapat dimuat untuk
+                    lokasi ini.
+                  </p>
                 </Card>
               )}
-
-              
             </div>
           </div>
 
@@ -539,7 +590,8 @@ export function DashboardClientPage({ initialData }) {
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {initialData.realTimeAlerts && initialData.realTimeAlerts.length > 0 ? (
+                  {initialData.realTimeAlerts &&
+                  initialData.realTimeAlerts.length > 0 ? (
                     initialData.realTimeAlerts.map((alert: any) => (
                       <PeringatanBencanaCard key={alert.id} alert={alert} />
                     ))
@@ -572,7 +624,9 @@ export function DashboardClientPage({ initialData }) {
               floodDataError={disasterError}
               onMapBoundsChange={handleMapBoundsChange}
               selectedLocation={selectedLocation}
-              globalWeatherStations={WEATHER_STATIONS_GLOBAL_MOCK as WeatherStation[]}
+              globalWeatherStations={
+                WEATHER_STATIONS_GLOBAL_MOCK as WeatherStation[]
+              }
               onMapLoad={(map) => {
                 mobileMapRef.current = map;
               }}
@@ -617,7 +671,9 @@ export function DashboardClientPage({ initialData }) {
                   floodDataError={disasterError}
                   onMapBoundsChange={handleMapBoundsChange}
                   selectedLocation={selectedLocation}
-                  globalWeatherStations={WEATHER_STATIONS_GLOBAL_MOCK as WeatherStation[]}
+                  globalWeatherStations={
+                    WEATHER_STATIONS_GLOBAL_MOCK as WeatherStation[]
+                  }
                   isFullscreen={isDashboardMapFullscreen}
                   onFullscreenToggle={() => setIsDashboardMapFullscreen(false)}
                 />

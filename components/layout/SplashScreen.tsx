@@ -10,8 +10,12 @@ import React, {
   useState,
   useCallback,
 } from 'react';
-// PERBAIKAN: Pastikan 'Canvas' diimpor dari '@react-three/fiber'
-import { Canvas, useFrame, useLoader } from '@react-three/fiber';
+import {
+  Canvas,
+  useFrame,
+  useLoader,
+  useThree,
+} from '@react-three/fiber';
 import {
   useGLTF,
   useAnimations,
@@ -110,11 +114,22 @@ function RainParticles({ count = 1500 }: { count?: number }) {
 }
 
 /* ----------------------------- ENHANCED ROBOT COMPONENT ----------------------------- */
-function RobotModel({ idle = 'Wave', onModelError }: { idle?: string; onModelError: (error: any) => void }) {
+function RobotModel({
+  idle = 'Wave',
+  onModelError,
+  onProgress,
+}: {
+  idle?: string;
+  onModelError: (error: any) => void;
+  onProgress?: (progress: number) => void;
+}) {
   const group = useRef<THREE.Group>(null);
-  
-  // Error akan ditangkap oleh ErrorBoundary dan diteruskan ke onModelError
-  const { scene, animations } = useGLTF(MODEL_URL);
+
+  const { scene, animations } = useGLTF(MODEL_URL, undefined, undefined, (xhr) => {
+    if (onProgress) {
+      onProgress((xhr.loaded / xhr.total) * 100);
+    }
+  });
   const { actions, mixer } = useAnimations(animations, group);
 
   const prepared = useMemo(() => {
@@ -264,15 +279,46 @@ function EmptyHtmlLoader() {
 }
 
 /* ----------------------------- ENHANCED CANVAS ----------------------------- */
-function Enhanced3DCanvas({
-  loadingProgress,
+function ProgressTracker({
   setLoadingProgress,
+  loadingProgress,
 }: {
-  loadingProgress: LoadingProgress;
   setLoadingProgress: (progress: LoadingProgress) => void;
+  loadingProgress: LoadingProgress;
 }) {
-  const [is3DSupported, setIs3DSupported] = useState(true);
+  const { progress: threeProgress } = useProgress();
 
+  useEffect(() => {
+    if (loadingProgress.phase === 'loading-3d') {
+      const interval = setInterval(() => {
+        const newProgress = Math.round(threeProgress);
+        setLoadingProgress((prev) => ({
+          ...prev,
+          progress: newProgress,
+        }));
+        if (newProgress >= 100) {
+          clearInterval(interval);
+          setLoadingProgress({
+            progress: 100,
+            phase: 'loading-data',
+            message: 'Memuat data cuaca...',
+          });
+        }
+      }, 100);
+      return () => clearInterval(interval);
+    }
+  }, [loadingProgress.phase, setLoadingProgress, threeProgress]);
+
+  return null; // This component doesn't render anything visible
+}
+
+function CanvasContent({
+  setLoadingProgress,
+  loadingProgress,
+}: {
+  setLoadingProgress: (progress: LoadingProgress) => void;
+  loadingProgress: LoadingProgress;
+}) {
   const deviceCapabilities = useMemo(() => {
     if (typeof window === 'undefined')
       return { supported: true, quality: 'high' };
@@ -281,7 +327,6 @@ function Enhanced3DCanvas({
     const gl = canvas.getContext('webgl2') || canvas.getContext('webgl');
 
     if (!gl) {
-      setIs3DSupported(false);
       return { supported: false, quality: 'none' };
     }
 
@@ -292,78 +337,30 @@ function Enhanced3DCanvas({
 
     let quality = 'medium';
     if (memory >= 8 && cores >= 8) quality = 'high';
-    if (memory < 4 || cores < 4) quality = 'low';
     if (renderer.includes('Intel') && !renderer.includes('Iris'))
       quality = 'low';
 
     return { supported: true, quality, renderer, vendor };
   }, []);
 
-  useEffect(() => {
-    if (
-      loadingProgress.phase === 'loading-3d' &&
-      loadingProgress.progress < 100
-    ) {
-      const timer = setTimeout(() => {
-        setLoadingProgress({
-          progress: 100,
-          phase: 'loading-data',
-          message: 'Memuat data cuaca...',
-        });
-      }, 1500);
-      return () => clearTimeout(timer);
-    }
-  }, [loadingProgress.phase, loadingProgress.progress, setLoadingProgress]);
-
-  if (!is3DSupported) {
-    return (
-      <div className="flex h-full w-full items-center justify-center">
-        <div className="text-center space-y-3">
-          <AlertTriangle className="w-12 h-12 text-yellow-400 mx-auto" />
-          <div className="text-sm text-white/70">
-            Perangkat tidak mendukung rendering 3D
-          </div>
-          <div className="text-xs text-white/50">
-            Menggunakan tampilan minimal
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  const dpr = (deviceCapabilities.quality === 'high' ? [1, 2] : [1, 1.5]) as [number, number];
+  const dpr = (deviceCapabilities.quality === 'high' ? [1, 2] : [1, 1.5]) as [
+    number,
+    number,
+  ];
   const shadows = deviceCapabilities.quality !== 'low';
 
+  const handleModelProgress = useCallback(
+    (progress: number) => {
+      setLoadingProgress((prev) => ({
+        ...prev,
+        progress: Math.round(progress),
+      }));
+    },
+    [setLoadingProgress],
+  );
+
   return (
-    <Canvas
-      shadows={shadows}
-      dpr={dpr}
-      camera={{
-        position: [0, 1.5, 6],
-        fov: deviceCapabilities.quality === 'low' ? 45 : 35,
-        near: 0.1,
-        far: 100,
-      }}
-      gl={{
-        antialias: deviceCapabilities.quality !== 'low',
-        alpha: true,
-        powerPreference:
-          deviceCapabilities.quality === 'high'
-            ? 'high-performance'
-            : 'default',
-        preserveDrawingBuffer: false,
-        toneMapping: THREE.ACESFilmicToneMapping,
-        toneMappingExposure: 1.2,
-      }}
-      onCreated={({ gl, scene, camera }) => {
-        gl.outputColorSpace = THREE.SRGBColorSpace;
-        scene.fog = new THREE.Fog(0x04080e, 8, 30);
-        if (deviceCapabilities.quality === 'low') {
-          gl.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
-        }
-      }}
-      style={{ width: '100%', height: '100%' }}
-    >
+    <>
       <Suspense fallback={<EmptyHtmlLoader />}>
         <Environment preset="city" environmentIntensity={0.3} />
 
@@ -415,7 +412,7 @@ function Enhanced3DCanvas({
           snap={{ mass: 1, tension: 180, friction: 25 }}
         >
           <Bounds fit observe clip margin={1.1}>
-            <Robot />
+            <Robot onProgress={handleModelProgress} />
           </Bounds>
 
           {shadows && (
@@ -442,6 +439,100 @@ function Enhanced3DCanvas({
           <meshStandardMaterial color="#0f172a" transparent opacity={0.3} />
         </mesh>
       </Suspense>
+    </>
+  );
+}
+
+function Enhanced3DCanvas({
+  loadingProgress,
+  setLoadingProgress,
+}: {
+  loadingProgress: LoadingProgress;
+  setLoadingProgress: (progress: LoadingProgress) => void;
+}) {
+  const [is3DSupported, setIs3DSupported] = useState(true);
+
+  const deviceCapabilities = useMemo(() => {
+    if (typeof window === 'undefined')
+      return { supported: true, quality: 'high' };
+
+    const canvas = document.createElement('canvas');
+    const gl = canvas.getContext('webgl2') || canvas.getContext('webgl');
+
+    if (!gl) {
+      setIs3DSupported(false);
+      return { supported: false, quality: 'none' };
+    }
+
+    const renderer = gl.getParameter(gl.RENDERER);
+    const vendor = gl.getParameter(gl.VENDOR);
+    const memory = (navigator as any).deviceMemory || 4;
+    const cores = navigator.hardwareConcurrency || 4;
+
+    let quality = 'medium';
+    if (memory >= 8 && cores >= 8) quality = 'high';
+    if (renderer.includes('Intel') && !renderer.includes('Iris'))
+      quality = 'low';
+
+    return { supported: true, quality, renderer, vendor };
+  }, []);
+
+  if (!is3DSupported) {
+    return (
+      <div className="flex h-full w-full items-center justify-center">
+        <div className="text-center space-y-3">
+          <AlertTriangle className="w-12 h-12 text-yellow-400 mx-auto" />
+          <div className="text-sm text-white/70">
+            Perangkat tidak mendukung rendering 3D
+          </div>
+          <div className="text-xs text-white/50">
+            Menggunakan tampilan minimal
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const dpr = (deviceCapabilities.quality === 'high' ? [1, 2] : [1, 1.5]) as [
+    number,
+    number,
+  ];
+  const shadows = deviceCapabilities.quality !== 'low';
+
+  return (
+    <Canvas
+      shadows={shadows}
+      dpr={dpr}
+      camera={{
+        position: [0, 1.5, 6],
+        fov: deviceCapabilities.quality === 'low' ? 45 : 35,
+        near: 0.1,
+        far: 100,
+      }}
+      gl={{
+        antialias: deviceCapabilities.quality !== 'low',
+        alpha: true,
+        powerPreference:
+          deviceCapabilities.quality === 'high'
+            ? 'high-performance'
+            : 'default',
+        preserveDrawingBuffer: false,
+        toneMapping: THREE.ACESFilmicToneMapping,
+        toneMappingExposure: 1.2,
+      }}
+      onCreated={({ gl, scene, camera }) => {
+        gl.outputColorSpace = THREE.SRGBColorSpace;
+        scene.fog = new THREE.Fog(0x04080e, 8, 30);
+        if (deviceCapabilities.quality === 'low') {
+          gl.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+        }
+      }}
+      style={{ width: '100%', height: '100%' }}
+    >
+      <CanvasContent
+        setLoadingProgress={setLoadingProgress}
+        loadingProgress={loadingProgress}
+      />
     </Canvas>
   );
 }
@@ -465,8 +556,10 @@ function LoadingProgress({ progress }: { progress: LoadingProgress }) {
     switch (progress.phase) {
       case 'initializing':
         return <LoaderIcon className="w-5 h-5 animate-spin" />;
+      case 'loading-3d':
+        return <Droplets className="w-5 h-5 animate-pulse text-blue-300" />; // Animasi dan warna baru
       case 'loading-data':
-        return <Cloud className="w-5 h-5 animate-bounce" />;
+        return <Cloud className="w-5 h-5 animate-bounce text-sky-400" />; // Warna baru
       case 'connecting':
         return isOnline ? (
           <Wifi className="w-5 h-5 text-emerald-400" />
@@ -499,11 +592,23 @@ function LoadingProgress({ progress }: { progress: LoadingProgress }) {
   };
 
   const displayMessage = useMemo(() => {
-    if (progress.phase === 'loading-3d') {
-      return 'Mempersiapkan elemen visual...';
+    switch (progress.phase) {
+      case 'initializing':
+        return 'Mempersiapkan inti aplikasi...';
+      case 'loading-3d':
+        return 'Memuat elemen visual 3D...'; // Pesan lebih spesifik
+      case 'loading-data':
+        return 'Mengambil data terkini...'; // Pesan lebih umum
+      case 'connecting':
+        return isOnline
+          ? 'Menghubungkan ke server...'
+          : 'Mencoba menghubungkan kembali...';
+      case 'ready':
+        return 'Siap digunakan!';
+      default:
+        return 'Memulai...';
     }
-    return progress.message;
-  }, [progress.phase, progress.message]);
+  }, [progress.phase, progress.message, isOnline]); // Tambah isOnline sebagai dependency
 
   return (
     <motion.div
@@ -512,7 +617,15 @@ function LoadingProgress({ progress }: { progress: LoadingProgress }) {
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.5 }}
     >
-      <div className="text-blue-400">{getPhaseIcon()}</div>
+      <motion.div
+        className="text-blue-400"
+        key={progress.phase} // Key untuk re-render dan animasi ikon
+        initial={{ scale: 0.8, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+      >
+        {getPhaseIcon()}
+      </motion.div>
 
       <div className="flex-1 min-w-0">
         <div className="text-sm text-white/90 font-medium mb-1">
@@ -523,16 +636,51 @@ function LoadingProgress({ progress }: { progress: LoadingProgress }) {
             className={`h-full bg-gradient-to-r ${getPhaseColor()}`}
             initial={{ width: 0 }}
             animate={{ width: `${progress.progress}%` }}
-            transition={{ duration: 0.5, ease: 'easeOut' }}
+            transition={{ duration: 0.8, ease: 'easeOut' }} // Durasi transisi lebih halus
           />
         </div>
       </div>
 
-      <div className="text-xs text-slate-400 tabular-nums min-w-[3ch]">
+      <motion.div
+        className="text-xs text-slate-400 tabular-nums min-w-[3ch]"
+        key={Math.round(progress.progress)} // Key untuk animasi persentase
+        initial={{ scale: 0.8, opacity: 0.5 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ duration: 0.3 }}
+      >
         {Math.round(progress.progress)}%
-      </div>
+      </motion.div>
     </motion.div>
   );
+}
+
+/* ----------------------------- CONTOH FUNGSI TASKS REAL ----------------------------- */
+// Fungsi contoh untuk initializing (misal load local storage atau auth)
+async function initApp(): Promise<void> {
+  // Contoh: Simulasi atau real init
+  return new Promise((resolve) => setTimeout(resolve, 1000)); // Ganti dengan real code
+}
+
+// Fungsi contoh untuk fetch data (misal API cuaca)
+async function fetchWeatherData(): Promise<void> {
+  // Contoh real fetch
+  try {
+    const response = await fetch(
+      'https://api.weatherapi.com/v1/current.json?key=YOUR_API_KEY&q=Indonesia',
+    );
+    if (!response.ok) throw new Error('Failed to fetch');
+    await response.json();
+  } catch (error) {
+    console.error('Fetch error:', error);
+  }
+}
+
+// Fungsi contoh untuk check connection
+async function checkConnection(): Promise<void> {
+  return new Promise((resolve) => {
+    if (navigator.onLine) resolve();
+    else setTimeout(() => checkConnection(), 1000); // Retry jika offline
+  });
 }
 
 /* ----------------------------- MAIN SPLASH SCREEN COMPONENT ----------------------------- */
@@ -559,103 +707,97 @@ export function SplashScreen({ isFadingOut, onComplete }: SplashScreenProps) {
   }, []);
 
   useEffect(() => {
-    // PERUBAHAN: Durasi diperpanjang agar totalnya ~6.5 detik
-    const phases: Array<{
-      phase: LoadingProgress['phase'];
-      message: string;
-      duration: number;
-      targetProgress: number;
-    }> = [
+    const minDuration = 10000; // Minimal 10 detik untuk user experience
+    const startTime = Date.now();
+
+    const phases = [
       {
-        phase: 'initializing',
-        message: 'Mempersiapkan aplikasi...',
-        duration: 1000, // dari 800
-        targetProgress: 20,
+        phase: 'initializing' as const,
+        message: 'Mempersiapkan inti aplikasi...',
+        weight: 20,
       },
       {
-        phase: 'loading-3d',
-        message: 'Memuat elemen visual...',
-        duration: 4000, // dari 1200
-        targetProgress: 50,
+        phase: 'loading-3d' as const,
+        message: 'Memuat elemen visual 3D...',
+        weight: 30,
       },
       {
-        phase: 'loading-data',
-        message: 'Memuat data cuaca...',
-        duration: 1500, // dari 1000
-        targetProgress: 80,
+        phase: 'loading-data' as const,
+        message: 'Mengambil data terkini...',
+        weight: 20,
       },
       {
-        phase: 'connecting',
-        message: isOnline
-          ? 'Menghubungkan ke server...'
-          : 'Mencoba menghubungkan kembali...',
-        duration: 1200, // dari 800
-        targetProgress: 95,
+        phase: 'connecting' as const,
+        message: 'Menghubungkan ke server...',
+        weight: 20,
       },
-      {
-        phase: 'ready',
-        message: 'Siap digunakan!',
-        duration: 500, // tetap
-        targetProgress: 100,
-      },
+      { phase: 'ready' as const, message: 'Siap digunakan!', weight: 10 },
     ];
 
+    let currentProgress = 0;
     let currentPhaseIndex = 0;
 
-    const progressPhase = () => {
-      if (currentPhaseIndex >= phases.length) return;
+    const updatePhase = async () => {
+      while (currentPhaseIndex < phases.length) {
+        const phase = phases[currentPhaseIndex];
+        setLoadingProgress({
+          progress: currentProgress,
+          phase: phase.phase,
+          message: phase.message,
+        });
 
-      const currentPhase = phases[currentPhaseIndex];
-      const startProgress =
-        currentPhaseIndex === 0
-          ? 0
-          : phases[currentPhaseIndex - 1].targetProgress;
-      const progressRange = currentPhase.targetProgress - startProgress;
-      const startTime = Date.now();
+        let task: Promise<void>;
+        switch (phase.phase) {
+          case 'initializing':
+            task = initApp();
+            break;
+          case 'loading-3d':
+            task = Promise.all([
+              new Promise<void>((resolve) => {
+                const check = () => {
+                  if (loadingProgress.progress >= currentProgress + phase.weight)
+                    resolve();
+                  else setTimeout(check, 100);
+                };
+                check();
+              }),
+              new Promise<void>((resolve) => setTimeout(resolve, 5000)), // Minimum 5 seconds for 3D loading
+            ]).then(() => {});
+            break;
+          case 'loading-data':
+            task = fetchWeatherData();
+            break;
+          case 'connecting':
+            task = checkConnection();
+            break;
+          case 'ready':
+            task = Promise.resolve();
+            break;
+        }
 
-      setLoadingProgress((prev) => ({
-        ...prev,
-        phase: currentPhase.phase,
-        message:
-          currentPhase.phase === 'connecting' && !isOnline
-            ? 'Mencoba menghubungkan kembali...'
-            : currentPhase.message,
-      }));
-
-      const updateProgress = () => {
-        const elapsed = Date.now() - startTime;
-        const progressRatio = Math.min(elapsed / currentPhase.duration, 1);
-        const easedProgress = easeInOutSine(progressRatio);
-        const newProgress = startProgress + progressRange * easedProgress;
-
+        await task;
+        currentProgress += phase.weight;
         setLoadingProgress((prev) => ({
           ...prev,
-          progress: Math.round(newProgress),
+          progress: Math.min(currentProgress, 100),
         }));
 
-        if (progressRatio < 1) {
-          requestAnimationFrame(updateProgress);
-        } else {
-          currentPhaseIndex++;
-          // Panggil onComplete HANYA setelah fase 'ready' selesai dan progress 100%
-          if (currentPhase.phase === 'ready' && newProgress === 100) {
-            // Beri jeda sedikit sebelum transisi agar pengguna melihat 100%
-            setTimeout(() => {
-              onComplete?.();
-            }, 300);
-          } else {
-            // Lanjutkan ke fase berikutnya
-            setTimeout(progressPhase, 200);
-          }
-        }
-      };
+        currentPhaseIndex++;
+      }
 
-      requestAnimationFrame(updateProgress);
+      // Pastikan minimal duration
+      const elapsed = Date.now() - startTime;
+      if (elapsed < minDuration) {
+        await new Promise((resolve) =>
+          setTimeout(resolve, minDuration - elapsed),
+        );
+      }
+
+      onComplete?.();
     };
 
-    const initialDelay = setTimeout(progressPhase, 500);
-    return () => clearTimeout(initialDelay);
-  }, [onComplete, isOnline]); // Dependensi disederhanakan
+    updatePhase();
+  }, [onComplete, isOnline]);
 
   return (
     <AnimatePresence>
