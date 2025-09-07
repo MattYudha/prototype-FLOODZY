@@ -346,10 +346,6 @@ function CanvasContent({
 
   return (
     <>
-      <ProgressTracker
-        setLoadingProgress={setLoadingProgress}
-        loadingProgress={loadingProgress}
-      />
       <Suspense fallback={<EmptyHtmlLoader />}>
         <Environment preset="city" environmentIntensity={0.3} />
 
@@ -625,7 +621,7 @@ function LoadingProgress({ progress }: { progress: LoadingProgress }) {
             className={`h-full bg-gradient-to-r ${getPhaseColor()}`}
             initial={{ width: 0 }}
             animate={{ width: `${progress.progress}%` }}
-            transition={{ duration: 0 }}
+            transition={{ type: "spring", stiffness: 200, damping: 30 }}
           />
         </div>
       </div>
