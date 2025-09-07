@@ -242,6 +242,21 @@ interface FloodMapProps {
   showFullscreenButton?: boolean; // NEW: To hide the fullscreen button
 }
 
+function MapEffect({ onMapLoad, mapRef }: { onMapLoad?: (map: L.Map) => void, mapRef: React.MutableRefObject<L.Map | null> }) {
+    const map = useMap();
+
+    useEffect(() => {
+        if (map) {
+            mapRef.current = map;
+            if (onMapLoad) {
+                onMapLoad(map);
+            }
+        }
+    }, [map, onMapLoad, mapRef]);
+
+    return null;
+}
+
 export const FloodMap = React.memo(function FloodMap({
   className,
   height,
@@ -556,22 +571,10 @@ export const FloodMap = React.memo(function FloodMap({
         
         touchZoom={true}
         className="w-full h-full bg-slate-900"
-        ref={mapRef as any}
         zoomControl={false}
-        // @ts-ignore
-        whenReady={((map: L.Map) => {
-          mapRef.current = map;
-          if (onMapLoad) {
-            onMapLoad(map);
-          }
-          if (map.zoomControl) {
-            map.removeControl(map.zoomControl);
-          }
-          if (map.attributionControl) {
-            map.removeControl(map.attributionControl);
-          }
-        })}
+        attributionControl={false}
       >
+        <MapEffect onMapLoad={onMapLoad} mapRef={mapRef} />
         <TileLayer
           key={selectedLayer}
           attribution={layerConfig[selectedLayer].attribution}

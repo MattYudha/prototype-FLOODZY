@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import Image from 'next/image';
 import { 
   Bot, 
   Send, 
@@ -17,6 +17,7 @@ import {
   Info
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface GeminiChatSectionProps {
   geminiQuestion: string;
@@ -141,33 +142,31 @@ export default function GeminiChatSection({
   return (
     <>
       {/* Floating Action Button */}
-      <motion.div
+      <motion.button
         initial={{ scale: 0, rotate: -180 }}
         animate={{ scale: 1, rotate: 0 }}
-        className="fixed bottom-6 right-6 z-40"
+        transition={{ type: "spring", stiffness: 260, damping: 20 }}
+        whileHover={{ scale: 1.05, y: -2 }}
+        whileTap={{ scale: 0.95 }}
+        onClick={() => setIsOpen(true)}
+        className="fixed bottom-4 right-4 z-40 bg-slate-900 hover:bg-slate-800 text-white p-3 rounded-full shadow-2xl transition-all duration-300"
       >
-        <motion.button
-          whileHover={{ scale: 1.05, y: -2 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={() => setIsOpen(true)}
-          className="relative bg-gradient-to-br from-cyan-400 via-blue-500 to-blue-600 hover:from-cyan-500 hover:via-blue-600 hover:to-blue-700 text-white p-4 rounded-2xl shadow-2xl transition-all duration-300"
+        <Image src="/robofloodzy.png" alt="Asisten AI Floodzie" width={40} height={40} className="rounded-full" />
+        <motion.div
+          animate={{ scale: [1, 1.2, 1] }}
+          transition={{ duration: 2, repeat: Infinity, repeatType: "reverse" }}
+          className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold"
         >
-          <MessageCircle className="w-6 h-6" />
-          <motion.div
-            animate={{ scale: [1, 1.2, 1] }}
-            transition={{ duration: 2, repeat: Infinity }}
-            className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold"
-          >
-            AI
-          </motion.div>
-          <div className="absolute inset-0 rounded-2xl bg-cyan-400 opacity-20 animate-ping" />
-        </motion.button>
-      </motion.div>
+          AI
+        </motion.div>
+        <div className="absolute inset-0 rounded-full bg-cyan-400 opacity-20 animate-ping" />
+      </motion.button>
 
       {/* Modal Overlay */}
       <AnimatePresence>
         {isOpen && (
           <motion.div
+            key="modal"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -187,7 +186,7 @@ export default function GeminiChatSection({
               }}
               exit={{ scale: 0.9, opacity: 0, y: 100 }}
               transition={{ type: "spring", damping: 25, stiffness: 300 }}
-              className="w-full sm:w-96 h-screen sm:h-[650px] bg-slate-900/95 backdrop-blur-xl sm:rounded-3xl shadow-2xl border border-slate-700/50 flex flex-col overflow-hidden"
+              className="w-full sm:w-96 h-screen sm:h-[650px] bg-slate-900 backdrop-blur-xl sm:rounded-3xl shadow-2xl border border-slate-700/50 flex flex-col overflow-hidden"
               onClick={(e) => e.stopPropagation()}
             >
               {/* Header */}

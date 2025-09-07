@@ -82,6 +82,7 @@ import { InfrastructureStatusCard } from '@/components/dashboard/InfrastructureS
 import type { FloodAlert as FloodAlertType, WeatherStation } from '@/types';
 import { SelectedLocation } from '@/types/location';
 import { MapBounds } from '@/types';
+import type { Map as LeafletMap } from 'leaflet';
 
 const FloodMap = dynamic(
   () => import('@/components/map/FloodMap').then((mod) => mod.FloodMap),
@@ -140,7 +141,7 @@ export function DashboardClientPage({ initialData }) {
   const [isDashboardMapFullscreen, setIsDashboardMapFullscreen] =
     useState(false);
   const chatScrollRef = useRef<HTMLDivElement>(null);
-  const mobileMapRef = useRef<any>(null);
+  const mobileMapRef = useRef<LeafletMap | null>(null);
 
   React.useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -154,9 +155,14 @@ export function DashboardClientPage({ initialData }) {
 
   React.useEffect(() => {
     if (isMapDrawerOpen) {
-      setTimeout(() => {
-        mobileMapRef.current?.invalidateSize();
-      }, 5000); // Wait for drawer animation to complete
+      // Wait for the drawer animation to finish before resizing the map
+      const timer = setTimeout(() => {
+        if (mobileMapRef.current) {
+          mobileMapRef.current.invalidateSize();
+        }
+      }, 300); // Corresponds to the drawer animation duration
+
+      return () => clearTimeout(timer);
     }
   }, [isMapDrawerOpen]);
 

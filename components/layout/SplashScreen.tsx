@@ -27,6 +27,7 @@ import {
   Html,
   Points,
   PointMaterial,
+  useProgress,
 } from '@react-three/drei';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -117,19 +118,13 @@ function RainParticles({ count = 1500 }: { count?: number }) {
 function RobotModel({
   idle = 'Wave',
   onModelError,
-  onProgress,
 }: {
   idle?: string;
   onModelError: (error: any) => void;
-  onProgress?: (progress: number) => void;
 }) {
   const group = useRef<THREE.Group>(null);
 
-  const { scene, animations } = useGLTF(MODEL_URL, undefined, undefined, (xhr) => {
-    if (onProgress) {
-      onProgress((xhr.loaded / xhr.total) * 100);
-    }
-  });
+  const { scene, animations } = useGLTF(MODEL_URL);
   const { actions, mixer } = useAnimations(animations, group);
 
   const prepared = useMemo(() => {
@@ -283,7 +278,7 @@ function ProgressTracker({
   setLoadingProgress,
   loadingProgress,
 }: {
-  setLoadingProgress: (progress: LoadingProgress) => void;
+  setLoadingProgress: React.Dispatch<React.SetStateAction<LoadingProgress>>;
   loadingProgress: LoadingProgress;
 }) {
   const { progress: threeProgress } = useProgress();
@@ -316,7 +311,7 @@ function CanvasContent({
   setLoadingProgress,
   loadingProgress,
 }: {
-  setLoadingProgress: (progress: LoadingProgress) => void;
+  setLoadingProgress: React.Dispatch<React.SetStateAction<LoadingProgress>>;
   loadingProgress: LoadingProgress;
 }) {
   const deviceCapabilities = useMemo(() => {
@@ -349,18 +344,12 @@ function CanvasContent({
   ];
   const shadows = deviceCapabilities.quality !== 'low';
 
-  const handleModelProgress = useCallback(
-    (progress: number) => {
-      setLoadingProgress((prev) => ({
-        ...prev,
-        progress: Math.round(progress),
-      }));
-    },
-    [setLoadingProgress],
-  );
-
   return (
     <>
+      <ProgressTracker
+        setLoadingProgress={setLoadingProgress}
+        loadingProgress={loadingProgress}
+      />
       <Suspense fallback={<EmptyHtmlLoader />}>
         <Environment preset="city" environmentIntensity={0.3} />
 
@@ -412,7 +401,7 @@ function CanvasContent({
           snap={{ mass: 1, tension: 180, friction: 25 }}
         >
           <Bounds fit observe clip margin={1.1}>
-            <Robot onProgress={handleModelProgress} />
+            <Robot />
           </Bounds>
 
           {shadows && (
@@ -448,7 +437,7 @@ function Enhanced3DCanvas({
   setLoadingProgress,
 }: {
   loadingProgress: LoadingProgress;
-  setLoadingProgress: (progress: LoadingProgress) => void;
+  setLoadingProgress: React.Dispatch<React.SetStateAction<LoadingProgress>>;
 }) {
   const [is3DSupported, setIs3DSupported] = useState(true);
 
@@ -608,7 +597,7 @@ function LoadingProgress({ progress }: { progress: LoadingProgress }) {
       default:
         return 'Memulai...';
     }
-  }, [progress.phase, progress.message, isOnline]); // Tambah isOnline sebagai dependency
+  }, [progress.phase, isOnline]); // Tambah isOnline sebagai dependency
 
   return (
     <motion.div
@@ -636,7 +625,7 @@ function LoadingProgress({ progress }: { progress: LoadingProgress }) {
             className={`h-full bg-gradient-to-r ${getPhaseColor()}`}
             initial={{ width: 0 }}
             animate={{ width: `${progress.progress}%` }}
-            transition={{ duration: 0.8, ease: 'easeOut' }} // Durasi transisi lebih halus
+            transition={{ duration: 0 }}
           />
         </div>
       </div>
@@ -707,97 +696,33 @@ export function SplashScreen({ isFadingOut, onComplete }: SplashScreenProps) {
   }, []);
 
   useEffect(() => {
-    const minDuration = 10000; // Minimal 10 detik untuk user experience
+    const minDuration = 5000; // Durasi total 5 detik
     const startTime = Date.now();
 
-    const phases = [
-      {
-        phase: 'initializing' as const,
-        message: 'Mempersiapkan inti aplikasi...',
-        weight: 20,
-      },
-      {
-        phase: 'loading-3d' as const,
-        message: 'Memuat elemen visual 3D...',
-        weight: 30,
-      },
-      {
-        phase: 'loading-data' as const,
-        message: 'Mengambil data terkini...',
-        weight: 20,
-      },
-      {
-        phase: 'connecting' as const,
-        message: 'Menghubungkan ke server...',
-        weight: 20,
-      },
-      { phase: 'ready' as const, message: 'Siap digunakan!', weight: 10 },
-    ];
-
-    let currentProgress = 0;
-    let currentPhaseIndex = 0;
-
-    const updatePhase = async () => {
-      while (currentPhaseIndex < phases.length) {
-        const phase = phases[currentPhaseIndex];
-        setLoadingProgress({
-          progress: currentProgress,
-          phase: phase.phase,
-          message: phase.message,
-        });
-
-        let task: Promise<void>;
-        switch (phase.phase) {
-          case 'initializing':
-            task = initApp();
-            break;
-          case 'loading-3d':
-            task = Promise.all([
-              new Promise<void>((resolve) => {
-                const check = () => {
-                  if (loadingProgress.progress >= currentProgress + phase.weight)
-                    resolve();
-                  else setTimeout(check, 100);
-                };
-                check();
-              }),
-              new Promise<void>((resolve) => setTimeout(resolve, 5000)), // Minimum 5 seconds for 3D loading
-            ]).then(() => {});
-            break;
-          case 'loading-data':
-            task = fetchWeatherData();
-            break;
-          case 'connecting':
-            task = checkConnection();
-            break;
-          case 'ready':
-            task = Promise.resolve();
-            break;
-        }
-
-        await task;
-        currentProgress += phase.weight;
-        setLoadingProgress((prev) => ({
-          ...prev,
-          progress: Math.min(currentProgress, 100),
-        }));
-
-        currentPhaseIndex++;
-      }
-
-      // Pastikan minimal duration
+    const interval = setInterval(() => {
       const elapsed = Date.now() - startTime;
-      if (elapsed < minDuration) {
-        await new Promise((resolve) =>
-          setTimeout(resolve, minDuration - elapsed),
-        );
+      const progress = Math.min((elapsed / minDuration) * 100, 100);
+
+      // Update state progress dan juga pesan fase secara dinamis
+      setLoadingProgress({
+        progress: progress,
+        phase: progress < 30 ? 'initializing' : progress < 70 ? 'loading-3d' : progress < 95 ? 'loading-data' : 'ready',
+        message: progress < 30 ? 'Mempersiapkan inti aplikasi...' : progress < 70 ? 'Memuat elemen visual 3D...' : progress < 95 ? 'Mengambil data terkini...' : 'Siap digunakan!',
+      });
+
+      if (progress >= 100) {
+        clearInterval(interval);
+        // Beri jeda singkat untuk memastikan render 100% selesai sebelum onComplete dipanggil
+        setTimeout(() => {
+          onComplete?.();
+        }, 100);
       }
+    }, 50); // Update setiap 50ms untuk animasi yang mulus
 
-      onComplete?.();
+    return () => {
+      clearInterval(interval);
     };
-
-    updatePhase();
-  }, [onComplete, isOnline]);
+  }, [onComplete]);
 
   return (
     <AnimatePresence>

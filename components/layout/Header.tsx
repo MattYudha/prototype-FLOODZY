@@ -16,6 +16,7 @@ import {
   MapPin,
   Shield,
   Home,
+  ArrowLeft,
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/badge';
@@ -35,6 +36,7 @@ interface HeaderProps {
 export function Header({ onMenuToggle, isMenuOpen }: HeaderProps) {
   const { theme, setTheme } = useTheme();
   const [isCommandOpen, setCommandOpen] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const isMobile = useMediaQuery('(max-width: 768px)');
 
   const { highAlertCount, loadingAlerts } = useAlertCount();
@@ -59,6 +61,38 @@ export function Header({ onMenuToggle, isMenuOpen }: HeaderProps) {
   };
 
   const ThemeIcon = themeIcons[theme];
+
+  if (isMobile && isSearchOpen) {
+    return (
+      <>
+        <motion.header
+          initial={{ y: -100 }}
+          animate={{ y: 0 }}
+          transition={{ type: 'spring', damping: 20, stiffness: 300 }}
+          className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60"
+        >
+          <div className="container mx-auto px-4 h-16 flex items-center">
+            <Button variant="ghost" size="icon" onClick={() => setIsSearchOpen(false)}>
+              <ArrowLeft size={20} />
+            </Button>
+            <div className="flex-1 ml-2">
+              <button
+                onClick={() => {
+                  setCommandOpen(true);
+                  setIsSearchOpen(false);
+                }}
+                className="flex items-center w-full px-3 py-2 text-sm text-muted-foreground bg-transparent border border-border rounded-lg"
+              >
+                <Search className="h-4 w-4 mr-3" />
+                <span className="flex-grow text-left">Cari wilayah atau lokasi...</span>
+              </button>
+            </div>
+          </div>
+        </motion.header>
+        <CommandMenu isOpen={isCommandOpen} setIsOpen={setCommandOpen} />
+      </>
+    );
+  }
 
   return (
     <>
@@ -151,7 +185,7 @@ export function Header({ onMenuToggle, isMenuOpen }: HeaderProps) {
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={() => setCommandOpen(true)}
+                onClick={() => setIsSearchOpen(true)}
               >
                 <Search size={20} />
               </Button>

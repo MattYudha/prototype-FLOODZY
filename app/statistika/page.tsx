@@ -203,15 +203,6 @@ export default function StatistikPage() {
           </div>
         </div>
 
-        {/* Gemini Section */}
-        <GeminiChatSection
-          geminiQuestion={geminiQuestion}
-          setGeminiQuestion={setGeminiQuestion}
-          geminiResponse={geminiResponse}
-          isGeminiLoading={isGeminiLoading}
-          handleGeminiAnalysis={handleGeminiAnalysis}
-        />
-
         {/* Filters (toggle) */}
         <AnimatePresence>
           {showFilters && (
@@ -281,6 +272,14 @@ export default function StatistikPage() {
           )}
         </AnimatePresence>
       </div>
+      {/* Gemini Section */}
+      <GeminiChatSection
+        geminiQuestion={geminiQuestion}
+        setGeminiQuestion={setGeminiQuestion}
+        geminiResponse={geminiResponse}
+        isGeminiLoading={isGeminiLoading}
+        handleGeminiAnalysis={handleGeminiAnalysis}
+      />
     </div>
   );
 }

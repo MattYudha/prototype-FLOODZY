@@ -26,12 +26,12 @@ export default function ClientLayoutWrapper({
 
     const fadeTimer = setTimeout(() => {
       setIsFadingOut(true);
-    }, 3000);
+    }, 6000);
 
     const hideTimer = setTimeout(() => {
       setShowSplash(false);
       sessionStorage.setItem('splashShown', 'true');
-    }, 3500);
+    }, 6000);
 
     return () => {
       clearTimeout(fadeTimer);
@@ -71,19 +71,10 @@ export default function ClientLayoutWrapper({
 
       <div
         className={`flex flex-col flex-1 transition-all duration-300
-        ${
-          isDesktop
-            ? isCollapsed
-              ? 'ml-16'
-              : 'ml-64'
-            : 'ml-0'
-        }
+        ${isDesktop ? (isCollapsed ? 'ml-16' : 'ml-64') : 'ml-0'}
       `}
       >
-        <Header
-          onMenuToggle={toggleMobileSidebar}
-          isMenuOpen={isSidebarOpen}
-        />
+        <Header onMenuToggle={toggleMobileSidebar} isMenuOpen={isSidebarOpen} />
         <main className="flex-1 p-4">{children}</main>
       </div>
     </div>

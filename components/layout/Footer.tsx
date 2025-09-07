@@ -19,11 +19,22 @@ const Footer = () => {
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Bagian Logo dan Deskripsi */}
-          
+
           <div className="md:col-span-1">
-            <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-              <Image src="/apple-icon.png" alt="Floodzy Logo" width={32} height={32} className="rounded-md" />
-              <span className="text-2xl font-bold text-foreground">Floodzy</span>
+            <Link
+              href="/"
+              className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+            >
+              <Image
+                src="/apple-icon.png"
+                alt="Floodzy Logo"
+                width={32}
+                height={32}
+                className="rounded-md"
+              />
+              <span className="text-2xl font-bold text-foreground">
+                Floodzy
+              </span>
             </Link>
             <p className="mt-2 text-sm">
               Sistem Peringatan Dini dan Informasi Banjir Terintegrasi.
@@ -36,7 +47,10 @@ const Footer = () => {
             <ul className="mt-4 space-y-2">
               {menuItems.map((item) => (
                 <li key={item.href}>
-                  <Link href={item.href} className="text-sm hover:text-foreground transition-colors">
+                  <Link
+                    href={item.href}
+                    className="text-sm hover:text-foreground transition-colors"
+                  >
                     {item.label}
                   </Link>
                 </li>
@@ -58,13 +72,19 @@ const Footer = () => {
           <div className="md:col-span-1">
             <h3 className="font-semibold text-foreground">Ikuti Kami</h3>
             <div className="flex mt-4 space-x-4">
-              <a href="https://github.com/MattYudha" className="hover:text-foreground transition-colors">
+              <a
+                href="https://github.com/MattYudha"
+                className="hover:text-foreground transition-colors"
+              >
                 <Github size={20} />
               </a>
               <a href="#" className="hover:text-foreground transition-colors">
                 <Twitter size={20} />
               </a>
-              <a href="https://www.linkedin.com/in/rahmat-yudi-burhanudin/" className="hover:text-foreground transition-colors">
+              <a
+                href="https://www.linkedin.com/in/rahmat-yudi-burhanudin/"
+                className="hover:text-foreground transition-colors"
+              >
                 <Linkedin size={20} />
               </a>
             </div>

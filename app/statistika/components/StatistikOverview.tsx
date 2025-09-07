@@ -567,8 +567,8 @@ Pastikan setiap bagian analisis disajikan dalam paragraf singkat dan poin-poin y
               </div>
             </CardTitle>
           </CardHeader>
-          <CardContent className="p-8">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <CardContent className="p-4 md:p-6 lg:p-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
               <div className="space-y-6">
                 {/* Insight Cards */}
                 <motion.div
@@ -693,7 +693,7 @@ Pastikan setiap bagian analisis disajikan dalam paragraf singkat dan poin-poin y
               <button
                 onClick={handleDetailedAnalysis}
                 disabled={isAnalyzing || isExporting}
-                className="flex-1 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300 flex items-center justify-center space-x-2 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex-1 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white px-4 py-2 sm:px-6 sm:py-3 rounded-xl font-semibold transition-all duration-300 flex items-center justify-center space-x-2 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
               >
                 {isAnalyzing ? (
                   <Loader2 className="w-5 h-5 animate-spin" />
@@ -705,7 +705,7 @@ Pastikan setiap bagian analisis disajikan dalam paragraf singkat dan poin-poin y
               <button
                 onClick={handleExportReport}
                 disabled={isAnalyzing || isExporting}
-                className="flex-1 bg-slate-800/60 hover:bg-slate-700/80 border border-slate-600/50 hover:border-slate-500 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300 flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex-1 bg-slate-800/60 hover:bg-slate-700/80 border border-slate-600/50 hover:border-slate-500 text-white px-4 py-2 sm:px-6 sm:py-3 rounded-xl font-semibold transition-all duration-300 flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
               >
                 {isExporting ? (
                   <Loader2 className="w-5 h-5 animate-spin" />
