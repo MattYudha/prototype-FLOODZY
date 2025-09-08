@@ -309,7 +309,7 @@ SENTRY_DSN="https://<your-dsn>.ingest.sentry.io/<project-id>"
 SENTRY_TRACES_SAMPLE_RATE="0.1"
 SENTRY_PROFILES_SAMPLE_RATE="0.0"
 SENTRY_ENVIRONMENT="development" # or "production", "preview"
-```
+
 
 - `SENTRY_DSN`: Your project's DSN from Sentry.
 - `SENTRY_TRACES_SAMPLE_RATE`: Percentage of transactions to sample for performance monitoring (e.g., 0.1 for 10%).
@@ -323,7 +323,8 @@ You can view captured errors and performance traces in your Sentry dashboard und
 API routes (`/api/*`) now produce structured JSON logs to provide better insights into request processing. Each API response includes an `X-Request-Id` header, which can be used to correlate logs for a single request.
 
 Example log entry (you can `grep` for `X-Request-Id` in your Vercel logs):
-
+```
+```
 ```json
 {
   "level": "info",
@@ -482,6 +483,7 @@ Ikuti langkah-langkah ini untuk menjalankan Floodzy di lingkungan pengembangan l
     *Catatan: Perintah ini juga akan menjalankan `seed.sql` untuk mengisi data awal.*
 
 ### 5. Jalankan Aplikasi
+
 
 1.  **Jalankan server pengembangan:**
     ```bash
