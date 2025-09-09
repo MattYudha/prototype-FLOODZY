@@ -538,7 +538,7 @@ Floodzy dibangun di atas tumpukan teknologi modern yang dirancang untuk skalabil
 -   **CI/CD**: Proses *Continuous Integration* diotomatisasi menggunakan **GitHub Actions**, yang menjalankan proses linting dan testing setiap kali ada perubahan kode untuk menjaga kualitas kode.
 ```
 
-
+```plaintext
 🎉 Acknowledgments
 
 OpenWeatherMap
@@ -550,7 +550,7 @@ Leaflet
 BMKG
 
 Kementerian PUPR
-
+```
 
 MIT License
 
