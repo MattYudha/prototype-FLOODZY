@@ -539,7 +539,6 @@ Floodzy dibangun di atas tumpukan teknologi modern yang dirancang untuk skalabil
 ```
 
 
-```plaintext
 🎉 Acknowledgments
 
 OpenWeatherMap
@@ -551,7 +550,7 @@ Leaflet
 BMKG
 
 Kementerian PUPR
-```
+
 
 MIT License
 
