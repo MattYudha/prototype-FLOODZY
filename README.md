@@ -388,27 +388,29 @@ Key fields in the logs:
 
 
 ````
+## ⚡ Custom Hooks
 
+🌍 useRegionData → Data wilayah & monitoring
 
-## Custom Hooks
+🚰 usePumpStatusData → Status pompa banjir
 
-useRegionData → Data wilayah & monitoring
+🌊 useWaterLevelData → Data ketinggian air
 
-usePumpStatusData → Status pompa banjir
+🌫️ useAirPollutionData → Data kualitas udara
 
-useWaterLevelData → Data ketinggian air
+🌐 useBmkgQuakeData → Data gempa dari BMKG
 
-useAirPollutionData → Data kualitas udara
+🚨 useDisasterData → Data bencana umum
 
-useBmkgQuakeData → Data gempa dari BMKG
+🎨 UI & Experience
 
-useDisasterData → Data bencana umum
+🌓 useTheme → Manajemen tema UI
 
-useTheme → Manajemen tema UI
+🔔 useToast → Notifikasi toast
 
-useDebounce → Input debouncing
+🛠️ Utilities
 
-use-toast → Notifikasi toast
+⏳ useDebounce → Input debouncing
 
 
 
