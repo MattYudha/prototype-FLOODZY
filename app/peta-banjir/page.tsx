@@ -1,189 +1,186 @@
 'use client';
 
-import React, { useState, Suspense } from 'react';
-import 'leaflet/dist/leaflet.css';
-import { useMediaQuery } from '@/hooks/useMediaQuery';
-import { Button } from '@/components/ui/Button';
-import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription } from '@/components/ui/drawer';
-import { MapIcon, Loader2, Expand, Minimize } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import dynamic from 'next/dynamic';
+import { 
+  Carousel, 
+  CarouselContent, 
+  CarouselItem, 
+  CarouselNext, 
+  CarouselPrevious, 
+  type CarouselApi 
+} from "@/components/ui/carousel";
+import { Card, CardContent } from "@/components/ui/card";
+import { formatDistanceToNow } from 'date-fns';
+import { id } from 'date-fns/locale';
+import { Waves, ChevronDown, ChevronUp } from 'lucide-react';
+import clsx from 'clsx';
 
-// Lazy load the FloodMap component for better performance
-const FloodMap = React.lazy(() =>
-  import('@/components/map/FloodMap').then(module => ({ default: module.FloodMap }))
-);
+// Dinamis impor PetaBanjirClient untuk menghindari masalah SSR dengan Leaflet
+const PetaBanjirClient = dynamic(() => import('@/components/peta-banjir/PetaBanjirClient'), {
+  ssr: false,
+  loading: () => <div className="w-full h-full bg-muted animate-pulse" />
+});
 
-// NEW: Types for Crowdsourced and Official BPBD Data (moved here for clarity)
-interface CrowdsourcedReport {
-  report_id: string;
-  type: "Laporan Pengguna";
-  severity: "Rendah" | "Sedang" | "Tinggi";
-  depth_cm: number;
+// Tipe data harus cocok dengan yang ada di PetaBanjirClient
+interface FloodReport {
+  id: string;
+  position: [number, number];
   timestamp: string;
-  notes: string;
-  upvotes: number;
-  geometry: { type: "Point"; coordinates: [number, number] }; // [longitude, latitude]
+  waterLevel: number;
 }
 
-interface OfficialBPBDData {
-  report_id: string;
-  type: "Data Resmi BPBD";
-  severity: "Rendah" | "Sedang" | "Tinggi" | "Kritis";
-  depth_cm: number;
-  status: "Naik" | "Stabil" | "Surut";
-  timestamp: string;
-  geometry: { type: "Polygon"; coordinates: [number[][]] }; // [longitude, latitude]
+interface EvacuationPoint {
+  id: string;
+  name: string;
+  position: [number, number];
 }
 
-const PetaBanjirPage = () => {
-  const isMobile = useMediaQuery("(max-width: 768px)");
-  const [isMapFullScreen, setMapFullScreen] = useState(false);
+// Mock data dipindahkan ke sini karena kita butuh akses di client component
+const mockFloodReports: FloodReport[] = [
+  {
+    id: 'report-1',
+    position: [-6.2088, 106.8456],
+    timestamp: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString(),
+    waterLevel: 30,
+  },
+  {
+    id: 'report-2',
+    position: [-6.2188, 106.8556],
+    timestamp: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString(),
+    waterLevel: 50,
+  },
+  {
+    id: 'report-3',
+    position: [-6.1988, 106.8256],
+    timestamp: new Date(Date.now() - 8 * 60 * 60 * 1000).toISOString(),
+    waterLevel: 20,
+  },
+  {
+    id: 'report-4',
+    position: [-6.2288, 106.8656],
+    timestamp: new Date(Date.now() - 15 * 60 * 60 * 1000).toISOString(),
+    waterLevel: 40,
+  },
+  {
+    id: 'report-5',
+    position: [-6.1888, 106.8356],
+    timestamp: new Date(Date.now() - 23 * 60 * 60 * 1000).toISOString(),
+    waterLevel: 60,
+  },
+];
 
-  React.useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-        if (event.key === 'Escape' && isMapFullScreen) {
-          setMapFullScreen(false);
-        }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isMapFullScreen]);
+const mockEvacuationPoints: EvacuationPoint[] = [
+  { id: 'evac-1', name: 'Posko Evakuasi Utama', position: [-6.1754, 106.8272] },
+  { id: 'evac-2', name: 'Gedung Serbaguna', position: [-6.2488, 106.8856] },
+];
 
-  React.useEffect(() => {
-      if (isMapFullScreen) {
-          document.body.classList.add('overflow-hidden');
-      } else {
-          document.body.classList.remove('overflow-hidden');
-      }
-      return () => document.body.classList.remove('overflow-hidden');
-  }, [isMapFullScreen]);
-
-  // Mock data for crowdsourced reports
-  const crowdsourcedReports: CrowdsourcedReport[] = [
-    {
-      report_id: "usr-123",
-      type: "Laporan Pengguna",
-      severity: "Rendah",
-      depth_cm: 20,
-      timestamp: "2025-08-26T07:30:00Z",
-      notes: "Genangan se-mata kaki, masih bisa dilewati motor.",
-      upvotes: 15,
-      geometry: { type: "Point", coordinates: [106.827, -6.175] }, // [longitude, latitude]
-    },
-    {
-      report_id: "usr-124",
-      type: "Laporan Pengguna",
-      severity: "Sedang",
-      depth_cm: 50,
-      timestamp: "2025-08-26T08:00:00Z",
-      notes: "Banjir selutut, motor sulit lewat.",
-      upvotes: 8,
-      geometry: { type: "Point", coordinates: [106.850, -6.200] },
-    },
-  ];
-
-  // Mock data for official BPBD data
-  const officialBPBDData: OfficialBPBDData[] = [
-    {
-      report_id: "bpbd-456",
-      type: "Data Resmi BPBD",
-      severity: "Tinggi",
-      depth_cm: 110,
-      status: "Naik",
-      timestamp: "2025-08-26T08:00:00Z",
-      geometry: {
-        type: "Polygon",
-        coordinates: [
-          [
-            [106.800, -6.150],
-            [106.810, -6.150],
-            [106.810, -6.160],
-            [106.800, -6.160],
-            [106.800, -6.150],
-          ],
-        ],
-      },
-    },
-    {
-      report_id: "bpbd-457",
-      type: "Data Resmi BPBD",
-      severity: "Kritis",
-      depth_cm: 150,
-      status: "Naik",
-      timestamp: "2025-08-26T09:00:00Z",
-      geometry: {
-        type: "Polygon",
-        coordinates: [
-          [
-            [106.830, -6.180],
-            [106.840, -6.180],
-            [106.840, -6.190],
-            [106.830, -6.190],
-            [106.830, -6.180],
-          ],
-        ],
-      },
-    },
-  ];
-
-  const MapLoader = () => (
-    <div className="absolute inset-0 flex flex-col items-center justify-center bg-background/80 backdrop-blur-sm z-10">
-      <Loader2 className="h-12 w-12 animate-spin text-primary" />
-      <p className="mt-4 text-muted-foreground">Memuat Peta...</p>
-    </div>
+export default function PetaBanjirPage() {
+  const [selectedReportId, setSelectedReportId] = useState<string | null>(
+    mockFloodReports.length > 0 ? mockFloodReports[0].id : null
   );
+  const [api, setApi] = useState<CarouselApi>();
+  const [isCarouselOpen, setIsCarouselOpen] = useState(true);
 
-  if (isMobile) {
-    return (
-      <div className="relative w-full h-[calc(100vh-8rem)] flex items-center justify-center p-4">
-        <div className="absolute inset-0 bg-gradient-to-br from-background to-muted/50 z-0"></div>
-        <div className="relative z-10 text-center">
-          <div className="p-6 bg-background/50 backdrop-blur-md rounded-2xl shadow-lg border border-border/20">
-            <MapIcon className="w-16 h-16 mx-auto text-primary mb-4" />
-            <h1 className="text-2xl font-bold mb-2">Peta Banjir Interaktif</h1>
-            <p className="text-muted-foreground mb-6">
-              Lihat data banjir real-time, zona risiko, dan lainnya.
-            </p>
-            <Button onClick={() => setMapFullScreen(true)} size="lg">
-              Lihat Peta
-            </Button>
-          </div>
-        </div>
+  const reports = mockFloodReports;
+  const evacuationPoints = mockEvacuationPoints;
 
-        <Drawer open={isMapFullScreen} onOpenChange={setMapFullScreen}>
-          <DrawerContent className="h-screen">
-            <DrawerHeader className="text-left">
-              <DrawerTitle>Peta Banjir</DrawerTitle>
-              <DrawerDescription>
-                Geser ke bawah untuk menutup peta.
-              </DrawerDescription>
-            </DrawerHeader>
-            <div className="flex-1 p-0 overflow-hidden relative bg-slate-900">
-              <Suspense fallback={<MapLoader />}>
-                <FloodMap crowdsourcedReports={crowdsourcedReports} officialBPBDData={officialBPBDData} isFullscreen={false} onFullscreenToggle={() => {}} />
-              </Suspense>
-            </div>
-          </DrawerContent>
-        </Drawer>
-      </div>
-    );
-  }
+  useEffect(() => {
+    if (!api) return;
+ 
+    const onSelect = () => {
+      const selectedId = reports[api.selectedScrollSnap()].id;
+      setSelectedReportId(selectedId);
+    };
+
+    api.on("select", onSelect);
+ 
+    return () => {
+      api.off("select", onSelect);
+    };
+  }, [api, reports]);
+
+  const handleMapClick = (coords: [number, number]) => {
+    console.log('Map clicked at:', coords);
+  };
+
+  const handleCardClick = (reportId: string, index: number) => {
+    setSelectedReportId(reportId);
+    if (api) {
+      api.scrollTo(index);
+    }
+  };
 
   return (
-    <div className={isMapFullScreen ? "fixed inset-0 z-50 w-screen h-screen bg-slate-900" : "w-full h-screen relative"}>
-      <Button
-          onClick={() => setMapFullScreen(!isMapFullScreen)}
-          variant="outline"
-          size="icon"
-          className="absolute top-[10px] right-[10px] z-[1000] w-8 h-8 bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-600 rounded-sm flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 shadow-lg"
-          aria-label={isMapFullScreen ? 'Keluar dari layar penuh' : 'Masuk ke layar penuh'}
-      >
-          {isMapFullScreen ? <Minimize className="w-4 h-4" /> : <Expand className="w-4 h-4" />}
-      </Button>
-      <Suspense fallback={<MapLoader />}>
-        <FloodMap key={isMapFullScreen ? 'fullscreen' : 'normal'} crowdsourcedReports={crowdsourcedReports} officialBPBDData={officialBPBDData} isFullscreen={isMapFullScreen} onFullscreenToggle={() => setMapFullScreen(prev => !prev)} />
-      </Suspense>
+    <div className="w-full h-[calc(100vh-var(--header-height))] flex flex-col md:relative">
+      <div className={clsx(
+        "w-full transition-all duration-300 ease-in-out",
+        isCarouselOpen ? "h-3/5" : "h-[calc(100%-3rem)]",
+        "md:h-full"
+      )}>
+        <PetaBanjirClient
+          reports={reports}
+          evacuationPoints={evacuationPoints}
+          onMapClick={handleMapClick}
+          selectedReportId={selectedReportId}
+        />
+      </div>
+      
+      <div className={clsx(
+        "relative bg-card border-t",
+        "transition-all duration-300 ease-in-out",
+        isCarouselOpen ? "h-2/5" : "h-12",
+        "md:absolute md:bottom-0 md:left-0 md:right-0 md:z-[1000] md:h-auto md:bg-transparent md:border-none"
+      )}>
+        <button 
+          onClick={() => setIsCarouselOpen(!isCarouselOpen)}
+          className="absolute -top-3 left-1/2 -translate-x-1/2 z-20 bg-card p-1 rounded-full border shadow-md md:hidden"
+          aria-label="Toggle report panel"
+        >
+          {isCarouselOpen ? <ChevronDown className="w-5 h-5" /> : <ChevronUp className="w-5 h-5" />}
+        </button>
+
+        <div className={clsx(
+            "p-4 h-full w-full transition-opacity duration-100",
+            isCarouselOpen ? 'opacity-100' : 'opacity-0 invisible'
+        )}>
+          <Carousel 
+            setApi={setApi}
+            opts={{ align: "start", loop: reports.length > 3 }}
+            className="w-full max-w-4xl mx-auto"
+          >
+            <CarouselContent>
+              {reports.map((report, index) => (
+                <CarouselItem key={report.id} className="md:basis-1/2 lg:basis-1/3">
+                  <div className="p-1">
+                    <Card 
+                      className={`cursor-pointer transition-all ${selectedReportId === report.id ? 'border-primary shadow-lg' : 'border-border'}`}
+                      onClick={() => handleCardClick(report.id, index)}
+                    >
+                      <CardContent className="flex flex-col items-center justify-center p-4 space-y-2">
+                          <div className="flex items-start justify-between w-full">
+                              <div className='flex items-center'>
+                                  <Waves className="w-6 h-6 mr-2 text-blue-500" />
+                                  <span className="text-lg font-bold">{report.waterLevel} cm</span>
+                              </div>
+                              <span className="text-xs text-muted-foreground">
+                                  {formatDistanceToNow(new Date(report.timestamp), { addSuffix: true, locale: id })}
+                              </span>
+                          </div>
+                          <p className="text-sm text-muted-foreground w-full text-left">
+                              Laporan dari sekitar lokasi ini.
+                          </p>
+                      </CardContent>
+                    </Card>
+                  </div>
+                </CarouselItem>
+              ))}
+            </CarouselContent>
+            <CarouselPrevious className='hidden sm:flex' />
+            <CarouselNext className='hidden sm:flex' />
+          </Carousel>
+        </div>
+      </div>
     </div>
   );
-};
-
-export default PetaBanjirPage;
+}

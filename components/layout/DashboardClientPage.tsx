@@ -310,9 +310,94 @@ export function DashboardClientPage({ initialData }) {
     [initialData.stats],
   );
 
-  const sendChatMessage = async (customMessage: string) => {
-    // Implementasi logika pengiriman pesan
-    console.log('Sending chat message:', customMessage);
+  const sendChatMessage = async (message: string) => {
+    if (!message.trim() && chatHistory.length === 0) return;
+
+    setIsChatLoading(true);
+    setChatError(null);
+
+    const newHistory = [...chatHistory, { role: 'user', parts: [{ text: message }] }];
+    setChatHistory(newHistory);
+    setChatInput('');
+
+    try {
+      let currentHistory = newHistory;
+      let needsLocation = false;
+
+      const body = {
+        question: message,
+        history: chatHistory,
+        location: (selectedLocation && selectedLocation.latitude && selectedLocation.longitude) ? selectedLocation : null,
+      };
+
+      // First API call
+      const response = await fetch(`${getBaseUrl()}/api/chatbot`, {
+        method: 'POST',
+        body: JSON.stringify(body),
+      });
+
+      if (!response.ok) {
+        throw new Error('Gagal mendapatkan respon dari server.');
+      }
+
+      const data = await response.json();
+
+      // Check if the bot needs location
+      if (data.action === 'REQUEST_LOCATION') {
+        needsLocation = true;
+        // Add a message to the user that we need their location
+        setChatHistory(prev => [...prev, { role: 'model', parts: [{ text: "Tentu, untuk itu saya memerlukan lokasi Anda. Mohon izinkan akses lokasi." }] }]);
+        
+        // Get location
+        navigator.geolocation.getCurrentPosition(
+          async (position) => {
+            const { latitude, longitude } = position.coords;
+            
+            // Add a system message with the location
+            const locationPart = { functionResponse: { name: 'userLocation', response: { latitude, longitude } } };
+            const historyWithLocation = [...currentHistory, { role: 'function', parts: [locationPart] }];
+            
+            setChatHistory(historyWithLocation);
+
+            // Second API call with location
+            const responseWithLocation = await fetch(`${getBaseUrl()}/api/chatbot`, {
+              method: 'POST',
+              body: JSON.stringify({ history: historyWithLocation }),
+            });
+
+            if (!responseWithLocation.ok) {
+              throw new Error('Gagal mendapatkan respon setelah mengirim lokasi.');
+            }
+
+            const dataWithLocation = await responseWithLocation.json();
+            setChatHistory(prev => [...prev, { role: 'model', parts: [{ text: dataWithLocation.answer }] }]);
+          },
+          (error) => {
+            console.error("Geolocation error:", error);
+            setChatHistory(prev => [...prev, { role: 'model', parts: [{ text: "Maaf, saya tidak bisa mendapatkan lokasi Anda. Pastikan Anda telah memberikan izin." }] }]);
+            setIsChatLoading(false);
+          }
+        );
+      } else if (data.answer) {
+        setChatHistory(prev => [...prev, { role: 'model', parts: [{ text: data.answer }] }]);
+      } else if (data.notification) {
+          toast[data.notification.type || 'info'](data.notification.message, {
+            duration: data.notification.duration || 5000,
+          });
+          // If there's a notification, we might not get an answer, so stop loading.
+          setIsChatLoading(false);
+      }
+
+
+    } catch (error: any) {
+      setChatError(error.message);
+      setChatHistory(prev => [...prev, { role: 'model', parts: [{ text: "Maaf, terjadi kesalahan. Coba lagi nanti." }] }]);
+    } finally {
+      // Only set loading to false if we are not waiting for geolocation
+      if (!needsLocation) {
+        setIsChatLoading(false);
+      }
+    }
   };
   const toggleChatbot = () => setIsChatbotOpen((prev) => !prev);
 
@@ -595,7 +680,7 @@ export function DashboardClientPage({ initialData }) {
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 flex justify-center">
                   {initialData.realTimeAlerts &&
                   initialData.realTimeAlerts.length > 0 ? (
                     initialData.realTimeAlerts.map((alert: any) => (

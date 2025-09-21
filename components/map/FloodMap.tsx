@@ -233,6 +233,7 @@ interface FloodMapProps {
   officialBPBDData?: OfficialBPBDData[]; // NEW: Official BPBD flood data
   weatherLayers?: { [key: string]: boolean };
   apiKey?: string;
+  weatherTileLayerUrl?: string; // NEW: Add this prop
   onMapBoundsChange?: (bounds: MapBounds) => void;
   selectedLocation?: SelectedLocation;
   globalWeatherStations?: WeatherStation[];
@@ -240,7 +241,8 @@ interface FloodMapProps {
   onFullscreenToggle: () => void; // Prop for fullscreen toggle function
   onMapLoad?: (map: L.Map) => void; // NEW: Callback to get map instance
   showFullscreenButton?: boolean; // NEW: To hide the fullscreen button
-}
+         activeLayer?: string | null; // NEW: Add activeLayer prop
+       }
 
 function MapEffect({ onMapLoad, mapRef }: { onMapLoad?: (map: L.Map) => void, mapRef: React.MutableRefObject<L.Map | null> }) {
     const map = useMap();
@@ -273,6 +275,7 @@ export const FloodMap = React.memo(function FloodMap({
   officialBPBDData = [], // NEW: Initialize new prop
   weatherLayers = {}, // Inisialisasi
   apiKey, // Inisialisasi
+  weatherTileLayerUrl: propWeatherTileLayerUrl, // Rename the prop to avoid potential shadowing
   onMapBoundsChange, // Add this line
   selectedLocation, // Add this prop
   globalWeatherStations = [], // Initialize new prop
@@ -280,8 +283,23 @@ export const FloodMap = React.memo(function FloodMap({
   onFullscreenToggle, // Prop for fullscreen toggle function
   onMapLoad, // NEW: Destructure onMapLoad
   showFullscreenButton, // NEW: Destructure showFullscreenButton
+  activeLayer, // NEW: Destructure activeLayer
 }: FloodMapProps) {
+  const weatherTileLayerUrl = propWeatherTileLayerUrl; // Assign to a local variable
   const [selectedLayer, setSelectedLayer] = useState('street');
+  const [weatherTileUrl, setWeatherTileUrl] = useState<string | null>(null); // NEW: weatherTileUrl state
+
+  useEffect(() => {
+    if (activeLayer && typeof activeLayer === 'string') {
+      const url = `/api/weather/tiles/${activeLayer}/{z}/{x}/{y}`;
+      setWeatherTileUrl(url);
+      console.log("URL Tile Cuaca Dibuat:", url); // Add console.log
+    } else {
+      setWeatherTileUrl(null);
+    }
+  }, [activeLayer]);
+
+  console.log("FloodMap menerima activeLayer:", activeLayer);
 
   const layerConfig = {
     street: {
@@ -524,6 +542,11 @@ export const FloodMap = React.memo(function FloodMap({
     };
   };
 
+  console.log('Debug weatherTileLayerUrl:', {
+    value: weatherTileLayerUrl,
+    type: typeof weatherTileLayerUrl
+  });
+
   return (
     <motion.div
       data-vaul-no-drag="true"
@@ -588,16 +611,36 @@ export const FloodMap = React.memo(function FloodMap({
         />
         {onMapBoundsChange && <MapBoundsUpdater onMapBoundsChange={onMapBoundsChange} />}
 
-        {Object.entries(weatherLayers).map(
-          ([key, value]) =>
-            value &&
-            apiKey && (
-              <TileLayer
-                key={key}
-                url={`https://tile.openweathermap.org/map/${key}_new/{z}/{x}/{y}.png?appid=${apiKey}`}
-                opacity={0.7}
-              />
-            ),
+        {/* NEW: Conditional Weather TileLayer */}
+        {weatherTileUrl && (
+          <TileLayer
+            key={weatherTileUrl} // Key for refresh
+            url={weatherTileUrl}
+            opacity={0.7}
+            zIndex={2} // Ensure this layer is on top
+          />
+        )}
+
+        {/* Original weatherTileLayerUrl and weatherLayers rendering (can be removed if no longer needed) */}
+        {/* Keeping it for now, but the new logic above takes precedence for activeLayer */}
+        {propWeatherTileLayerUrl && typeof propWeatherTileLayerUrl === 'string' && (
+          <TileLayer url={propWeatherTileLayerUrl} opacity={0.7} />
+        )}
+
+        {!propWeatherTileLayerUrl && (
+          <>
+            {Object.entries(weatherLayers).map(
+              ([key, value]) =>
+                value &&
+                apiKey && (
+                  <TileLayer
+                    key={key}
+                    url={`https://tile.openweathermap.org/map/${key}_new/{z}/{x}/{y}.png?appid=${apiKey}`}
+                    opacity={0.7}
+                  />
+                ),
+            )}
+          </>
         )}
 
         {searchedLocation && isValidLatLng([searchedLocation.lat, searchedLocation.lon]) && (
@@ -824,7 +867,7 @@ export const FloodMap = React.memo(function FloodMap({
         )}
         {!loadingFloodData &&
           !floodDataError &&
-          floodProneData.length > 0 &&
+          floodProneData?.length > 0 &&
           showFloodZones &&
           floodProneData.map((element) => {
             const disasterInfo = getDisasterInfo(element); // Panggil fungsi

@@ -7,10 +7,17 @@ import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import dynamic from 'next/dynamic';
 
-const WeatherMap = dynamic(() => import('@/components/weather/WeatherMap').then(mod => mod.WeatherMap), {
-  ssr: false,
-  loading: () => <div className="h-full w-full bg-slate-800 flex items-center justify-center"><p className="text-white">Memuat peta...</p></div>
-});
+const WeatherMap = dynamic(
+  () => import('@/components/weather/WeatherMap').then((mod) => mod.WeatherMap),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="h-full w-full bg-slate-800 flex items-center justify-center">
+        <p className="text-white">Memuat peta...</p>
+      </div>
+    ),
+  },
+);
 import {
   Search,
   MapPin,
@@ -137,7 +144,13 @@ const RegionDropdown = ({
     </div>
   );
 };
-const MapUpdater = ({ center, zoom }: { center: L.LatLngExpression; zoom: number }) => {
+const MapUpdater = ({
+  center,
+  zoom,
+}: {
+  center: L.LatLngExpression;
+  zoom: number;
+}) => {
   const map = useMap();
   useEffect(() => {
     if (center) {
@@ -157,11 +170,7 @@ interface WeatherDisplayProps {
   error: string | null;
 }
 
-const WeatherDisplay = ({
-  data,
-  loading,
-  error,
-}: WeatherDisplayProps) => {
+const WeatherDisplay = ({ data, loading, error }: WeatherDisplayProps) => {
   if (loading) {
     return (
       <Card className="h-full flex items-center justify-center bg-slate-800/60 backdrop-blur-xl border border-slate-700/50 rounded-2xl shadow-2xl">
@@ -416,7 +425,9 @@ export default function PrakiraanCuacaPage() {
     lat: number;
     lon: number;
   }>(regionData[0]);
-  const [currentMapCenter, setCurrentMapCenter] = useState<[number, number]>([-6.1751, 106.865]);
+  const [currentMapCenter, setCurrentMapCenter] = useState<[number, number]>([
+    -6.1751, 106.865,
+  ]);
   const [currentMapZoom, setCurrentMapZoom] = useState(10);
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchingLocation, setIsSearchingLocation] = useState(false);
@@ -453,21 +464,21 @@ export default function PrakiraanCuacaPage() {
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-        if (event.key === 'Escape' && isMapFullscreen) {
-            setIsMapFullscreen(false);
-        }
+      if (event.key === 'Escape' && isMapFullscreen) {
+        setIsMapFullscreen(false);
+      }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isMapFullscreen]);
 
   useEffect(() => {
-      if (isMapFullscreen) {
-          document.body.classList.add('overflow-hidden');
-      } else {
-          document.body.classList.remove('overflow-hidden');
-      }
-      return () => document.body.classList.remove('overflow-hidden');
+    if (isMapFullscreen) {
+      document.body.classList.add('overflow-hidden');
+    } else {
+      document.body.classList.remove('overflow-hidden');
+    }
+    return () => document.body.classList.remove('overflow-hidden');
   }, [isMapFullscreen]);
 
   useEffect(() => {
@@ -630,7 +641,10 @@ export default function PrakiraanCuacaPage() {
   };
 
   const toggleWeatherLayer = (layerName: string) => {
-    setWeatherLayers((prev) => ({ ...prev, [layerName]: !prev[layerName as keyof WeatherLayers] }));
+    setWeatherLayers((prev) => ({
+      ...prev,
+      [layerName]: !prev[layerName as keyof WeatherLayers],
+    }));
   };
 
   const weatherLayerConfigs = [
@@ -841,7 +855,9 @@ export default function PrakiraanCuacaPage() {
                             </div>
                           </div>
                           <Switch
-                            checked={weatherLayers[layer.key as keyof WeatherLayers]}
+                            checked={
+                              weatherLayers[layer.key as keyof WeatherLayers]
+                            }
                             onCheckedChange={() =>
                               toggleWeatherLayer(layer.key)
                             }
@@ -860,9 +876,15 @@ export default function PrakiraanCuacaPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className={isMapFullscreen ? 'fixed inset-0 z-50 w-screen h-screen bg-slate-900' : 'lg:col-span-5'}
+            className={
+              isMapFullscreen
+                ? 'fixed inset-0 z-50 w-screen h-screen bg-slate-900'
+                : 'lg:col-span-5'
+            }
           >
-            <Card className={`h-full bg-slate-800/60 backdrop-blur-xl border border-slate-700/50 shadow-2xl ${isMapFullscreen ? 'rounded-none' : 'rounded-2xl'}`}>
+            <Card
+              className={`h-full bg-slate-800/60 backdrop-blur-xl border border-slate-700/50 shadow-2xl ${isMapFullscreen ? 'rounded-none' : 'rounded-2xl'}`}
+            >
               <CardHeader className="bg-gradient-to-r from-slate-800/50 to-slate-700/50 border-b border-slate-700/50">
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-white flex items-center space-x-2 truncate">
@@ -875,15 +897,25 @@ export default function PrakiraanCuacaPage() {
               </CardHeader>
               <CardContent className="p-0 relative">
                 <Button
-                    onClick={() => setIsMapFullscreen(!isMapFullscreen)}
-                    variant="outline"
-                    size="icon"
-                    className="absolute top-[78px] left-[10px] z-[1000] w-8 h-8 bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-600 rounded-sm flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 shadow-lg"
-                    aria-label={isMapFullscreen ? 'Keluar dari layar penuh' : 'Masuk ke layar penuh'}
+                  onClick={() => setIsMapFullscreen(!isMapFullscreen)}
+                  variant="outline"
+                  size="icon"
+                  className="absolute top-[78px] left-[10px] z-[1000] w-8 h-8 bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-600 rounded-sm flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 shadow-lg"
+                  aria-label={
+                    isMapFullscreen
+                      ? 'Keluar dari layar penuh'
+                      : 'Masuk ke layar penuh'
+                  }
                 >
-                    {isMapFullscreen ? <Minimize className="w-4 h-4" /> : <Expand className="w-4 h-4" />}
+                  {isMapFullscreen ? (
+                    <Minimize className="w-4 h-4" />
+                  ) : (
+                    <Expand className="w-4 h-4" />
+                  )}
                 </Button>
-                <div className={`${isMapFullscreen ? 'h-screen' : 'h-[500px] lg:h-[calc(100vh-140px)]'} bg-slate-900`}>
+                <div
+                  className={`${isMapFullscreen ? 'h-screen' : 'h-[500px] lg:h-[calc(100vh-140px)]'} bg-slate-900`}
+                >
                   {API_KEY ? (
                     <>
                       {console.log('Rendering WeatherMap with props:')}
@@ -933,7 +965,11 @@ export default function PrakiraanCuacaPage() {
               loading={loadingWeather}
               error={weatherError}
             />
-            <DailyForecast data={currentWeatherData} loading={loadingWeather} error={weatherError} />
+            <DailyForecast
+              data={currentWeatherData}
+              loading={loadingWeather}
+              error={weatherError}
+            />
 
             {currentWeatherData?.airQuality && (
               <Card className="bg-slate-800/60 backdrop-blur-xl border border-slate-700/50 rounded-2xl shadow-2xl">
@@ -948,13 +984,21 @@ export default function PrakiraanCuacaPage() {
                     <div className="flex items-center">
                       <Wind className="w-12 h-12 text-white" />
                       <div className="ml-4">
-                        <p className="text-5xl font-bold text-white">AQI: {currentWeatherData.airQuality.aqi}</p>
-                        <p className="text-md text-gray-300">Level: {currentWeatherData.airQuality.level}</p>
+                        <p className="text-5xl font-bold text-white">
+                          AQI: {currentWeatherData.airQuality.aqi}
+                        </p>
+                        <p className="text-md text-gray-300">
+                          Level: {currentWeatherData.airQuality.level}
+                        </p>
                       </div>
                     </div>
-                    <p className="text-sm text-gray-400 text-right">Polutan Utama: {currentWeatherData.airQuality.pollutant}</p>
+                    <p className="text-sm text-gray-400 text-right">
+                      Polutan Utama: {currentWeatherData.airQuality.pollutant}
+                    </p>
                   </div>
-                  <p className="text-sm text-gray-200 border-t border-slate-700 pt-4 mt-4">Rekomendasi: {currentWeatherData.airQuality.recommendation}</p>
+                  <p className="text-sm text-gray-200 border-t border-slate-700 pt-4 mt-4">
+                    Rekomendasi: {currentWeatherData.airQuality.recommendation}
+                  </p>
                 </CardContent>
               </Card>
             )}

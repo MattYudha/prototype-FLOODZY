@@ -78,19 +78,15 @@ export default function GeminiChatSection({
 
   // Tambahkan respons dari Gemini ke daftar pesan
   useEffect(() => {
-    if (geminiResponse && messages.length > 0) {
-      const lastMessage = messages[messages.length - 1];
-      // Pastikan pesan terakhir adalah dari user sebelum menambahkan respons bot
-      if (lastMessage.isUser) {
+    if (geminiResponse) {
         setMessages(prev => [...prev, {
           id: Date.now().toString(),
           text: geminiResponse,
           isUser: false,
           timestamp: new Date(),
         }]);
-      }
     }
-  }, [geminiResponse, messages]);
+  }, [geminiResponse]);
 
   // Auto-scroll ke pesan terbaru
   useEffect(() => {

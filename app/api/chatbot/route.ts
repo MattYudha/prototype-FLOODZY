@@ -1,4 +1,4 @@
-// app/api/chatbot/route.ts (MODIFIED: Improved Weather Location Handling & Debugging)
+// app/api/chatbot/route.ts
 
 import { NextResponse } from 'next/server';
 import {
@@ -6,6 +6,7 @@ import {
   Tool,
   FunctionDeclaration,
   SchemaType,
+  Content,
 } from '@google/generative-ai';
 import {
   WaterLevelPost,
@@ -18,7 +19,7 @@ import {
   FetchWeatherDataArgs,
   GeocodeLocationArgs,
   DisplayNotificationArgs,
-} from '@/lib/api'; // Pastikan path ini benar
+} from '@/lib/api';
 import {
   fetchWaterLevelData,
   fetchPumpStatusData,
@@ -32,159 +33,36 @@ import {
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 const genAI = GEMINI_API_KEY ? new GoogleGenerativeAI(GEMINI_API_KEY) : null;
 
-// API Key untuk OpenWeatherMap (harus diatur di .env)
+// API Key untuk OpenWeatherMap
 const OPEN_WEATHER_API_KEY =
-  process.env.OPEN_WEATHER_API_KEY || 'b48e2782f52bd9c6783ef14a35856abc'; // Fallback jika tidak diatur
+  process.env.OPEN_WEATHER_API_KEY || 'b48e2782f52bd9c6783ef14a35856abc';
 
 // ===============================================
-// DEFINISI FUNGSI/TOOLS YANG BISA DIAKSES GEMINI
+// DEFINISI FUNGSI/TOOLS
 // ===============================================
 
 const tools: Tool[] = [
   {
     functionDeclarations: [
-      {
-        name: 'fetchWaterLevelData',
-        description: 'Mendapatkan data tinggi muka air dari pos-pos hidrologi.',
-        parameters: {
-          type: SchemaType.OBJECT,
-          properties: {},
-          required: [] as string[],
-        },
-      },
-      {
-        name: 'fetchPumpStatusData',
-        description: 'Mendapatkan status operasional pompa-pompa banjir.',
-        parameters: {
-          type: SchemaType.OBJECT,
-          properties: {},
-          required: [] as string[],
-        },
-      },
-      {
-        name: 'fetchBmkgLatestQuake',
-        description: 'Mendapatkan informasi gempa bumi terkini dari BMKG.',
-        parameters: {
-          type: SchemaType.OBJECT,
-          properties: {},
-          required: [] as string[],
-        },
-      },
-      {
-        name: 'fetchPetabencanaReports',
-        description:
-          'Mendapatkan laporan bencana (banjir, gempa, dll.) dari PetaBencana.id.',
-        parameters: {
-          type: SchemaType.OBJECT,
-          properties: {
-            hazardType: {
-              type: SchemaType.STRING,
-              description:
-                "Jenis bencana (misal: 'flood', 'earthquake', 'haze', 'volcano'). Default 'flood'.",
-              enum: [
-                'flood',
-                'earthquake',
-                'haze',
-                'volcano',
-                'wind',
-                'fire',
-                'landslide',
-              ],
-              format: 'enum',
-            },
-            timeframe: {
-              type: SchemaType.STRING,
-              description:
-                "Rentang waktu laporan (misal: '1h', '6h', '24h', '3d', '7d'). Default '24h'.",
-              enum: ['1h', '6h', '24h', '3d', '7d'],
-              format: 'enum',
-            },
-          }, // This closes the properties object
-          required: [] as string[], // This is now at the correct level
-        },
-      },
-      {
-        // Tool for geocoding location names to coordinates (still available for other uses, but weather will handle its own geocoding)
-        name: 'geocodeLocation',
-        description:
-          'Mengubah nama lokasi (kota, kabupaten, kecamatan) menjadi koordinat Latitude dan Longitude. Gunakan ini jika Anda perlu koordinat spesifik untuk fungsi lain.',
-        parameters: {
-          type: SchemaType.OBJECT,
-          properties: {
-            query: {
-              type: SchemaType.STRING,
-              description:
-                "Nama lokasi yang ingin dicari koordinatnya (contoh: 'Tangerang', 'Surabaya').",
-            },
-          },
-          required: ['query'],
-        },
-      },
-      {
-        // Tool for fetching weather data (lat/lon/locationName are now OPTIONAL for Gemini)
-        name: 'fetchWeatherData',
-        description:
-          "Mendapatkan kondisi cuaca saat ini untuk lokasi tertentu. Jika 'locationName' diberikan (misal: 'Bandung', 'Surabaya', 'Jakarta'), sistem akan otomatis mencari koordinatnya. Jika 'lat' dan 'lon' diberikan, gunakan itu. Jika tidak ada lokasi spesifik, akan menggunakan lokasi default (Jakarta). Contoh penggunaan: 'fetchWeatherData(locationName: \"Tangerang\")' atau 'fetchWeatherData(lat: -6.2, lon: 106.8)'",
-        parameters: {
-          type: SchemaType.OBJECT,
-          properties: {
-            lat: {
-              type: SchemaType.NUMBER,
-              description: 'Latitude lokasi.',
-            },
-            lon: {
-              type: SchemaType.NUMBER,
-              description: 'Longitude lokasi.',
-            },
-            locationName: {
-              // Gemini can now provide a location name directly to this tool
-              type: SchemaType.STRING,
-              description:
-                "Nama lokasi yang disebutkan pengguna (misal: 'Bandung', 'Surabaya', 'Jakarta').",
-            },
-          },
-          required: [] as string[], // Make all parameters optional for Gemini's initial call
-        },
-      },
-      {
-        name: 'displayNotification',
-        description:
-          'Menampilkan notifikasi popup kepada pengguna di antarmuka aplikasi.',
-        parameters: {
-          type: SchemaType.OBJECT,
-          properties: {
-            message: {
-              type: SchemaType.STRING,
-              description: 'Pesan yang akan ditampilkan dalam notifikasi.',
-            },
-            type: {
-              type: SchemaType.STRING,
-              description:
-                "Jenis notifikasi (misal: 'success', 'error', 'warning', 'info', 'default').",
-              enum: ['success', 'error', 'warning', 'info', 'default'],
-              format: 'enum',
-            },
-            duration: {
-              type: SchemaType.NUMBER,
-              description:
-                'Durasi notifikasi dalam milidetik sebelum menghilang secara otomatis. Default 5000ms.',
-            },
-          },
-          required: ['message'],
-        },
-      },
+      { name: 'fetchWaterLevelData', description: 'Mendapatkan data tinggi muka air dari pos-pos hidrologi.', parameters: { type: SchemaType.OBJECT, properties: {}, required: [] } },
+      { name: 'fetchPumpStatusData', description: 'Mendapatkan status operasional pompa-pompa banjir.', parameters: { type: SchemaType.OBJECT, properties: {}, required: [] } },
+      { name: 'fetchBmkgLatestQuake', description: 'Mendapatkan informasi gempa bumi terkini dari BMKG.', parameters: { type: SchemaType.OBJECT, properties: {}, required: [] } },
+      { name: 'requestUserLocation', description: 'Gunakan jika pengguna menanyakan informasi berbasis lokasi tanpa menyebutkan lokasi spesifik (misal: "di sekitar saya").', parameters: { type: SchemaType.OBJECT, properties: {}, required: [] } },
+      { name: 'fetchPetabencanaReports', description: 'Mendapatkan laporan bencana dari PetaBencana.id.', parameters: { type: SchemaType.OBJECT, properties: { hazardType: { type: SchemaType.STRING, description: "Jenis bencana (flood, earthquake, dll)" }, timeframe: { type: SchemaType.STRING, description: "Rentang waktu (6h, 24h, 3d, dll)" } }, required: [] } },
+      { name: 'geocodeLocation', description: 'Mengubah nama lokasi menjadi koordinat.', parameters: { type: SchemaType.OBJECT, properties: { query: { type: SchemaType.STRING, description: "Nama lokasi" } }, required: ['query'] } },
+      { name: 'fetchWeatherData', description: "Mendapatkan kondisi cuaca saat ini.", parameters: { type: SchemaType.OBJECT, properties: { lat: { type: SchemaType.NUMBER }, lon: { type: SchemaType.NUMBER }, locationName: { type: SchemaType.STRING } }, required: [] } },
+      { name: 'displayNotification', description: 'Menampilkan notifikasi popup kepada pengguna.', parameters: { type: SchemaType.OBJECT, properties: { message: { type: SchemaType.STRING }, type: { type: SchemaType.STRING, enum: ['success', 'error', 'warning', 'info', 'default'] }, duration: { type: SchemaType.NUMBER } }, required: ['message'] } },
     ],
   },
 ];
 
 // ===============================================
-// FUNGSI UTAMA UNTUK MENANGANI PERTANYAAN CHATBOT
+// FUNGSI UTAMA
 // ===============================================
 
 const MAX_RETRIES = 3;
-const RETRY_DELAY_MS = 1000; // 1 second
+const RETRY_DELAY_MS = 1000;
 
-// Helper function for retrying async operations
 async function retry<T>(fn: () => Promise<T>, retries = MAX_RETRIES): Promise<T> {
   for (let i = 0; i < retries; i++) {
     try {
@@ -195,315 +73,131 @@ async function retry<T>(fn: () => Promise<T>, retries = MAX_RETRIES): Promise<T>
         console.warn(`[Chatbot API] Retrying due to status ${status}. Attempt ${i + 1}/${retries}...`);
         await new Promise(resolve => setTimeout(resolve, RETRY_DELAY_MS * (i + 1)));
       } else {
-        throw e; // Re-throw other errors or if max retries reached
+        throw e;
       }
     }
   }
-  throw new Error("Max retries reached"); // Should not be reached if retries > 0
+  throw new Error("Max retries reached");
 }
 
 export const runtime = 'nodejs';
 export async function POST(request: Request) {
   if (!genAI) {
-    console.error('[Chatbot API] ❌ GEMINI_API_KEY is missing in environment.');
-    return NextResponse.json(
-      { error: 'GEMINI_API_KEY is missing in environment.' },
-      { status: 500 },
-    );
+    return NextResponse.json({ error: 'GEMINI_API_KEY is missing' }, { status: 500 });
   }
 
   try {
-    console.log('[Chatbot API] Received request.');
-    const { question, history } = await request.json();
-    console.log('[Chatbot API] Request body parsed.');
+    const { question, history, location } = await request.json();
 
-    if (!question) {
-      return NextResponse.json(
-        { error: 'Question is required.' },
-        { status: 400 },
-      );
+    const isFunctionResponseTurn = history && history.length > 0 && history[history.length - 1].role === 'function';
+    if (!question && !isFunctionResponseTurn) {
+      return NextResponse.json({ error: 'Question is required.' }, { status: 400 });
     }
 
     const model = genAI.getGenerativeModel({
       model: 'gemini-1.5-flash',
       tools: tools,
       systemInstruction:
-        "Anda adalah asisten informasi Floodzy. Gunakan fungsi yang tersedia untuk mendapatkan data real-time tentang cuaca, banjir, tinggi muka air, dan status pompa. Selalu prioritaskan penggunaan 'locationName' saat mencari cuaca jika pengguna menyebutkan nama lokasi, dan sistem akan mencari koordinatnya secara otomatis. Berikan jawaban yang ringkas, informatif, dan relevan dengan pertanyaan pengguna. Contoh: Untuk 'cuaca di Tangerang', panggil 'fetchWeatherData' dengan 'locationName: \"Tangerang\"'. Gunakan fungsi 'displayNotification' untuk menampilkan pesan popup penting kepada pengguna, misalnya untuk konfirmasi sukses, peringatan, atau informasi yang perlu segera diketahui pengguna. Contoh: 'displayNotification(message: \"Data berhasil diperbarui!\")' atau 'displayNotification(message: \"Terjadi kesalahan saat mengambil data cuaca.\", type: \"error\")'.",
+        "Anda adalah asisten Floodzy. Tugas Anda adalah menjawab pertanyaan terkait banjir dan cuaca menggunakan tools yang tersedia. Aturan: 1. Jika nama lokasi disebutkan (misal: 'cuaca di Jakarta'), Anda WAJIB menggunakan tool `geocodeLocation` lalu `fetchWeatherData`. JANGAN PERNAH membalas dengan teks konfirmasi seperti 'Baik, saya akan cek'. Langsung panggil tool-nya. 2. Jika lokasi tidak spesifik ('di sekitar saya'), Anda WAJIB memanggil `requestUserLocation`. 3. Selalu gunakan tools jika memungkinkan.",
     });
-    console.log('[Chatbot API] Generative model initialized.');
 
-    const chat = model.startChat({
-      history: history || [],
-    });
-    console.log('[Chatbot API] Chat session started.');
+    const contents: Content[] = [...(history || [])];
+    if (location) {
+        contents.unshift({
+            role: 'user',
+            parts: [{ text: `Konteks lokasi saat ini: ${JSON.stringify(location)}` }]
+        });
+    }
+    if (question) {
+      contents.push({ role: 'user', parts: [{ text: question }] });
+    }
 
-    console.log('[Chatbot API] User Question:', question);
+    const result = await retry(() => model.generateContent({ contents }));
+    const response = result.response;
 
-    const result = await retry(() => chat.sendMessage(question));
-    console.log('[Chatbot API] Message sent to Gemini. Result received.');
-    const call = result.response.functionCall();
-    const directTextResponse = result.response.text();
-    console.log('[Chatbot API] Function call and direct text extracted.');
-
-
-    let finalAnswer = '';
-    let notificationPayload: {
-      message: string;
-      type?: string;
-      duration?: number;
-    } | null = null;
-
-    // Memeriksa apakah ada panggilan fungsi yang valid dan namanya tidak kosong
-    if (
-      call &&
-      call.name &&
-      typeof call.name === 'string' &&
-      call.name.length > 0
-    ) {
-      console.log(
-        `[Chatbot API] 🛠️ Gemini Suggested Function: ${call.name} with args:`,
-        call.args,
+    // Tambahkan pengecekan ini untuk keamanan
+    if (response.promptFeedback?.blockReason) {
+      return NextResponse.json(
+        {
+          answer: `Maaf, permintaan Anda diblokir karena: ${response.promptFeedback.blockReason}. Coba ubah pertanyaan Anda.`,
+        },
+        { status: 200 }
       );
+    }
+
+    const calls = response.functionCalls();
+    const call = calls ? calls[0] : undefined;
+
+    if (call) {
+      console.log(`[Chatbot API] 🛠️ Gemini Suggested Function: ${call.name} with args:`, call.args);
+
+      if (call.name === 'requestUserLocation') {
+        return NextResponse.json({ action: 'REQUEST_LOCATION', originalCall: call }, { status: 200 });
+      }
 
       let toolResponseData: any;
-      let functionExecutedSuccessfully = false;
-
       try {
-        console.log(`[Chatbot API] Attempting to execute tool: ${call.name}`);
-        if (call.name === 'fetchWaterLevelData') {
-          toolResponseData = await fetchWaterLevelData();
-        } else if (call.name === 'fetchPumpStatusData') {
-          toolResponseData = await fetchPumpStatusData();
-        } else if (call.name === 'fetchBmkgLatestQuake') {
-          toolResponseData = await fetchBmkgLatestQuake();
-        } else if (call.name === 'fetchPetabencanaReports') {
+        if (call.name === 'fetchWaterLevelData') toolResponseData = await fetchWaterLevelData();
+        else if (call.name === 'fetchPumpStatusData') toolResponseData = await fetchPumpStatusData();
+        else if (call.name === 'fetchBmkgLatestQuake') toolResponseData = await fetchBmkgLatestQuake();
+        else if (call.name === 'fetchPetabencanaReports') {
           const args = call.args as FetchPetabencanaReportsArgs;
-          toolResponseData = await fetchPetabencanaReports(
-            args.hazardType,
-            args.timeframe,
-          );
+          toolResponseData = await fetchPetabencanaReports(args.hazardType, args.timeframe);
         } else if (call.name === 'geocodeLocation') {
-          // Handle geocoding tool
           const args = call.args as GeocodeLocationArgs;
-          console.log(
-            `[Chatbot API] Executing geocodeLocation for query: ${args.query}`,
-          );
-          const geocodeResults: NominatimResult[] = await geocodeLocation(
-            args.query,
-          );
-          if (geocodeResults && geocodeResults.length > 0) {
-            toolResponseData = geocodeResults[0]; // Ambil hasil pertama
-            console.log(
-              `[Chatbot API] geocodeLocation success:`,
-              toolResponseData,
-            );
-          } else {
-            toolResponseData = {
-              error: `Tidak dapat menemukan koordinat untuk '${args.query}'.`,
-            };
-            console.warn(
-              `[Chatbot API] geocodeLocation failed for query: '${args.query}'.`,
-            );
-          }
+          const geocodeResults = await geocodeLocation(args.query);
+          toolResponseData = geocodeResults?.[0] ?? { error: `Tidak dapat menemukan koordinat untuk '${args.query}'.` };
         } else if (call.name === 'fetchWeatherData') {
-          // Handle weather tool
           const args = call.args as FetchWeatherDataArgs;
-          let lat = args.lat;
-          let lon = args.lon;
-          const locationName = args.locationName; // Dapatkan nama lokasi jika ada
-
-          console.log(
-            `[Chatbot API] fetchWeatherData called with lat: ${lat}, lon: ${lon}, locationName: ${locationName}`,
-          );
-
+          let lat = args.lat, lon = args.lon;
           if (!lat || !lon) {
-            // Jika lat/lon tidak disediakan oleh Gemini
-            if (locationName) {
-              console.log(
-                `[Chatbot API] Attempting to geocode '${locationName}' internally for weather.`,
-              );
-              const geocodeResults: NominatimResult[] =
-                await geocodeLocation(locationName);
-              if (geocodeResults && geocodeResults.length > 0) {
-                lat = parseFloat(geocodeResults[0].lat);
-                lon = parseFloat(geocodeResults[0].lon);
-                console.log(
-                  `[Chatbot API] Internal geocoding success for '${locationName}': lat=${lat}, lon=${lon}`,
-                );
-              } else {
-                console.warn(
-                  `[Chatbot API] Internal geocoding failed for '${locationName}'. Falling back to default Jakarta.`,
-                );
-                lat = -6.2088; // Default Jakarta
-                lon = 106.8456; // Default Jakarta
-                // toolResponseData ini akan diganti oleh hasil fetchWeatherData, tapi kita bisa tambahkan info error awal
-                toolResponseData = {
-                  error: `Tidak dapat menemukan lokasi '${locationName}'. Menampilkan cuaca Jakarta.`,
-                };
-              }
+            const locationName = args.locationName || 'Jakarta';
+            const geocodeResults = await geocodeLocation(locationName);
+            if (geocodeResults && geocodeResults.length > 0) {
+              lat = parseFloat(geocodeResults[0].lat);
+              lon = parseFloat(geocodeResults[0].lon);
             } else {
-              console.log(
-                '[Chatbot API] No location specified for weather. Using default Jakarta.',
-              );
-              lat = -6.2088; // Default Jakarta
-              lon = 106.8456; // Default Jakarta
+              lat = -6.2088; lon = 106.8456; // Fallback Jakarta
             }
           }
-
-          if (lat && lon) {
-            console.log(
-              `[Chatbot API] Fetching weather data for lat: ${lat}, lon: ${lon}`,
-            );
-            toolResponseData = await fetchWeatherData(
-              lat,
-              lon,
-              OPEN_WEATHER_API_KEY,
-            );
-            // Tambahkan nama lokasi ke respons agar Gemini bisa merujuknya
-            if (locationName) {
-              toolResponseData = {
-                ...toolResponseData,
-                locationName: locationName,
-              };
-            } else if (lat === -6.2088 && lon === 106.8456) {
-              toolResponseData = {
-                ...toolResponseData,
-                locationName: 'Jakarta',
-              };
-            }
-            console.log(
-              `[Chatbot API] fetchWeatherData success:`,
-              toolResponseData,
-            );
-          } else {
-            console.error(
-              '[Chatbot API] Fatal: Could not determine valid coordinates for weather fetch.',
-            );
-            throw new Error(
-              'Tidak dapat menentukan lokasi untuk mencari cuaca.',
-            );
-          }
+          toolResponseData = await fetchWeatherData(lat, lon, OPEN_WEATHER_API_KEY);
+          if (args.locationName) toolResponseData.locationName = args.locationName;
         } else if (call.name === 'displayNotification') {
-          // Handle displayNotification tool
-          const args = call.args as DisplayNotificationArgs;
-          notificationPayload = {
-            message: args.message,
-            type: args.type || 'default',
-            duration: args.duration || 5000,
-          };
-          toolResponseData = { status: 'Notification instruction sent.' };
-          console.log(
-            '[Chatbot API] Notification payload:',
-            notificationPayload,
-          );
+            const args = call.args as DisplayNotificationArgs;
+            return NextResponse.json({ notification: { message: args.message, type: args.type, duration: args.duration } }, { status: 200 });
         } else {
-          console.warn(
-            `[Chatbot API] ⚠️ Fungsi '${call.name}' tidak dikenal oleh backend.`,
-          );
           throw new Error(`Fungsi tidak dikenal: ${call.name}`);
         }
-        functionExecutedSuccessfully = true;
-        console.log(
-          `[Chatbot API] ✅ Tool execution successful. Response Data:`,
-          toolResponseData,
-        );
 
-        // Kirimkan hasil toolResponse kembali ke Gemini
-        console.log('[Chatbot API] Sending tool response back to Gemini.');
-        const toolResult = await chat.sendMessage([
-          {
-            functionResponse: {
-              name: call.name,
-              response: toolResponseData || {}, // Pastikan response adalah objek (bisa kosong)
-            },
-          },
-        ]);
-        finalAnswer = toolResult.response.text();
-        console.log(
-          '[Chatbot API] ✨ Final Answer from Gemini (after tool use):',
-          finalAnswer,
-        );
+        const toolContents: Content[] = [
+          ...contents,
+          { role: 'model', parts: [{ functionCall: call }] },
+          { role: 'function', parts: [{ functionResponse: { name: call.name, response: toolResponseData } }] },
+        ];
+
+        const finalResult = await model.generateContent({ contents: toolContents });
+        return NextResponse.json({ answer: finalResult.response.text() }, { status: 200 });
+
       } catch (toolExecutionError: any) {
-        console.error(
-          `[Chatbot API] ❌ Error executing tool '${call.name}':`,
-          toolExecutionError.message,
-          toolExecutionError.stack,
-        );
-        try {
-          // Kirim error kembali ke Gemini agar bisa merespons dengan tepat
-          const errorResponseToGemini = {
-            error: toolExecutionError.message || 'Gagal mengambil data.',
-          };
-          const errorResult = await chat.sendMessage([
-            {
-              functionResponse: {
-                name: call.name,
-                response: errorResponseToGemini,
-              },
-            },
-          ]);
-          finalAnswer = errorResult.response.text(); // Dapatkan interpretasi Gemini dari error
-          console.log(
-            "[Chatbot API] ⚠️ Gemini's interpretation of tool error:",
-            finalAnswer,
-          );
-        } catch (geminiErrorInterpretation: any) {
-          console.error(
-            "[Chatbot API] ‼️ Error getting Gemini's error interpretation:",
-            geminiErrorInterpretation.message,
-          );
-          finalAnswer = `Maaf, saya mengalami kesulitan teknis saat memproses data. (${toolExecutionError.message})`;
-        }
+        console.error(`[Chatbot API] ❌ Error executing tool '${call.name}':`, toolExecutionError);
+        const errorContents: Content[] = [
+          ...contents,
+          { role: 'model', parts: [{ functionCall: call }] },
+          { role: 'function', parts: [{ functionResponse: { name: call.name, response: { error: toolExecutionError.message } } }] },
+        ];
+        const errorResult = await model.generateContent({ contents: errorContents });
+        return NextResponse.json({ answer: errorResult.response.text() }, { status: 200 });
       }
     } else {
-      finalAnswer = directTextResponse;
-      console.log(
-        '[Chatbot API] 💬 Direct Answer from Gemini (no tool call or malformed tool call):',
-        finalAnswer,
-      );
+      return NextResponse.json({ answer: response.text() }, { status: 200 });
     }
-
-    if (!finalAnswer || finalAnswer.trim() === '') {
-      finalAnswer =
-        'Maaf, saya tidak dapat menemukan informasi yang relevan saat ini. Bisakah Anda mencoba pertanyaan lain?';
-      console.warn('[Chatbot API] 🚨 Fallback: Final answer was empty.');
-    }
-
-    console.log('[Chatbot API] Returning response.');
-    return NextResponse.json(
-      { answer: finalAnswer, notification: notificationPayload },
-      { status: 200 },
-    );
   } catch (error: any) {
-    console.error(
-      '[Chatbot API] Fatal Error in POST handler:',
-      error?.message,
-      error?.stack,
-    );
-    const status = error?.status ?? error?.response?.status;
-    if ([429, 503].includes(status)) {
-      return NextResponse.json(
-        { error: "Model sedang penuh. Coba lagi." },
-        { status: 503 },
-      );
-    }
-    const errorMessage =
-      'Terjadi kesalahan internal server yang tidak terduga. Mohon coba lagi nanti.';
-    return NextResponse.json(
-      {
-        error: errorMessage,
-        message: errorMessage,
-        stack:
-          process.env.NODE_ENV === 'development' ? error?.stack : undefined,
-      },
-      { status: 500 },
-    );
+    console.error('[Chatbot API] Fatal Error in POST handler:', error);
+    const errorMessage = 'Terjadi kesalahan internal server yang tidak terduga. Mohon coba lagi nanti.';
+    return NextResponse.json({ error: errorMessage, message: errorMessage }, { status: 500 });
   }
 }
 
 export async function GET() {
-  return NextResponse.json(
-    { message: 'Chatbot API (Flash) is running OK' },
-    { status: 200 },
-  );
+  return NextResponse.json({ message: 'Chatbot API (Flash) is running OK' }, { status: 200 });
 }

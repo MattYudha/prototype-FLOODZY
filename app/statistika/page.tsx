@@ -27,6 +27,15 @@ import GeminiChatSection from './components/GeminiChatSection';
 import StatistikOverview from './components/StatistikOverview';
 import StatistikHistorical from './components/StatistikHistorical';
 
+// Definisikan tipe ChatMessage di sini agar bisa diakses oleh state
+interface ChatMessage {
+  id: string;
+  text: string;
+  isUser: boolean;
+  timestamp: Date;
+  type?: 'info' | 'warning' | 'success';
+}
+
 export default function StatistikPage() {
   // State utama
   const [activeTab, setActiveTab] = useState<'overview' | 'historical'>('overview');
@@ -51,6 +60,7 @@ export default function StatistikPage() {
   const [geminiQuestion, setGeminiQuestion] = useState('');
   const [geminiResponse, setGeminiResponse] = useState<string | null>(null);
   const [isGeminiLoading, setIsGeminiLoading] = useState(false);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
 
   // Fetch data insiden
   const fetchIncidents = useCallback(async () => {
@@ -143,28 +153,110 @@ export default function StatistikPage() {
     setIsGeminiLoading(true);
     setGeminiResponse(null);
 
+    const userMessage: ChatMessage = {
+      id: Date.now().toString(),
+      text: question,
+      isUser: true,
+      timestamp: new Date(),
+    };
+    const newMessages = [...messages, userMessage];
+    setMessages(newMessages);
+
+    const historyForApi = newMessages
+      .filter(msg => msg.id !== 'welcome')
+      .map(msg => ({
+        role: msg.isUser ? 'user' : 'model',
+        parts: [{ text: msg.text }],
+      }));
+
     try {
-      const response = await fetch('/api/gemini-analysis', {
+      const response = await fetch('/api/chatbot', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ prompt: question }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ question, history: historyForApi.slice(0, -1) }), // Send history BEFORE the current question
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Gagal terhubung ke Gemini API');
+        throw new Error(errorData.error || 'Gagal terhubung ke Chatbot API');
       }
 
       const data = await response.json();
-      setGeminiResponse(data.response);
+
+      if (data.action === 'REQUEST_LOCATION') {
+        setMessages(prev => [...prev, {
+          id: 'location-request',
+          text: 'Untuk memberikan informasi yang akurat, saya memerlukan izin untuk mengakses lokasi Anda. Mohon setujui permintaan lokasi yang muncul di browser Anda.',
+          isUser: false,
+          timestamp: new Date(),
+          type: 'info',
+        }]);
+
+        navigator.geolocation.getCurrentPosition(
+          async (position) => {
+            const { latitude, longitude } = position.coords;
+            setMessages(prev => [...prev, {
+              id: 'location-success',
+              text: `Lokasi Anda berhasil didapatkan (Lat: ${latitude.toFixed(4)}, Lon: ${longitude.toFixed(4)}). Menganalisis data...`,
+              isUser: false,
+              timestamp: new Date(),
+              type: 'success',
+            }]);
+
+            // Construct the history for the second API call
+            const historyWithFunctionCall = [
+              ...historyForApi,
+              { role: 'model', parts: [{ functionCall: data.originalCall }] }
+            ];
+            
+            const functionResponse = {
+              role: 'function',
+              parts: [{
+                functionResponse: {
+                  name: 'requestUserLocation',
+                  response: { success: true, latitude, longitude },
+                },
+              }],
+            };
+
+            const finalHistory = [...historyWithFunctionCall, functionResponse];
+
+            // Make the second call to get the final answer
+            const finalResponse = await fetch('/api/chatbot', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ question: '', history: finalHistory }), // No new question, just continuing the turn
+            });
+
+            if (!finalResponse.ok) {
+              const errorData = await finalResponse.json();
+              throw new Error(errorData.error || 'Gagal mendapatkan jawaban akhir dari AI.');
+            }
+
+            const finalData = await finalResponse.json();
+            setGeminiResponse(finalData.answer);
+            setIsGeminiLoading(false);
+          },
+          (error) => {
+            setMessages(prev => [...prev, {
+              id: 'location-error',
+              text: 'Gagal mendapatkan lokasi. Saya tidak bisa memberikan informasi spesifik tanpa izin lokasi. Anda bisa mencoba bertanya dengan menyebutkan nama wilayah secara spesifik (contoh: "banjir di Tangerang").',
+              isUser: false,
+              timestamp: new Date(),
+              type: 'warning',
+            }]);
+            setIsGeminiLoading(false);
+          }
+        );
+      } else {
+        setGeminiResponse(data.answer);
+        setIsGeminiLoading(false);
+      }
     } catch (err: any) {
       setGeminiResponse(`Terjadi kesalahan saat menganalisis: ${err.message}`);
-    } finally {
       setIsGeminiLoading(false);
     }
-  }, []);
+  }, [messages]);
 
   // Render loading & error
   if (isLoading) {
@@ -279,6 +371,8 @@ export default function StatistikPage() {
         geminiResponse={geminiResponse}
         isGeminiLoading={isGeminiLoading}
         handleGeminiAnalysis={handleGeminiAnalysis}
+        messages={messages}
+        setMessages={setMessages}
       />
     </div>
   );
