@@ -1,10 +1,10 @@
-# 🌊 Floodzy - Real-time Pendeteksi Banjir  & Monitoring Cuaca
+# 🌊 Floodzy - Real-time Pendeteksi Banjir & Monitoring Cuaca di Indonesia
 
 <div align="center">
   <img src="public/assets/ChatGPT Image 4 Sep 2025, 08.50.45.png" alt="Floodzy Logo" width="200"/>
   
   <p align="center">
-    <strong>Comprehensive flood monitoring, weather tracking, and early warning platform for Indonesia</strong>
+    <strong>Platform pemantauan banjir, pelacakan cuaca, dan peringatan dini yang komprehensif untuk warga Indonesia </strong>
   </p>
 
   <p align="center">
@@ -19,7 +19,7 @@
 
 ## 🚀 Overview
 
-Floodzy adalah sistem pemantauan banjir dan peringatan dini real-time yang memanfaatkan teknologi modern seperti **Next.js**, **TypeScript**, **Tailwind CSS**, dan **Supabase**.  
+Floodzy adalah sistem pemantauan banjir dan peringatan dini real-time yang memanfaatkan teknologi modern seperti **Next.js**,**React**, **TypeScript**, **Tailwind CSS**, dan **Supabase**.  
 Platform ini menyediakan data ketinggian air, status pompa, prakiraan cuaca, analisis bencana, dan peta interaktif untuk mendukung mitigasi bencana di Indonesia dan data nya bisa untuk seluruh wilayah indonesia sampai ke kecamatan dengan detail dan terstruktur.
 
 ---
@@ -28,15 +28,15 @@ Platform ini menyediakan data ketinggian air, status pompa, prakiraan cuaca, ana
 
 Floodzy menyediakan serangkaian fitur lengkap untuk pemantauan bencana yang komprehensif:
 
--   **🗺️ Peta Bencana Interaktif**: Visualisasi data banjir, cuaca, dan sensor secara real-time menggunakan Leaflet, lengkap dengan marker, layer, dan legenda yang interaktif.
--   **📊 Dashboard Statistik & Analisis**: Halaman dashboard (`/statistika`) yang menampilkan statistik historis bencana, grafik curah hujan, dan laporan banjir dalam bentuk visual yang mudah dipahami.
--   **🤖 Analisis Bencana Berbasis AI**: Integrasi dengan Gemini API untuk memberikan analisis otomatis terhadap data bencana, peringatan dini, dan ringkasan berita terkini.
--   **🚨 Peringatan Dini Multi-Sumber**: Mengagregasi data peringatan dari berbagai sumber terpercaya untuk memberikan notifikasi bencana yang akurat.
--   **🌦️ Prakiraan & Riwayat Cuaca**: Menyajikan data cuaca real-time (suhu, kelembapan, angin) dari OpenWeatherMap dan riwayat cuaca untuk analisis tren.
--   **🌬️ Pemantauan Kualitas Udara**: Fitur untuk memantau tingkat polusi udara di wilayah terpilih, memberikan informasi kesehatan lingkungan yang krusial.
--   **🌍 Informasi Gempa Bumi**: Menampilkan data gempa bumi terkini langsung dari BMKG untuk meningkatkan kesiapsiagaan terhadap bencana geologi.
--   **📱 Dukungan Progressive Web App (PWA)**: Floodzy dapat diinstal di perangkat mobile layaknya aplikasi native, serta mendukung fungsionalitas offline untuk akses di kondisi darurat.
--   **💬 Laporan Pengguna & Chatbot**: Memungkinkan pengguna melaporkan kejadian banjir secara langsung dan menyediakan chatbot interaktif untuk menjawab pertanyaan seputar cuaca dan bencana.
+- **🗺️ Peta Bencana Interaktif**: Visualisasi data banjir, cuaca, dan sensor secara real-time menggunakan Leaflet, lengkap dengan marker, layer, dan legenda yang interaktif.
+- **📊 Dashboard Statistik & Analisis**: Halaman dashboard (`/statistika`) yang menampilkan statistik historis bencana, grafik curah hujan, dan laporan banjir dalam bentuk visual yang mudah dipahami dan data realtime.
+- **🤖 Analisis Bencana Berbasis AI**: Integrasi dengan Gemini API untuk memberikan analisis otomatis terhadap data bencana, peringatan dini, dan ringkasan berita terkini.
+- **🚨 Peringatan Dini Multi-Sumber**: Mengagregasi data peringatan dari berbagai sumber terpercaya untuk memberikan notifikasi bencana yang akurat.
+- **🌦️ Prakiraan & Riwayat Cuaca**: Menyajikan data cuaca real-time (suhu, kelembapan, angin) dari OpenWeatherMap dan riwayat cuaca untuk analisis tren.
+- **🌬️ Pemantauan Kualitas Udara**: Fitur untuk memantau tingkat polusi udara di wilayah terpilih, memberikan informasi kesehatan lingkungan yang krusial.
+- **🌍 Informasi Gempa Bumi**: Menampilkan data gempa bumi terkini langsung dari BMKG untuk meningkatkan kesiapsiagaan terhadap bencana geologi maupun mencana banjir secara realtime .
+- **📱 Dukungan Progressive Web App (PWA)**: Floodzy dapat diinstal di perangkat mobile layaknya aplikasi native, serta mendukung fungsionalitas offline untuk akses di kondisi darurat.
+- **💬 Laporan Pengguna & Chatbot**: Memungkinkan pengguna melaporkan kejadian banjir secara langsung dan menyediakan chatbot interaktif untuk menjawab pertanyaan seputar cuaca dan bencana.
 
 ### 🌡️ Weather & Flood Data
 
@@ -52,7 +52,7 @@ Floodzy menyediakan serangkaian fitur lengkap untuk pemantauan bencana yang komp
 
 ### 📍 Region & Evacuation
 
-- Pilihan wilayah hingga tingkat kota/kecamatan.
+- Pilihan wilayah hingga tingkat provinbsi/kota/kecamatan.
 - Informasi jalur & titik evakuasi.
 
 ### 💬 User Interaction
@@ -274,35 +274,38 @@ floodzy/
 ├── test-supabase.js
 ├── ts-errors.txt
 └── tsconfig.json
-```
+``
 
 ## API Hardening: Rate Limiting & Caching
 
-To ensure API stability and prevent abuse, Floodzy APIs implement rate limiting and caching mechanisms.
+Untuk menjaga stabilitas API dan mencegah penyalahgunaan, Floodzy API menerapkan mekanisme rate limiting dan caching.
 
-- **Rate Limiting**: APIs are limited to **60 requests per minute per IP address**. Exceeding this limit will result in a `429 Too Many Requests` response.
-- **Caching**: API responses are cached to reduce server load and improve response times. The default cache TTL (Time-To-Live) is **60 seconds**.
+Rate Limiting: API dibatasi hingga 60 permintaan per menit per alamat IP. Jika melebihi batas ini, akan muncul respons 429 Too Many Requests.
 
-Both features are powered by **Upstash Redis**. Ensure the following environment variables are set in your `.env.local` file:
+Caching: Respons API disimpan dalam cache untuk mengurangi beban server dan mempercepat waktu respon. Nilai default cache TTL (Time-To-Live) adalah 60 detik.
 
+Kedua fitur ini dijalankan menggunakan Upstash Redis. Pastikan variabel lingkungan berikut sudah disetel di file .env.local:
 ```
+
 UPSTASH_REDIS_REST_URL=YOUR_UPSTASH_REDIS_REST_URL
 UPSTASH_REDIS_REST_TOKEN=YOUR_UPSTASH_REDIS_REST_TOKEN
-```
 
-You can override the default cache TTL for specific routes by passing an `ttl` option to the caching function within the route handler. For example:
+````
+
+Anda dapat menimpa (override) nilai default cache TTL untuk rute tertentu dengan memberikan opsi ttl pada fungsi caching di dalam route handler.
+Sebagai contoh:
 
 ```typescript
-await setCache(cacheKey, data, { ttl: 300 }); // Cache for 5 minutes
-```
+await setCache(cacheKey, data, { ttl: 300 });
+````
 
 ## Observability
 
-Floodzy integrates with Sentry for error monitoring and performance tracing, and implements structured logging for API routes to enhance observability.
+Floodzy terintegrasi dengan Sentry untuk pemantauan error dan pelacakan performa, serta menerapkan structured logging pada rute API untuk meningkatkan observabilitas.
 
-### Sentry Configuration
+Konfigurasi Sentry
 
-Sentry helps in real-time error tracking and performance monitoring. To enable Sentry, set the following environment variables in your `.env.local` (for local development) and your deployment environment (e.g., Vercel) for preview and production stages:
+Sentry membantu dalam pelacakan error secara real-time dan pemantauan performa. Untuk mengaktifkan Sentry, atur variabel lingkungan berikut di file .env.local (untuk pengembangan lokal) dan juga di environment deployment Anda (misalnya Vercel) pada tahap preview dan production:
 
 ```
 SENTRY_DSN="https://<your-dsn>.ingest.sentry.io/<project-id>"
@@ -316,15 +319,16 @@ SENTRY_ENVIRONMENT="development" # or "production", "preview"
 - `SENTRY_PROFILES_SAMPLE_RATE`: Percentage of transactions to sample for profiling (e.g., 0.0 for disabled).
 - `SENTRY_ENVIRONMENT`: The environment name (e.g., `development`, `production`, `preview`).
 
-You can view captured errors and performance traces in your Sentry dashboard under the "Issues" and "Performance" tabs, respectively.
+Anda dapat melihat error yang tertangkap dan jejak performa di dashboard Sentry, masing-masing pada tab "Issues" dan "Performance".
 
 ### Structured API Logging
 
 API routes (`/api/*`) now produce structured JSON logs to provide better insights into request processing. Each API response includes an `X-Request-Id` header, which can be used to correlate logs for a single request.
 
-Example log entry (you can `grep` for `X-Request-Id` in your Vercel logs):
+Contoh entri log (Anda dapat menggunakan perintah grep untuk mencari X-Request-Id di log Vercel Anda):
 ```
-```
+
+````
 ```json
 {
   "level": "info",
@@ -338,7 +342,7 @@ Example log entry (you can `grep` for `X-Request-Id` in your Vercel logs):
   "durationMs": 15,
   "requestId": "some-uuid-1234"
 }
-```
+````
 
 Key fields in the logs:
 
@@ -388,9 +392,10 @@ Key fields in the logs:
 
 
 ````
+
 ## ⚡ Custom Hooks
 
-🌍 useRegionData → Data wilayah & monitoring
+🌍 useRegionData → Data wilayah & monitoring Di wilayah indonesia
 
 🚰 usePumpStatusData → Status pompa banjir
 
@@ -412,12 +417,10 @@ Key fields in the logs:
 
 ⏳ useDebounce → Input debouncing
 
-
-
-```plaintext
+````plaintext
 ## 🚀 Panduan Memulai (Getting Started)
 
-Ikuti langkah-langkah ini untuk menjalankan Floodzy di lingkungan pengembangan lokal Anda.
+Ikuti langkah-langkah ini untukclone dan  menjalankan Floodzy di lingkungan pengembangan lokal Anda.
 
 ### 1. Prasyarat
 
@@ -508,7 +511,7 @@ SUPABASE_SERVICE_ROLE_KEY=...
 OPENWEATHER_API_KEY=...
 NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN=...
 
-```
+````
 
 ```plaintext
 📊 Performance
