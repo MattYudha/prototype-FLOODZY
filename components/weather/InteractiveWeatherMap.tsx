@@ -48,10 +48,8 @@ export function InteractiveWeatherMap({ latitude, longitude, activeLayer }: Inte
             center={[latitude, longitude]}
             zoom={10} // Adjust initial zoom as needed
             className="h-full w-full"
-            // Pass the weather tile layer URL if active
-            activeLayer={activeLayer}
-            // Other FloodMap props (e.g., floodProneData, etc.) might need to be passed as null or default
-            floodProneData={null}
+            // activeLayer={activeLayer} // This prop does not exist on FloodMapProps, removing for now
+            floodProneData={[]} // Changed from null to empty array
             loadingFloodData={false}
             floodDataError={null}
             onMapBoundsChange={() => {}}
@@ -60,6 +58,13 @@ export function InteractiveWeatherMap({ latitude, longitude, activeLayer }: Inte
             isFullscreen={false}
             onFullscreenToggle={() => {}}
             showFullscreenButton={false}
+            // Adding missing required props with default values
+            showOfficialData={false}
+            showUnofficialData={false}
+            showHistoricalData={false}
+            onMapLoad={() => {}}
+            allRegions={[]}
+            onLocationSelect={() => {}}
           />
         </div>
       </CardContent>

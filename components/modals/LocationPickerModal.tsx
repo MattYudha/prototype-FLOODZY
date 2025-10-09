@@ -40,6 +40,9 @@ export function LocationPickerModal({ isOpen, onClose, onSave, initialLocation }
           <RegionDropdown
             onSelectDistrict={setSelectedLocation}
             selectedLocation={selectedLocation}
+            currentWeatherData={null}
+            loadingWeather={false}
+            weatherError={null}
           />
           {selectedLocation && (
             <p className="mt-4 text-sm text-muted-foreground">

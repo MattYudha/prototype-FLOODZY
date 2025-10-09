@@ -2,7 +2,14 @@
 
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
-import { CommandDialog, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
+import {
+  CommandDialog,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from '@/components/ui/command';
 import { useDebounce } from '@/hooks/useDebounce';
 import { getCoordsByLocationName } from '@/lib/geocodingService';
 import { useAppStore } from '@/lib/store';
@@ -31,7 +38,10 @@ export function CommandMenu({ isOpen, setIsOpen }: CommandMenuProps) {
       const fetchLocations = async () => {
         setIsLoading(true);
         // We need to adapt this service to return an array and take a limit
-        const searchResults = await getCoordsByLocationName(debouncedSearchQuery, 5);
+        const searchResults = await getCoordsByLocationName(
+          debouncedSearchQuery,
+          5,
+        );
         setResults(searchResults || []);
         setIsLoading(false);
       };
@@ -43,7 +53,7 @@ export function CommandMenu({ isOpen, setIsOpen }: CommandMenuProps) {
 
   const handleSelect = (location: GeocodingResponse) => {
     const { lat, lon, name, state, country } = location;
-    
+
     const newSelectedLocation: SelectedLocation = {
       provinceName: state || country || '',
       districtName: name,
@@ -56,7 +66,10 @@ export function CommandMenu({ isOpen, setIsOpen }: CommandMenuProps) {
     const newMapBounds: MapBounds = {
       center: [lat, lon],
       zoom: 11,
-      bounds: [[lat - buffer, lon - buffer], [lat + buffer, lon + buffer]],
+      bounds: [
+        [lat - buffer, lon - buffer],
+        [lat + buffer, lon + buffer],
+      ],
     };
     setMapBounds(newMapBounds);
 
@@ -72,11 +85,13 @@ export function CommandMenu({ isOpen, setIsOpen }: CommandMenuProps) {
         onValueChange={setSearchQuery}
       />
       <CommandList>
-        <CommandEmpty>{isLoading ? 'Mencari...' : 'Tidak ada hasil ditemukan.'}</CommandEmpty>
+        <CommandEmpty>
+          {isLoading ? 'Mencari...' : 'Tidak ada hasil ditemukan.'}
+        </CommandEmpty>
         {isLoading && (
-            <div className="p-4 flex justify-center items-center">
-                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-            </div>
+          <div className="p-4 flex justify-center items-center">
+            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+          </div>
         )}
         {!isLoading && results.length > 0 && (
           <CommandGroup heading="Saran Lokasi">

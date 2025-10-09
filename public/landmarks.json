@@ -1,0 +1,33 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "RS Umum Daerah",
+        "type": "Rumah Sakit"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          106.8271,
+          -6.1754
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Posko Evakuasi Utama",
+        "type": "Posko Evakuasi"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          106.8456,
+          -6.2088
+        ]
+      }
+    }
+  ]
+}

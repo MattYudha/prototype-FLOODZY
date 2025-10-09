@@ -3,7 +3,7 @@ export const INDONESIA_BOUNDS: [[number, number], [number, number]] = [
   [6.0, 141.0], // Northeast
 ];
 
-export const DEFAULT_MAP_CENTER: [number, number] = [-6.2, 106.816]; // Jakarta
+export const DEFAULT_MAP_CENTER: [number, number] = [106.816, -6.2]; // Jakarta
 export const DEFAULT_MAP_ZOOM = 10;
 
 export const FLOOD_RISK_COLORS = {

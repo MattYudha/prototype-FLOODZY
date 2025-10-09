@@ -5,7 +5,7 @@ import { Inter } from 'next/font/google';
 import { ThemeProvider } from '@/hooks/useTheme';
 import { Toaster } from 'react-hot-toast';
 import { AlertCountProvider } from '@/components/contexts/AlertCountContext';
-import 'leaflet/dist/leaflet.css';
+import 'mapbox-gl/dist/mapbox-gl.css';
 import ReactQueryProvider from '@/components/providers/ReactQueryProvider';
 import ClientLayoutWrapper from '@/components/layout/ClientLayoutWrapper';
 

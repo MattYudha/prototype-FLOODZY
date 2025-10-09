@@ -2,6 +2,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { toast } from 'sonner';
 import { useRegionData } from '@/hooks/useRegionData';
 import { Button } from '@/components/ui/Button';
 import {
@@ -253,6 +254,14 @@ function RegionSelectField({
   );
 }
 
+interface RegionDropdownProps {
+  onSelectDistrict: (location: SelectedLocation) => void;
+  selectedLocation: SelectedLocation | null;
+  currentWeatherData: CombinedWeatherData | null;
+  loadingWeather: boolean;
+  weatherError: string | null;
+}
+
 // Main component that orchestrates the dropdowns
 export function RegionDropdown({
   onSelectDistrict,
@@ -383,13 +392,15 @@ export function RegionDropdown({
       const name = selectedDistrict.sub_district_name || null;
       setDisplayDistrictName(name);
 
-      const lat = selectedDistrict.sub_district_latitude;
-      const lng = selectedDistrict.sub_district_longitude;
+      const lat = Number(selectedDistrict.sub_district_latitude);
+      const lng = Number(selectedDistrict.sub_district_longitude);
 
-      if (lat == null || lng == null || isNaN(lat) || isNaN(lng)) {
+      if (isNaN(lat) || isNaN(lng)) {
         console.warn(
-          `Invalid coordinates for district ${name}: lat=${lat}, lng=${lng}`,
+          `Invalid coordinates for district ${name}: lat=${lat}, lng=${lng}. Skipping location update.`,
         );
+        toast.error(`Koordinat tidak valid untuk ${name}.`);
+        return; // Skip updating location if coordinates are invalid
       }
 
       const locationData = {

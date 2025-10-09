@@ -25,6 +25,8 @@ interface GeminiChatSectionProps {
   geminiResponse: string | null;
   isGeminiLoading: boolean;
   handleGeminiAnalysis: (question: string) => void;
+  messages: ChatMessage[];
+  setMessages: (messages: ChatMessage[]) => void;
 }
 
 interface ChatMessage {

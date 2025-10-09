@@ -279,7 +279,7 @@ export function InfrastructureStatusCard({ waterLevelPosts, pumpStatusData }: In
                             const post = filteredWaterLevelPosts[virtualItem.index];
                             return (
                               <div
-                                key={virtualItem.key}
+                                key={virtualItem.key.toString()}
                                 style={{
                                   position: 'absolute',
                                   top: 0,
@@ -372,7 +372,7 @@ export function InfrastructureStatusCard({ waterLevelPosts, pumpStatusData }: In
                             const pump = filteredPumpData[virtualItem.index];
                             return (
                               <div
-                                key={virtualItem.key}
+                                key={virtualItem.key.toString()}
                                 style={{
                                   position: 'absolute',
                                   top: 0,

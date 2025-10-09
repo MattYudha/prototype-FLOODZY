@@ -51,7 +51,7 @@ const tools: Tool[] = [
       { name: 'fetchPetabencanaReports', description: 'Mendapatkan laporan bencana dari PetaBencana.id.', parameters: { type: SchemaType.OBJECT, properties: { hazardType: { type: SchemaType.STRING, description: "Jenis bencana (flood, earthquake, dll)" }, timeframe: { type: SchemaType.STRING, description: "Rentang waktu (6h, 24h, 3d, dll)" } }, required: [] } },
       { name: 'geocodeLocation', description: 'Mengubah nama lokasi menjadi koordinat.', parameters: { type: SchemaType.OBJECT, properties: { query: { type: SchemaType.STRING, description: "Nama lokasi" } }, required: ['query'] } },
       { name: 'fetchWeatherData', description: "Mendapatkan kondisi cuaca saat ini.", parameters: { type: SchemaType.OBJECT, properties: { lat: { type: SchemaType.NUMBER }, lon: { type: SchemaType.NUMBER }, locationName: { type: SchemaType.STRING } }, required: [] } },
-      { name: 'displayNotification', description: 'Menampilkan notifikasi popup kepada pengguna.', parameters: { type: SchemaType.OBJECT, properties: { message: { type: SchemaType.STRING }, type: { type: SchemaType.STRING, enum: ['success', 'error', 'warning', 'info', 'default'] }, duration: { type: SchemaType.NUMBER } }, required: ['message'] } },
+      { name: 'displayNotification', description: 'Menampilkan notifikasi popup kepada pengguna.', parameters: { type: SchemaType.OBJECT, properties: { message: { type: SchemaType.STRING }, type: { type: SchemaType.STRING, enum: ['success', 'error', 'warning', 'info', 'default'], format: 'enum' }, duration: { type: SchemaType.NUMBER } }, required: ['message'] } },
     ],
   },
 ];
@@ -95,7 +95,7 @@ export async function POST(request: Request) {
     }
 
     const model = genAI.getGenerativeModel({
-      model: 'gemini-1.5-flash',
+      model: 'gemini-2.5-flash',
       tools: tools,
       systemInstruction:
         "Anda adalah asisten Floodzy. Tugas Anda adalah menjawab pertanyaan terkait banjir dan cuaca menggunakan tools yang tersedia. Aturan: 1. Jika nama lokasi disebutkan (misal: 'cuaca di Jakarta'), Anda WAJIB menggunakan tool `geocodeLocation` lalu `fetchWeatherData`. JANGAN PERNAH membalas dengan teks konfirmasi seperti 'Baik, saya akan cek'. Langsung panggil tool-nya. 2. Jika lokasi tidak spesifik ('di sekitar saya'), Anda WAJIB memanggil `requestUserLocation`. 3. Selalu gunakan tools jika memungkinkan.",

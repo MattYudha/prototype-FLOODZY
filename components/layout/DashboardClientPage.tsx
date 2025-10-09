@@ -61,6 +61,7 @@ import {
 import { useMediaQuery } from '@/hooks/useMediaQuery';
 import { useWeatherData } from '@/hooks/useWeatherData';
 import { useDisasterData } from '@/hooks/useDisasterData';
+import { useRegionData } from '@/hooks/useRegionData'; // Import useRegionData
 import {
   DASHBOARD_STATS_MOCK,
   DEFAULT_MAP_CENTER,
@@ -107,6 +108,33 @@ const FloodReportChart = dynamic(
 export function DashboardClientPage({ initialData }) {
   const { selectedLocation, mapBounds, setSelectedLocation, setMapBounds } =
     useAppStore();
+
+  console.log('DEBUG DashboardClientPage: selectedLocation from store:', selectedLocation);
+  console.log('DEBUG DashboardClientPage: mapBounds from store:', mapBounds);
+
+  // Fetch all regions for local search
+  const { data: provinces } = useRegionData({ type: 'provinces' });
+
+  const allRegions = useMemo(() => {
+    const combined: SelectedLocation[] = [];
+
+    provinces.forEach((p: any) => {
+      const lat = Number(p.province_latitude);
+      const lng = Number(p.province_longitude);
+      if (!isNaN(lat) && !isNaN(lng)) {
+        combined.push({
+          districtName: p.province_name,
+          latitude: lat,
+          longitude: lng,
+          provinceCode: String(p.province_code),
+        });
+      }
+    });
+
+    return combined;
+  }, [provinces]);
+
+  console.log('DEBUG DashboardClientPage: allRegions:', allRegions);
 
   const [weatherSummary, setWeatherSummary] = useState(
     initialData.weatherSummary || null,
@@ -212,7 +240,13 @@ export function DashboardClientPage({ initialData }) {
   const handleRegionSelect = useCallback(
     (location) => {
       setSelectedLocation(location);
-      if (location && location.latitude != null && location.longitude != null) {
+      if (
+        location &&
+        location.latitude != null &&
+        location.longitude != null &&
+        !isNaN(location.latitude) &&
+        !isNaN(location.longitude)
+      ) {
         const { latitude, longitude } = location;
         fetchWeather(latitude, longitude);
         const buffer = 0.05;
@@ -313,6 +347,7 @@ export function DashboardClientPage({ initialData }) {
   const sendChatMessage = async (message: string) => {
     if (!message.trim() && chatHistory.length === 0) return;
 
+    let needsLocation = false;
     setIsChatLoading(true);
     setChatError(null);
 
@@ -573,6 +608,11 @@ export function DashboardClientPage({ initialData }) {
                   <CardContent className="p-0">
                     <div className="h-72 lg:h-[600px] w-full rounded-b-lg relative overflow-hidden">
                       <FloodMap
+                        showFullscreenButton={true}
+                        onMapLoad={() => {}}
+                        showOfficialData={true}
+                        showUnofficialData={true}
+                        showHistoricalData={true}
                         center={mapBounds?.center || DEFAULT_MAP_CENTER}
                         zoom={mapBounds?.zoom || DEFAULT_MAP_ZOOM}
                         className="h-full w-full"
@@ -588,6 +628,8 @@ export function DashboardClientPage({ initialData }) {
                         onFullscreenToggle={() =>
                           setIsDashboardMapFullscreen(true)
                         }
+                        allRegions={allRegions}
+                        onLocationSelect={handleRegionSelect}
                       />
                     </div>
                   </CardContent>
@@ -707,6 +749,9 @@ export function DashboardClientPage({ initialData }) {
           </DrawerHeader>
           <div className="flex-1 p-0 overflow-hidden" data-vaul-no-drag="true">
             <FloodMap
+              showOfficialData={true}
+              showUnofficialData={true}
+              showHistoricalData={true}
               center={mapBounds?.center || DEFAULT_MAP_CENTER}
               zoom={mapBounds?.zoom || DEFAULT_MAP_ZOOM}
               className="h-full w-full"
@@ -724,6 +769,8 @@ export function DashboardClientPage({ initialData }) {
               isFullscreen={false}
               onFullscreenToggle={() => {}}
               showFullscreenButton={false}
+              allRegions={allRegions}
+              onLocationSelect={handleRegionSelect}
             />
           </div>
         </DrawerContent>
@@ -754,6 +801,11 @@ export function DashboardClientPage({ initialData }) {
               </CardHeader>
               <CardContent className="flex-1 h-0">
                 <FloodMap
+                  showOfficialData={true}
+                  showUnofficialData={true}
+                  showHistoricalData={true}
+                  onMapLoad={() => {}}
+                  showFullscreenButton={true}
                   center={mapBounds?.center || DEFAULT_MAP_CENTER}
                   zoom={mapBounds?.zoom || DEFAULT_MAP_ZOOM}
                   className="h-full w-full"
@@ -767,6 +819,8 @@ export function DashboardClientPage({ initialData }) {
                   }
                   isFullscreen={isDashboardMapFullscreen}
                   onFullscreenToggle={() => setIsDashboardMapFullscreen(false)}
+                  allRegions={allRegions}
+                  onLocationSelect={handleRegionSelect}
                 />
               </CardContent>
             </Card>

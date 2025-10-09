@@ -1,1165 +1,333 @@
-// src/components/map/FloodMap.tsx
+/* eslint-disable @next/next/no-img-element */
 'use client';
 
-import React from 'react'; // Add this line
-
-// Impor React-Leaflet
-import {
-  MapContainer,
-  TileLayer,
-  Marker,
+import { useState, useMemo, useEffect, useRef } from 'react';
+import Map, {
+  Source,
+  Layer,
   Popup,
-  Polygon,
-  useMap,
-  useMapEvents,
-} from 'react-leaflet';
-import L, { Icon, LatLngExpression } from 'leaflet';
-
-// Explicitly set default icon paths for Leaflet
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: '/leaflet/images/marker-icon-2x.png',
-  iconUrl: '/leaflet/images/marker-icon.png',
-  shadowUrl: '/leaflet/images/marker-shadow.png',
-});
-
-// Konfigurasi ikon default Leaflet
-
-
-
-
-// Impor dari file proyek Anda
-import { useEffect, useRef, useState, useCallback } from 'react';
-import { motion } from 'framer-motion';
-import {
-  Layers,
-  Maximize2,
-  Minimize2,
-  RotateCcw,
-  MapPin,
-  AlertTriangle,
-  Droplets,
-  Navigation,
-  Mountain, // ICON untuk longsor
-  Waves as WavesIcon, // Rename Waves untuk menghindari konflik dengan komponen Waves
-  CircleDot, // Icon untuk risiko umum/rendah
-  Info, // Icon untuk level info
-  XCircle, // Icon untuk level danger/critical
-  Search,
-} from 'lucide-react';
-import { Button } from '@/components/ui/Button';
-import { Card } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { toast } from 'react-hot-toast';
-import { Input } from '@/components/ui/input';
-import { MapControls } from './MapControls';
-import { MapLegend } from './MapLegend';
-import {
-  DEFAULT_MAP_CENTER,
-  DEFAULT_MAP_ZOOM,
-  FLOOD_RISK_COLORS, // Menggunakan konstanta ini untuk warna
-  FLOOD_ZONES_MOCK,
-  WEATHER_MOCK_DATA,
-  WEATHER_STATIONS_GLOBAL_MOCK,
-} from '@/lib/constants';
-import { FloodZone, WeatherData, FloodAlert, MapBounds, WeatherStation } from '@/types'; // Import FloodAlert
-import { SelectedLocation } from '@/types/location';
-
-// NEW: Types for Crowdsourced and Official BPBD Data
-interface CrowdsourcedReport {
-  report_id: string;
-  type: "Laporan Pengguna";
-  severity: "Rendah" | "Sedang" | "Tinggi";
-  depth_cm: number;
-  timestamp: string;
-  notes: string;
-  upvotes: number;
-  geometry: { type: "Point"; coordinates: [number, number] }; // [longitude, latitude]
-}
-
-interface OfficialBPBDData {
-  report_id: string;
-  type: "Data Resmi BPBD";
-  severity: "Rendah" | "Sedang" | "Tinggi" | "Kritis";
-  depth_cm: number;
-  status: "Naik" | "Stabil" | "Surut";
-  timestamp: string;
-  geometry: { type: "Polygon"; coordinates: [number[][]] }; // [longitude, latitude]
-}
-
-
-import { cn } from '@/lib/utils';
+  NavigationControl,
+  FullscreenControl,
+  ScaleControl,
+  GeolocateControl,
+  MapRef,
+} from 'react-map-gl';
+import 'mapbox-gl/dist/mapbox-gl.css';
+import type { LayerProps } from 'react-map-gl';
+import type { FillExtrusionLayerSpecification, LineLayerSpecification, SymbolLayerSpecification } from 'mapbox-gl';
+import type { FeatureCollection } from 'geojson';
+import { WeatherStation } from '@/types';
 import { OverpassElement } from '@/lib/api';
-import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
-import {
-  getCoordsByLocationName,
-  getLocationNameByCoords,
-} from '@/lib/geocodingService';
-import { GeocodingResponse } from '@/types/geocoding';
+import { SelectedLocation } from '@/types/location'; // Import SelectedLocation type
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/Button';
+import { Search } from 'lucide-react';
+import { toast } from 'sonner';
 
-const isValidLatLng = (latlng: any): latlng is [number, number] | { lat: number; lng: number; } => {
-  if (Array.isArray(latlng) && latlng.length === 2 && typeof latlng[0] === 'number' && typeof latlng[1] === 'number') {
-    return true;
-  }
-  if (typeof latlng === 'object' && latlng !== null && typeof latlng.lat === 'number' && typeof latlng.lng === 'number') {
-    return true;
-  }
-  return false;
-};
-
-// Custom marker icons
-const createCustomIcon = (color: string, iconHtml: string) => {
-  // Ganti icon menjadi iconHtml
-  const svgString = `
-    <svg width="25" height="25" viewBox="0 0 25 25" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <circle cx="12.5" cy="12.5" r="12" fill="${color}" stroke="white" stroke-width="2"/>
-      <text x="12.5" y="17" text-anchor="middle" fill="white" font-size="12">${iconHtml}</text>
-    </svg>
-  `;
-
-  const encodedSvg = btoa(unescape(encodeURIComponent(svgString)));
-
-  return new Icon({
-    iconUrl: `data:image/svg+xml;base64,${encodedSvg}`,
-    iconSize: [25, 25],
-    iconAnchor: [12, 25],
-    popupAnchor: [0, -25],
-  });
-};
-
-const floodIcon = createCustomIcon(FLOOD_RISK_COLORS.high, '🌊');
-const weatherIcon = createCustomIcon('#3B82F6', '☀️');
-
-// NEW: Icons for Crowdsourced and Official BPBD Data
-const userReportIcon = createCustomIcon('#60A5FA', '👤'); // Blue for user reports
-const bpbdOfficialIcon = createCustomIcon('#EF4444', '🚨'); // Red for official BPBD data
-
-// Helper to get color based on severity for new data types
-const getSeverityColor = (severity: 'Rendah' | 'Sedang' | 'Tinggi' | 'Kritis') => {
-  switch (severity) {
-    case 'Rendah': return '#22C55E'; // Green
-    case 'Sedang': return '#FACC15'; // Yellow
-    case 'Tinggi': return '#EF4444'; // Red
-    case 'Kritis': return '#8B5CF6'; // Purple
-    default: return '#9CA3AF'; // Gray
-  }
-};
-
-// Komponen Helper untuk mengupdate view peta
-interface MapUpdaterProps {
-  center: [number, number];
-  zoom: number;
-}
-function MapUpdater({ center, zoom }: MapUpdaterProps) {
-  const map = useMap();
-
-  useEffect(() => {
-    const currentCenter = map.getCenter();
-    const currentZoom = map.getZoom();
-
-    const isCenterChanged =
-      currentCenter.lat !== center[0] || currentCenter.lng !== center[1];
-    const isZoomChanged = currentZoom !== zoom;
-
-    if (isCenterChanged || isZoomChanged) {
-      map.setView(center, zoom, {
-        animate: true,
-        duration: 0.5,
-      });
-    }
-  }, [center, zoom, map]);
-  return null;
-}
-
-// Map reset component (tetap sama)
-
-
-interface MapEventsProps {
-  onLocationSelect: (latlng: LatLngExpression) => void;
-  onReverseGeocode: (latlng: LatLngExpression, locationName: GeocodingResponse) => void;
-}
-
-function MapEvents({ onLocationSelect, onReverseGeocode }: MapEventsProps) {
-  useMapEvents({
-    click: async (e) => {
-      const { lat, lng } = e.latlng;
-      onLocationSelect(e.latlng);
-      const locationName = await getLocationNameByCoords(lat, lng);
-      if (locationName) {
-        onReverseGeocode(e.latlng, locationName);
-      }
-    },
-  });
-  return null;
-}
-
-interface MapBoundsUpdaterProps {
-  onMapBoundsChange?: (bounds: MapBounds) => void;
-  selectedLocation?: SelectedLocation; // Add this prop
-}
-
-function MapBoundsUpdater({ onMapBoundsChange }: MapBoundsUpdaterProps) {
-  const map = useMap();
-
-  useMapEvents({
-    moveend: () => {
-      if (onMapBoundsChange) {
-        const bounds = map.getBounds();
-        const center = map.getCenter();
-        const zoom = map.getZoom();
-        onMapBoundsChange({
-          center: [center.lat, center.lng],
-          zoom: zoom,
-          bounds: [[bounds.getSouth(), bounds.getWest()], [bounds.getNorth(), bounds.getEast()]],
-        });
-      }
-    },
-  });
-  return null;
+// Definisikan tipe untuk data banjir jika belum ada
+interface FloodData {
+  id: string;
+  depth_m: number;
+  // tambahkan properti lain yang mungkin ada
 }
 
 interface FloodMapProps {
   className?: string;
-  height?: string;
-  onLocationSelect?: (location: LatLngExpression) => void;
-  center?: [number, number];
-  zoom?: number;
-  floodProneData?: OverpassElement[];
-  loadingFloodData?: boolean;
-  floodDataError?: string | null;
-  realtimeFloodAlerts?: FloodAlert[]; // Properti baru untuk peringatan real-time
-  loadingRealtimeAlerts?: boolean; // Properti baru untuk status loading
-  realtimeAlertsError?: string | null; // Properti baru untuk error
-  crowdsourcedReports?: CrowdsourcedReport[]; // NEW: Crowdsourced flood reports
-  officialBPBDData?: OfficialBPBDData[]; // NEW: Official BPBD flood data
-  weatherLayers?: { [key: string]: boolean };
-  apiKey?: string;
-  weatherTileLayerUrl?: string; // NEW: Add this prop
-  onMapBoundsChange?: (bounds: MapBounds) => void;
-  selectedLocation?: SelectedLocation;
-  globalWeatherStations?: WeatherStation[];
-  isFullscreen: boolean; // Prop for fullscreen state
-  onFullscreenToggle: () => void; // Prop for fullscreen toggle function
-  onMapLoad?: (map: L.Map) => void; // NEW: Callback to get map instance
-  showFullscreenButton?: boolean; // NEW: To hide the fullscreen button
-         activeLayer?: string | null; // NEW: Add activeLayer prop
-       }
-
-function MapEffect({ onMapLoad, mapRef }: { onMapLoad?: (map: L.Map) => void, mapRef: React.MutableRefObject<L.Map | null> }) {
-    const map = useMap();
-
-    useEffect(() => {
-        if (map) {
-            mapRef.current = map;
-            if (onMapLoad) {
-                onMapLoad(map);
-            }
-        }
-    }, [map, onMapLoad, mapRef]);
-
-    return null;
+  officialData?: FeatureCollection;
+  unofficialData?: FeatureCollection;
+  historicalData?: FeatureCollection;
+  showOfficialData: boolean;
+  showUnofficialData: boolean;
+  showHistoricalData: boolean;
+  floodProneData: OverpassElement[];
+  loadingFloodData: boolean;
+  floodDataError: string | null;
+  onMapBoundsChange: (bounds: any) => void;
+  globalWeatherStations: WeatherStation[];
+  isFullscreen: boolean;
+  onFullscreenToggle: () => void;
+  onMapLoad: (map: any) => void;
+  showFullscreenButton: boolean;
+  // Props baru untuk pencarian lokal
+  allRegions: SelectedLocation[];
+  onLocationSelect: (location: SelectedLocation) => void;
+  selectedLocation: SelectedLocation | null;
+  center: [number, number]; // Center prop from DashboardClientPage
+  zoom: number; // Zoom prop from DashboardClientPage
 }
 
-export const FloodMap = React.memo(function FloodMap({
-  className,
-  height,
-  onLocationSelect,
-  center = DEFAULT_MAP_CENTER,
-  zoom = DEFAULT_MAP_ZOOM,
-  floodProneData = [],
-  loadingFloodData = false,
-  floodDataError = null,
-  realtimeFloodAlerts = [], // Inisialisasi
-  loadingRealtimeAlerts = false, // Inisialisasi
-  realtimeAlertsError = null, // Inisialisasi
-  crowdsourcedReports = [], // NEW: Initialize new prop
-  officialBPBDData = [], // NEW: Initialize new prop
-  weatherLayers = {}, // Inisialisasi
-  apiKey, // Inisialisasi
-  weatherTileLayerUrl: propWeatherTileLayerUrl, // Rename the prop to avoid potential shadowing
-  onMapBoundsChange, // Add this line
-  selectedLocation, // Add this prop
-  globalWeatherStations = [], // Initialize new prop
-  isFullscreen, // Prop for fullscreen state
-  onFullscreenToggle, // Prop for fullscreen toggle function
-  onMapLoad, // NEW: Destructure onMapLoad
-  showFullscreenButton, // NEW: Destructure showFullscreenButton
-  activeLayer, // NEW: Destructure activeLayer
-}: FloodMapProps) {
-  const weatherTileLayerUrl = propWeatherTileLayerUrl; // Assign to a local variable
-  const [selectedLayer, setSelectedLayer] = useState('street');
-  const [weatherTileUrl, setWeatherTileUrl] = useState<string | null>(null); // NEW: weatherTileUrl state
+const floodFillExtrusionLayerStyle: Omit<FillExtrusionLayerSpecification, 'id' | 'source'> = {
+  type: 'fill-extrusion',
+  paint: {
+    'fill-extrusion-color': [
+      'interpolate',
+      ['linear'],
+      ['get', 'depth_m'],
+      0.1,
+      '#ffffcc',
+      0.5,
+      '#fcae91',
+      1.0,
+      '#de2d26',
+    ],
+    'fill-extrusion-height': ['*', ['get', 'depth_m'], 1000], // Pengali ketinggian bisa disesuaikan
+    'fill-extrusion-base': 0,
+    'fill-extrusion-opacity': 0.7,
+  },
+};
 
-  useEffect(() => {
-    if (activeLayer && typeof activeLayer === 'string') {
-      const url = `/api/weather/tiles/${activeLayer}/{z}/{x}/{y}`;
-      setWeatherTileUrl(url);
-      console.log("URL Tile Cuaca Dibuat:", url); // Add console.log
-    } else {
-      setWeatherTileUrl(null);
+const floodLineLayerStyle: Omit<LineLayerSpecification, 'id' | 'source'> = {
+  type: 'line',
+  paint: {
+    'line-color': [
+      'interpolate',
+      ['linear'],
+      ['get', 'depth_m'],
+      0.1,
+      '#88ccee',
+      0.5,
+      '#ff8888',
+      1.0,
+      '#ff0000',
+    ],
+    'line-width': 2,
+    'line-opacity': 0.8,
+  },
+};
+
+const landmarkLayerStyle: Omit<SymbolLayerSpecification, 'id' | 'source'> = {
+    type: 'symbol',
+    layout: {
+      'icon-image': 'hospital-15', // Contoh ikon dari Mapbox, bisa diganti
+      'icon-size': 1.5,
+      'text-field': ['get', 'name'],
+      'text-offset': [0, 1.25],
+      'text-anchor': 'top',
+    },
+    paint: {
+        'text-color': '#ffffff',
+        'text-halo-color': '#000000',
+        'text-halo-width': 1,
     }
-  }, [activeLayer]);
-
-  console.log("FloodMap menerima activeLayer:", activeLayer);
-
-  const layerConfig = {
-    street: {
-      url: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-    },
-    satellite: {
-      url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
-      attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community',
-    },
-    terrain: {
-      url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}",
-      attribution: 'Tiles &copy; Esri &mdash; Esri, DeLorme, NAVTEQ, TomTom, Intermap, iPC, USGS, FAO, NPS, NRCAN, GeoBase, Kadaster NL, Ordnance Survey, Esri Japan, METI, Esri China (Hong Kong), and the GIS User Community',
-    },
   };
-  const [showFloodZones, setShowFloodZones] = useState(true); // Untuk mock data FLOOD_ZONES_MOCK
-  const [showWeatherStations, setShowWeatherStations] = useState(true);
-  const [showRealtimeAlerts, setShowRealtimeAlerts] = useState(true); // State baru untuk toggle peringatan real-time
-  const [showCrowdsourcedReports, setShowCrowdsourcedReports] = useState(true); // NEW: State for crowdsourced reports visibility
-  const [showOfficialBPBDData, setShowOfficialBPBDData] = useState(true); // NEW: State for official BPBD data visibility
-  const [floodZones] = useState<FloodZone[]>(FLOOD_ZONES_MOCK); // Mock data asli
-  const mapRef = useRef<L.Map | null>(null);
 
-  useEffect(() => {
-    L.Icon.Default.mergeOptions({
-      iconRetinaUrl: '/leaflet/images/marker-icon-2x.png',
-      iconUrl: '/leaflet/images/marker-icon.png',
-      shadowUrl: '/leaflet/images/marker-shadow.png',
-    });
-  }, []);
 
-  const [searchQuery, setSearchQuery] = useState('');
-  const [searchedLocation, setSearchedLocation] =
-    useState<GeocodingResponse | null>(null);
-  const [clickedLocation, setClickedLocation] = useState<{
-    latlng: LatLngExpression;
-    name: string;
+export function FloodMap({
+  officialData,
+  unofficialData,
+  historicalData,
+  showOfficialData,
+  showUnofficialData,
+  showHistoricalData,
+  allRegions,
+  onLocationSelect,
+  selectedLocation,
+  center,
+  zoom,
+}: FloodMapProps) {
+  console.log('DEBUG FloodMap: Props received:', selectedLocation, center, zoom);
+
+  const mapRef = useRef<MapRef>(null);
+  const [hoverInfo, setHoverInfo] = useState<{
+    longitude: number;
+    latitude: number;
+    properties: any;
   } | null>(null);
 
-  const handleSearch = async () => {
-    if (searchQuery.trim() !== '') {
-      const results = await getCoordsByLocationName(searchQuery);
-      if (results && results.length > 0) {
-        const firstResult = results[0];
-        setSearchedLocation(firstResult);
-        const map = mapRef.current;
-        if (map) {
-          const newCenter: [number, number] = [firstResult.lat, firstResult.lon];
-          const newZoom = 13;
-          map.setView(newCenter, newZoom);
+  const [searchQuery, setSearchQuery] = useState('');
 
-          // NEW: Update parent state via callback to prevent reversion
-          if (onMapBoundsChange) {
-            const newBounds = map.getBounds();
-            onMapBoundsChange({
-              center: newCenter,
-              zoom: newZoom,
-              bounds: [[newBounds.getSouth(), newBounds.getWest()], [newBounds.getNorth(), newBounds.getEast()]],
-            });
-          }
-        }
+  // Initial view state based on selectedLocation or default props
+  const initialMapViewState = useMemo(() => {
+    const defaultLongitude = (center && center.length === 2 && !isNaN(center[0])) ? center[0] : 110.3695; // Default to Jakarta if center is invalid
+    const defaultLatitude = (center && center.length === 2 && !isNaN(center[1])) ? center[1] : -7.7956; // Default to Jakarta if center is invalid
+
+    const viewState = {
+      longitude: selectedLocation?.longitude || defaultLongitude,
+      latitude: selectedLocation?.latitude || defaultLatitude,
+      zoom: selectedLocation ? 12 : zoom, // Zoom in if a location is selected
+      pitch: 45,
+      bearing: 0,
+    };
+    console.log('DEBUG FloodMap: initialMapViewState calculated:', viewState);
+    return viewState;
+  }, [selectedLocation, center, zoom]);
+
+  const [viewState, setViewState] = useState(initialMapViewState);
+  console.log('DEBUG FloodMap: viewState initialized to:', viewState);
+
+  // Effect to update map view when selectedLocation changes
+  useEffect(() => {
+    console.log('DEBUG FloodMap: useEffect for selectedLocation triggered.');
+    if (selectedLocation && mapRef.current) {
+      const { latitude, longitude } = selectedLocation;
+      console.log('DEBUG FloodMap: selectedLocation coords for flyTo:', { latitude, longitude });
+      if (latitude != null && longitude != null && !isNaN(latitude) && !isNaN(longitude)) {
+        mapRef.current.flyTo({
+          center: [longitude, latitude],
+          zoom: 12, // Keep a consistent zoom level when flying to a selected location
+          pitch: 45,
+          bearing: 0,
+          duration: 3000, // Smooth animation
+        });
       } else {
-        toast.custom(
-          (t) => (
-            <div
-              className={`${t.visible ? 'animate-enter' : 'animate-leave'} max-w-md w-full bg-slate-900/90 backdrop-blur-sm shadow-lg rounded-lg pointer-events-auto flex ring-1 ring-red-500/50`}
-            >
-              <div className="flex-1 w-0 p-4">
-                <div className="flex items-start">
-                  <div className="flex-shrink-0 pt-0.5">
-                    <AlertTriangle className="h-6 w-6 text-red-500" />
-                  </div>
-                  <div className="ml-3 flex-1">
-                    <p className="text-sm font-medium text-white">
-                      Lokasi Tidak Ditemukan
-                    </p>
-                    <p className="mt-1 text-sm text-white/70">
-                      Harap masukkan nama kota atau provinsi yang valid.
-                    </p>
-                  </div>
-                </div>
-              </div>
-              <div className="flex border-l border-slate-700">
-                <button
-                  onClick={() => toast.dismiss(t.id)}
-                  className="w-full border border-transparent rounded-none rounded-r-lg p-4 flex items-center justify-center text-sm font-medium text-red-500 hover:text-red-400 focus:outline-none focus:ring-2 focus:ring-red-500"
-                >
-                  Tutup
-                </button>
-              </div>
-            </div>
-          )
-        );
+        console.warn('Selected location has invalid coordinates:', selectedLocation);
       }
+    } else if (!selectedLocation) {
+      console.log('DEBUG FloodMap: selectedLocation is null, resetting viewState.');
+      // If no location is selected, reset to default view or passed center/zoom
+      setViewState(initialMapViewState);
+    }
+  }, [selectedLocation, initialMapViewState]);
+
+  const onMouseMove = (event: mapboxgl.MapLayerMouseEvent) => {
+    const { features, lngLat } = event;
+    const hoveredFeature = features && features[0];
+
+    if (hoveredFeature && hoveredFeature.properties) {
+      setHoverInfo({
+        longitude: lngLat.lng,
+        latitude: lngLat.lat,
+        properties: hoveredFeature.properties,
+      });
+    } else {
+      setHoverInfo(null);
     }
   };
 
-  const handleMapClick = (latlng: LatLngExpression, locationName: GeocodingResponse) => {
-    setClickedLocation({
-      latlng,
-      name: locationName?.name || 'Lokasi tidak diketahui',
-    });
+  const handleSearch = () => {
+    if (searchQuery.trim() === '') {
+      toast.info('Silakan masukkan nama lokasi untuk dicari.');
+      return;
+    }
+
+    const results = allRegions.filter(region =>
+      region.districtName.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+
+    if (results.length > 0) {
+      const firstResult = results[0];
+      onLocationSelect(firstResult);
+      toast.success(`Lokasi '${firstResult.districtName}' ditemukan.`);
+    } else {
+      toast.error(`Lokasi '${searchQuery}' tidak ditemukan di data lokal.`);
+    }
   };
 
-  const getPolygonColor = (riskLevel: FloodZone['riskLevel']) => {
-    return FLOOD_RISK_COLORS[riskLevel];
-  };
-
-  const getDisasterInfo = (element: OverpassElement) => {
-    let iconToUse;
-    let color;
-    let cardTitle;
-    let cardTitleColor;
-    let riskLabel = 'Tidak Dikategorikan'; // Label risiko di Legenda
-    const detailText =
-      element.tags.name ||
-      element.tags.description ||
-      element.tags.note ||
-      `ID: ${element.id}`;
-
-    // === LOGIKA PEMETAAN RISIKO DARI TAGS OVERPASS (PRIORITAS TINGGI KE RENDAH) ===
-
-    // Prioritas 1: Risiko Kritis
-    if (
-      element.tags.flood_prone === 'critical' ||
-      element.tags.hazard === 'critical_flood' ||
-      element.tags.disaster_type === 'extreme_flood'
-    ) {
-      iconToUse = createCustomIcon(FLOOD_RISK_COLORS.critical, '💀'); // Cokelat gelap (sesuai constants.ts)
-      color = FLOOD_RISK_COLORS.critical; // Cokelat gelap (sesuai constants.ts)
-      cardTitle = 'Risiko Kritis (Bencana Ekstrim)';
-      cardTitleColor = 'text-red-800';
-      riskLabel = 'Risiko Kritis';
+  const interactiveLayerIds = useMemo(() => {
+    const ids = [];
+    if (showOfficialData && officialData) {
+        ids.push('official-flood-fill-extrusion-layer', 'official-flood-line-layer');
     }
-    // Prioritas 2: Risiko Tinggi (Banjir Konkret) - MERAH
-    else if (
-      element.tags.hazard === 'flood' ||
-      element.tags.flood_prone === 'yes' ||
-      (element.tags.waterway === 'river' &&
-        element.tags.seasonal === 'yes' &&
-        element.tags.flood_risk === 'high')
-    ) {
-      // Tambahan tag river, seasonal, flood_risk
-      iconToUse = createCustomIcon(FLOOD_RISK_COLORS.high, '🚨'); // Merah (sesuai constants.ts)
-      color = FLOOD_RISK_COLORS.high; // Merah (sesuai constants.ts)
-      cardTitle = 'Risiko Tinggi Banjir';
-      cardTitleColor = 'text-red-500';
-      riskLabel = 'Risiko Tinggi';
+    if (showUnofficialData && unofficialData) {
+        ids.push('unofficial-flood-fill-extrusion-layer', 'unofficial-flood-line-layer');
     }
-    // Prioritas 3: Risiko Sedang (Longsor atau Area Rawan Lain) - KUNING
-    else if (
-      element.tags.natural === 'landslide' ||
-      element.tags.hazard === 'landslide' ||
-      element.tags.natural === 'mudflow' ||
-      element.tags.landuse === 'landslide_prone'
-    ) {
-      // Tambahan mudflow, landslide_prone
-      iconToUse = createCustomIcon('#FFFF00', '⛰️'); // KUNING (explicit hex code)
-      color = '#FFFF00'; // KUNING (explicit hex code)
-      cardTitle = 'Risiko Sedang Longsor';
-      cardTitleColor = 'text-yellow-500';
-      riskLabel = 'Risiko Sedang';
+    if (showHistoricalData && historicalData) {
+        ids.push('historical-flood-fill-extrusion-layer', 'historical-flood-line-layer');
     }
-    // Prioritas 4: Risiko Rendah (Fitur Air Umum yang Berpotensi) - HIJAU
-    // Hanya dirender jika tidak ada tag risiko yang lebih tinggi, dan tetap dengan warna hijau
-    else if (
-      element.tags.waterway ||
-      element.tags.natural === 'water' ||
-      element.tags.man_made === 'dyke' ||
-      element.tags.landuse === 'basin' ||
-      element.tags.natural === 'wetland'
-    ) {
-      iconToUse = createCustomIcon(FLOOD_RISK_COLORS.low, '💧'); // HIJAU (sesuai constants.ts)
-      color = FLOOD_RISK_COLORS.low; // HIJAU (sesuai constants.ts)
-      cardTitle = 'Risiko Rendah (Fitur Air)';
-      cardTitleColor = 'text-green-500';
-      riskLabel = 'Risiko Rendah';
-    }
-    // Jika tidak ada tag bencana spesifik yang terdeteksi di atas, fungsi akan mengembalikan null
-    else {
-      return null; // Mengembalikan null agar elemen ini tidak dirender
-    }
-
-    return {
-      iconToUse,
-      color,
-      cardTitle,
-      cardTitleColor,
-      detailText,
-      riskLabel,
-    };
-  };
-
-  // FUNGSI HELPER BARU: untuk mendapatkan info visual dari FloodAlert
-  const getAlertInfo = (alert: FloodAlert) => {
-    let iconToUse;
-    let color;
-    let cardTitle;
-    let cardTitleColor;
-    let badgeVariant: 'info' | 'warning' | 'danger' | 'success' = 'info';
-
-    switch (alert.level) {
-      case 'critical':
-        iconToUse = createCustomIcon(FLOOD_RISK_COLORS.critical, '💀');
-        color = FLOOD_RISK_COLORS.critical;
-        cardTitle = 'Peringatan KRITIS!';
-        cardTitleColor = 'text-red-800';
-        badgeVariant = 'danger';
-        break;
-      case 'danger':
-        iconToUse = createCustomIcon(FLOOD_RISK_COLORS.high, '🚨');
-        color = FLOOD_RISK_COLORS.high;
-        cardTitle = 'Peringatan BAHAYA!';
-        cardTitleColor = 'text-red-500';
-        badgeVariant = 'danger';
-        break;
-      case 'warning':
-        iconToUse = createCustomIcon(FLOOD_RISK_COLORS.medium, '⚠️');
-        color = FLOOD_RISK_COLORS.medium;
-        cardTitle = 'Peringatan!';
-        cardTitleColor = 'text-yellow-500';
-        badgeVariant = 'warning';
-        break;
-      case 'info':
-      default:
-        iconToUse = createCustomIcon(FLOOD_RISK_COLORS.low, 'ℹ️');
-        color = FLOOD_RISK_COLORS.low;
-        cardTitle = 'Informasi';
-        cardTitleColor = 'text-blue-500';
-        badgeVariant = 'info';
-        break;
-    }
-
-    return {
-      iconToUse,
-      color,
-      cardTitle,
-      cardTitleColor,
-      badgeVariant,
-    };
-  };
-
-  console.log('Debug weatherTileLayerUrl:', {
-    value: weatherTileLayerUrl,
-    type: typeof weatherTileLayerUrl
-  });
+    ids.push('landmark-layer'); // landmark layer is always there
+    return ids;
+  }, [showOfficialData, officialData, showUnofficialData, unofficialData, showHistoricalData, historicalData]);
 
   return (
-    <motion.div
-      data-vaul-no-drag="true"
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
-      className={cn(
-        'relative rounded-lg overflow-hidden shadow-lg',
-        isFullscreen && 'fixed inset-0 z-50 rounded-none bg-slate-900',
-        className,
-      )}
-      style={{ height: isFullscreen ? '100vh' : height }}
-    >
-      <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[1000] w-full max-w-xs sm:max-w-sm md:max-w-md px-4">
-        <div className="relative flex items-center">
+    <div className="relative w-full h-full">
+      <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10 w-full max-w-md px-4">
+        <div className="flex shadow-lg rounded-lg overflow-hidden">
           <Input
             type="text"
-            placeholder="Cari nama kota atau wilayah..."
+            placeholder="Cari lokasi (mis. Jakarta)"
+            className="flex-1 bg-white/90 border-none focus:ring-0 text-gray-800 placeholder:text-gray-500"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            onKeyDown={(e) => {
+            onKeyPress={(e) => {
               if (e.key === 'Enter') {
                 handleSearch();
               }
             }}
-            className="w-full pl-10 pr-20 py-2 rounded-full bg-slate-900/80 border-slate-700/50 text-xs sm:text-sm text-white placeholder:text-slate-400 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 shadow-lg backdrop-blur-md transition-colors duration-300"
           />
-          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
           <Button
             onClick={handleSearch}
-            className="absolute right-2 top-1/2 -translate-y-1/2 px-3 py-1 h-8 rounded-full bg-cyan-600 hover:bg-cyan-700 text-white text-xs sm:text-sm"
+            className="bg-blue-600 hover:bg-blue-700 text-white rounded-l-none"
           >
-            Cari
+            <Search className="h-5 w-5" />
           </Button>
         </div>
       </div>
-      <MapContainer
-        center={center}
-        zoom={zoom}
-        scrollWheelZoom={true}
-        doubleClickZoom={false}
-        boxZoom={false}
-        dragging={true}
-        keyboard={false}
-        
-        touchZoom={true}
-        className="w-full h-full bg-slate-900"
-        zoomControl={false}
-        attributionControl={false}
+
+      <Map
+        ref={mapRef}
+        {...viewState}
+        onMove={evt => {
+          const { longitude, latitude, zoom, pitch, bearing } = evt.viewState;
+          console.log('DEBUG FloodMap: onMove viewState:', evt.viewState);
+          if (!isNaN(longitude) && !isNaN(latitude) && !isNaN(zoom) && !isNaN(pitch) && !isNaN(bearing)) {
+            setViewState(evt.viewState);
+          }
+        }}
+        mapboxAccessToken={process.env.NEXT_PUBLIC_MAPBOX_TOKEN}
+        mapStyle="mapbox://styles/mapbox/dark-v10" // Gaya peta gelap untuk kontras
+        interactiveLayerIds={interactiveLayerIds}
+        onMouseMove={onMouseMove}
       >
-        <MapEffect onMapLoad={onMapLoad} mapRef={mapRef} />
-        <TileLayer
-          key={selectedLayer}
-          attribution={layerConfig[selectedLayer].attribution}
-          url={layerConfig[selectedLayer].url}
-        />
+        <GeolocateControl position="top-left" />
+        <FullscreenControl position="top-left" />
+        <NavigationControl position="top-left" />
+        <ScaleControl />
 
-        <MapUpdater center={center} zoom={zoom} />
-        <MapEvents
-          onLocationSelect={() => {}}
-          onReverseGeocode={handleMapClick}
-        />
-        {onMapBoundsChange && <MapBoundsUpdater onMapBoundsChange={onMapBoundsChange} />}
-
-        {/* NEW: Conditional Weather TileLayer */}
-        {weatherTileUrl && (
-          <TileLayer
-            key={weatherTileUrl} // Key for refresh
-            url={weatherTileUrl}
-            opacity={0.7}
-            zIndex={2} // Ensure this layer is on top
-          />
+        {/* Sumber dan Layer untuk Data Resmi BPBD */}
+        {showOfficialData && officialData && (
+          <Source id="official-flood-data" type="geojson" data={officialData}>
+            <Layer {...floodFillExtrusionLayerStyle} id="official-flood-fill-extrusion-layer" />
+            <Layer {...floodLineLayerStyle} id="official-flood-line-layer" />
+          </Source>
         )}
 
-        {/* Original weatherTileLayerUrl and weatherLayers rendering (can be removed if no longer needed) */}
-        {/* Keeping it for now, but the new logic above takes precedence for activeLayer */}
-        {propWeatherTileLayerUrl && typeof propWeatherTileLayerUrl === 'string' && (
-          <TileLayer url={propWeatherTileLayerUrl} opacity={0.7} />
+        {/* Sumber dan Layer untuk Data Laporan Masyarakat */}
+        {showUnofficialData && unofficialData && (
+          <Source id="unofficial-flood-data" type="geojson" data={unofficialData}>
+            <Layer {...floodFillExtrusionLayerStyle} id="unofficial-flood-fill-extrusion-layer" />
+            <Layer {...floodLineLayerStyle} id="unofficial-flood-line-layer" />
+          </Source>
         )}
 
-        {!propWeatherTileLayerUrl && (
-          <>
-            {Object.entries(weatherLayers).map(
-              ([key, value]) =>
-                value &&
-                apiKey && (
-                  <TileLayer
-                    key={key}
-                    url={`https://tile.openweathermap.org/map/${key}_new/{z}/{x}/{y}.png?appid=${apiKey}`}
-                    opacity={0.7}
-                  />
-                ),
-            )}
-          </>
+        {/* Sumber dan Layer untuk Data Historis */}
+        {showHistoricalData && historicalData && (
+          <Source id="historical-flood-data" type="geojson" data={historicalData}>
+            <Layer {...floodFillExtrusionLayerStyle} id="historical-flood-fill-extrusion-layer" />
+            <Layer {...floodLineLayerStyle} id="historical-flood-line-layer" />
+          </Source>
         )}
 
-        {searchedLocation && isValidLatLng([searchedLocation.lat, searchedLocation.lon]) && (
-          <Marker position={[searchedLocation.lat, searchedLocation.lon]}>
-            <Popup>{searchedLocation.name}</Popup>
-          </Marker>
-        )}
+        {/* Sumber dan Layer untuk Landmark */}
+        <Source id="landmark-data" type="geojson" data="/landmarks.json">
+          <Layer {...landmarkLayerStyle} id="landmark-layer" />
+        </Source>
 
-        {clickedLocation && isValidLatLng(clickedLocation.latlng) && (
-          <Marker position={clickedLocation.latlng}>
-            <Popup>{clickedLocation.name}</Popup>
-          </Marker>
-        )}
-
-        {/* Marker di lokasi yang dipilih (dari RegionDropdown) */}
-        {selectedLocation?.latitude != null && selectedLocation?.longitude != null && isValidLatLng([selectedLocation.latitude, selectedLocation.longitude]) && (
-          <Marker position={[selectedLocation.latitude, selectedLocation.longitude]} icon={floodIcon}>
-            <Popup>
-              Lokasi Terpilih: {selectedLocation.districtName || 'Tidak Diketahui'} <br /> Lat: {selectedLocation.latitude.toFixed(6)}, Lng:{' '}
-              {selectedLocation.longitude.toFixed(6)}
-            </Popup>
-          </Marker>
-        )}
-
-        {/* NEW: Crowdsourced Reports (Markers) - Temporarily commented out for debugging */}
-        {/* {showCrowdsourcedReports && crowdsourcedReports.map((report) => (
-          isValidLatLng([report.geometry.coordinates[1], report.geometry.coordinates[0]]) && <Marker
-            key={report.report_id}
-            position={[report.geometry.coordinates[1], report.geometry.coordinates[0]]} // [latitude, longitude]
-            icon={userReportIcon}
+        {hoverInfo && (
+          <Popup
+            longitude={hoverInfo.longitude}
+            latitude={hoverInfo.latitude}
+            onClose={() => setHoverInfo(null)}
+            closeButton={false}
+            className="bg-transparent shadow-none"
           >
-            <Popup>
-              <Card className="min-w-[180px] sm:min-w-[250px] p-3">
-                <div className="flex items-center justify-between mb-2">
-                  <h4 className="font-semibold text-blue-500">{report.type}</h4>
-                  <Badge variant="outline" style={{ backgroundColor: getSeverityColor(report.severity), color: 'white' }}>
-                    {report.severity}
-                  </Badge>
-                </div>
-                <p className="text-xs sm:text-sm text-muted-foreground">
-                  Kedalaman: {report.depth_cm} cm
-                </p>
-                <p className="text-xs sm:text-sm text-muted-foreground">
-                  Catatan: {report.notes}
-                </p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Dilaporkan: {new Date(report.timestamp).toLocaleString()}
-                </p>
-                <div className="flex items-center justify-between mt-3">
-                  <span className="text-xs text-gray-400">👍 {report.upvotes} Validasi</span>
-                  <Button size="sm" variant="secondary" className="text-xs">
-                    👍 Validasi
-                  </Button>
-                </div>
-              </Card>
-            </Popup>
-          </Marker>
-        ))} */}
-
-        {/* NEW: Official BPBD Data (Polygons) - Temporarily commented out for debugging */}
-        {/* {showOfficialBPBDData && officialBPBDData.map((data) => (
-          <Polygon
-            key={data.report_id}
-            positions={data.geometry.coordinates[0].map(coord => [coord[1], coord[0]])} // [latitude, longitude]
-            pathOptions={{
-              color: getSeverityColor(data.severity),
-              fillColor: getSeverityColor(data.severity),
-              fillOpacity: 0.4,
-              weight: 3,
-            }}
-          >
-            <Popup>
-              <Card className="min-w-[180px] sm:min-w-[250px] p-3">
-                <div className="flex items-center justify-between mb-2">
-                  <h4 className="font-semibold text-red-500">{data.type}</h4>
-                  <Badge variant="outline" style={{ backgroundColor: getSeverityColor(data.severity), color: 'white' }}>
-                    {data.severity}
-                  </Badge>
-                </div>
-                <p className="text-xs sm:text-sm text-muted-foreground">
-                  Kedalaman: {data.depth_cm} cm
-                </p>
-                <p className="text-xs sm:text-sm text-muted-foreground">
-                  Status: {data.status}
-                </p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Pembaruan: {new Date(data.timestamp).toLocaleString()}
-                </p>
-              </Card>
-            </Popup>
-          </Polygon>
-        ))} */}
-
-        {/* Flood Zones (menggunakan mock data yang sudah ada) */}
-        {/* Ini tetap ada sebagai layer terpisah, bisa di toggle jika perlu */}
-        {showFloodZones &&
-          floodZones.map((zone) => (
-            <Polygon
-              key={zone.id}
-              positions={zone.coordinates}
-              pathOptions={{
-                color: getPolygonColor(zone.riskLevel),
-                fillColor: getPolygonColor(zone.riskLevel),
-                fillOpacity: 0.3,
-                weight: 2,
-              }}
-            >
-              <Popup>
-                <Card className="min-w-[150px] sm:min-w-[200px] p-4">
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <h3 className="font-semibold">{zone.name}</h3>
-                      <Badge
-                        variant={
-                          zone.riskLevel === 'high'
-                            ? 'danger'
-                            : zone.riskLevel === 'medium'
-                              ? 'warning'
-                              : 'success'
-                        }
-                      >
-                        {zone.riskLevel.toUpperCase()}
-                      </Badge>
-                    </div>
-                    <div className="space-y-2 text-xs sm:text-sm">
-                      <div className="flex items-center space-x-2">
-                        <MapPin size={14} className="text-muted-foreground" />
-                        <span>Luas: {zone.area} km²</span>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <AlertTriangle
-                          size={14}
-                          className="text-muted-foreground"
-                        />
-                        <span>
-                          Populasi: {zone.population.toLocaleString()}
-                        </span>
-                      </div>
-                    </div>
-                    <p className="text-xs sm:text-sm text-muted-foreground">
-                      {zone.description}
-                    </p>
-                    <div className="flex space-x-2">
-                      <Button size="sm" variant="outline">
-                        Detail
-                      </Button>
-                      <Button size="sm" variant="secondary">
-                        Rute Evakuasi
-                      </Button>
-                    </div>
-                  </div>
-                </Card>
-              </Popup>
-            </Polygon>
-          ))}
-
-        {/* Weather Stations (global data) */}
-        {showWeatherStations && globalWeatherStations.map((station) => (
-          isValidLatLng(station.coordinates) && <Marker key={station.id} position={station.coordinates} icon={weatherIcon}>
-            <Popup>
-              <Card className="min-w-[180px] sm:min-w-[250px] p-4">
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <h3 className="font-semibold">Stasiun Cuaca {station.name}</h3>
-                    <Badge variant="info">Aktif</Badge>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4 text-xs sm:text-sm">
-                    <div className="space-y-1">
-                      <p className="text-muted-foreground">Suhu</p>
-                      <p className="font-medium">
-                        {station.temperature !== undefined
-                          ? `${station.temperature}°C`
-                          : 'N/A'}
-                      </p>
-                    </div>
-                    <div className="space-y-1">
-                      <p className="text-muted-foreground">Kelembaban</p>
-                      <p className="font-medium">
-                        {station.humidity !== undefined
-                          ? `${station.humidity}%`
-                          : 'N/A'}
-                      </p>
-                    </div>
-                    <div className="space-y-1">
-                      <p className="text-muted-foreground">Angin</p>
-                      <p className="font-medium">
-                        {station.windSpeed !== undefined
-                          ? `${station.windSpeed} km/h`
-                          : 'N/A'}
-                      </p>
-                    </div>
-                    <div className="space-y-1">
-                      <p className="text-muted-foreground">Tekanan</p>
-                      <p className="font-medium">
-                        {station.pressure !== undefined
-                          ? `${station.pressure} hPa`
-                          : 'N/A'}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-2 p-2 bg-muted rounded">
-                    <Droplets size={16} className="text-secondary" />
-                    <span className="text-xs sm:text-sm">
-                      {station.description || 'N/A'}
-                    </span>
-                  </div>
-                </div>
-              </Card>
-            </Popup>
-          </Marker>
-        ))}
-
-        {/* === MENAMPILKAN DATA RAWAN BANJIR/BENCANA DARI OVERPASS API === */}
-        {loadingFloodData && (
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[1001] bg-gray-800/70 p-4 rounded-lg text-white text-sm">
-            Memuat data rawan bencana...
-            <LoadingSpinner className="ml-2 inline-block" />
-          </div>
+            <div className="bg-gray-800 bg-opacity-80 text-white p-2 rounded">
+              {hoverInfo.properties && typeof hoverInfo.properties.depth_m === 'number' ? (
+                <>
+                  <h3 className="font-bold">Informasi Banjir</h3>
+                  <p>Ketinggian: {hoverInfo.properties.depth_m.toFixed(2)} meter</p>
+                </>
+              ) : hoverInfo.properties && hoverInfo.properties.name ? (
+                <>
+                  <h3 className="font-bold">{hoverInfo.properties.type || 'Landmark'}</h3>
+                  <p>{hoverInfo.properties.name}</p>
+                </>
+              ) : (
+                <p>Informasi tidak tersedia</p>
+              )}
+            </div>
+          </Popup>
         )}
-        {floodDataError && (
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[1001] bg-red-800/70 p-4 rounded-lg text-white text-sm">
-            Error memuat data bencana: {floodDataError}
-          </div>
-        )}
-        {!loadingFloodData &&
-          !floodDataError &&
-          floodProneData?.length > 0 &&
-          showFloodZones &&
-          floodProneData.map((element) => {
-            const disasterInfo = getDisasterInfo(element); // Panggil fungsi
-
-            // HANYA RENDER JIKA FUNGSI MENGEMBALIKAN OBJEK (bukan null)
-            if (!disasterInfo) {
-              return null; // Tidak merender jika kategori tidak spesifik
-            }
-
-            const { iconToUse, color, cardTitle, cardTitleColor, detailText } =
-              disasterInfo;
-
-            // RENDER POLYGON UNTUK ELEMENT DENGAN GEOMETRI (WAY/RELATION)
-            if (element.geometry && element.geometry.length > 0) {
-              const positions = element.geometry.map(
-                (coord) => [coord.lat, coord.lon] as LatLngExpression,
-              );
-
-              return (
-                <Polygon
-                  key={`overpass-poly-${element.id}`}
-                  positions={positions}
-                  pathOptions={{
-                    color: color,
-                    fillColor: color,
-                    fillOpacity: 0.3, // Lebih transparan untuk area
-                    weight: 2,
-                  }}
-                >
-                  <Popup>
-                    <Card className="min-w-[150px] sm:min-w-[200px] p-3">
-                      <h4 className={`font-semibold ${cardTitleColor}`}>
-                        {cardTitle}
-                      </h4>
-                      <p className="text-xs sm:text-sm text-muted-foreground">
-                        ID OSM: {element.id}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        Tipe OSM: {element.type}
-                      </p>
-                      <p className="text-xs sm:text-sm text-muted-foreground">
-                        Detail: {detailText}
-                      </p>
-                      {Object.keys(element.tags).length > 0 && (
-                        <div className="mt-2 text-xs text-gray-400">
-                          <strong>Tags:</strong>
-                          <div className="flex flex-wrap gap-1 mt-1">
-                            {Object.entries(element.tags).map(
-                              ([key, value]) => (
-                                <Badge
-                                  key={key}
-                                  variant="outline"
-                                  className="text-xxs sm:text-xs"
-                                >
-                                  {key}: {value}
-                                </Badge>
-                              ),
-                            )}
-                          </div>
-                        </div>
-                      )}
-                    </Card>
-                  </Popup>
-                </Polygon>
-              );
-            }
-            // RENDER MARKER UNTUK NODE
-            else if (element.type === 'node' && element.lat && element.lon && isValidLatLng([element.lat, element.lon])) {
-              return (
-                <Marker
-                  key={`overpass-node-${element.id}`}
-                  position={[element.lat, element.lon]}
-                  icon={iconToUse}
-                >
-                  <Popup>
-                    <Card className="min-w-[140px] sm:min-w-[180px] p-3">
-                      <h4 className={`font-semibold ${cardTitleColor}`}>
-                        {cardTitle}
-                      </h4>
-                      <p className="text-xs sm:text-sm text-muted-foreground">
-                        Detail: {detailText}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        Tipe OSM: {element.type}
-                      </p>
-                      {Object.keys(element.tags).length > 0 && (
-                        <div className="mt-2 text-xs text-gray-400">
-                          <strong>Tags:</strong>
-                          <div className="flex flex-wrap gap-1 mt-1">
-                            {Object.entries(element.tags).map(
-                              ([key, value]) => (
-                                <Badge
-                                  key={key}
-                                  variant="outline"
-                                  className="text-xxs sm:text-xs"
-                                >
-                                  {key}: {value}
-                                </Badge>
-                              ),
-                            )}
-                          </div>
-                        </div>
-                      )}
-                    </Card>
-                  </Popup>
-                </Marker>
-              );
-            }
-            return null;
-          })}
-
-        {/* === MENAMPILKAN DATA PERINGATAN BANJIR REAL-TIME === */}
-        {loadingRealtimeAlerts && (
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[1001] bg-gray-800/70 p-4 rounded-lg text-white text-sm">
-            Memuat peringatan banjir...
-            <LoadingSpinner className="ml-2 inline-block" />
-          </div>
-        )}
-        {realtimeAlertsError && (
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[1001] bg-red-800/70 p-4 rounded-lg text-white text-sm">
-            Error memuat peringatan banjir: {realtimeAlertsError}
-          </div>
-        )}
-        {!loadingRealtimeAlerts &&
-          !realtimeAlertsError &&
-          realtimeFloodAlerts.length > 0 &&
-          showRealtimeAlerts &&
-          realtimeFloodAlerts.map((alert) => {
-            const {
-              iconToUse,
-              color,
-              cardTitle,
-              cardTitleColor,
-              badgeVariant,
-            } = getAlertInfo(alert);
-
-            // Render Polygon jika ada polygonCoordinates
-            if (
-              alert.polygonCoordinates &&
-              alert.polygonCoordinates.length > 0
-            ) {
-              // Flattern array jika nested ([[lat,lng],[lat,lng]]) -> [[lat,lng],[lat,lng]]
-              const flatCoordinates = alert.polygonCoordinates
-                .flat()
-                .map((coords) => [coords[0], coords[1]] as LatLngExpression);
-
-              return (
-                <Polygon
-                  key={`alert-poly-${alert.id}`}
-                  positions={flatCoordinates}
-                  pathOptions={{
-                    color: color,
-                    fillColor: color,
-                    fillOpacity: 0.4,
-                    weight: 3,
-                  }}
-                >
-                  <Popup>
-                    <Card className="min-w-[150px] sm:min-w-[200px] p-3">
-                      <div className="flex items-center justify-between">
-                        <h4 className={`font-semibold ${cardTitleColor}`}>
-                          {cardTitle}
-                        </h4>
-                        <Badge variant={badgeVariant}>
-                          {alert.level.toUpperCase()}
-                        </Badge>
-                      </div>
-                      <p className="text-xs sm:text-sm mt-2">
-                        {alert.title || 'Tidak ada judul'}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {alert.message || 'Tidak ada deskripsi'}
-                      </p>
-                      {alert.affectedAreas &&
-                        alert.affectedAreas.length > 0 && (
-                          <div className="mt-2 text-xs text-gray-400">
-                            <strong>Wilayah Terdampak:</strong>
-                            <div className="flex flex-wrap gap-1 mt-1">
-                              {alert.affectedAreas.map((area, index) => (
-                                <Badge
-                                  key={index}
-                                  variant="outline"
-                                  className="text-xxs sm:text-xs"
-                                >
-                                  {area}
-                                </Badge>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-                      {alert.actions && alert.actions.length > 0 && (
-                        <div className="mt-2 text-xs text-gray-400">
-                          <strong>Tindakan Disarankan:</strong>
-                          <ul className="list-disc list-inside ml-2">
-                            {alert.actions.map((action, index) => (
-                              <li key={index}>{action}</li>
-                            ))}
-                          </ul>
-                        </div>
-                      )}
-                      <p className="text-xs text-muted-foreground mt-2">
-                        Pembaruan terakhir:{' '}
-                        {alert.timestamp
-                          ? new Date(alert.timestamp).toLocaleString()
-                          : 'N/A'}
-                      </p>
-                    </Card>
-                  </Popup>
-                </Polygon>
-              );
-            }
-            // Render Marker jika ada coordinates (dan tidak ada polygon)
-            else if (alert.coordinates && isValidLatLng(alert.coordinates)) {
-              return (
-                <Marker
-                  key={`alert-marker-${alert.id}`}
-                  position={alert.coordinates}
-                  icon={iconToUse}
-                >
-                  <Popup>
-                    <Card className="min-w-[140px] sm:min-w-[180px] p-3">
-                      <div className="flex items-center justify-between">
-                        <h4 className={`font-semibold ${cardTitleColor}`}>
-                          {cardTitle}
-                        </h4>
-                        <Badge variant={badgeVariant}>
-                          {alert.level.toUpperCase()}
-                        </Badge>
-                      </div>
-                      <p className="text-xs sm:text-sm mt-2">
-                        {alert.title || 'Tidak ada judul'}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {alert.message || 'Tidak ada deskripsi'}
-                      </p>
-                      {alert.affectedAreas &&
-                        alert.affectedAreas.length > 0 && (
-                          <div className="mt-2 text-xs text-gray-400">
-                            <strong>Wilayah Terdampak:</strong>
-                            <div className="flex flex-wrap gap-1 mt-1">
-                              {alert.affectedAreas.map((area, index) => (
-                                <Badge
-                                  key={index}
-                                  variant="outline"
-                                  className="text-xxs sm:text-xs"
-                                >
-                                  {area}
-                                </Badge>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-                      <p className="text-xs text-muted-foreground mt-2">
-                        Pembaruan terakhir:{' '}
-                        {alert.timestamp
-                          ? new Date(alert.timestamp).toLocaleString()
-                          : 'N/A'}
-                      </p>
-                    </Card>
-                  </Popup>
-                </Marker>
-              );
-            }
-            return null; // Jangan render jika tidak ada data geografis
-          })}
-      </MapContainer>
-
-      {/* Map Controls */}
-      <MapControls
-        onFullscreenToggle={onFullscreenToggle}
-        isFullscreen={isFullscreen}
-        onLayerChange={setSelectedLayer}
-        selectedLayer={selectedLayer}
-        onFloodZonesToggle={() => setShowFloodZones(!showFloodZones)}
-        showFloodZones={showFloodZones}
-        onWeatherToggle={() => setShowWeatherStations(!showWeatherStations)}
-        showWeatherStations={showWeatherStations}
-        onRealtimeAlertsToggle={() =>
-          setShowRealtimeAlerts(!showRealtimeAlerts)
-        } // Properti baru
-        showRealtimeAlerts={showRealtimeAlerts} // Properti baru
-        onCrowdsourcedReportsToggle={() => setShowCrowdsourcedReports(!showCrowdsourcedReports)} // NEW: Pass toggle function
-        showCrowdsourcedReports={showCrowdsourcedReports} // NEW: Pass state
-        onOfficialBPBDDataToggle={() => setShowOfficialBPBDData(!showOfficialBPBDData)} // NEW: Pass toggle function
-        showOfficialBPBDData={showOfficialBPBDData} // NEW: Pass state
-        showFullscreenButton={showFullscreenButton}
-      />
-
-      {/* Map Legend */}
-      <MapLegend />
-
-      
-    </motion.div>
+      </Map>
+    </div>
   );
-});
+}
