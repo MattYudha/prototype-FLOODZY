@@ -58,7 +58,7 @@ Floodzy menyediakan serangkaian fitur lengkap untuk pemantauan bencana yang komp
 ### 💬 User Interaction
 
 - Laporan banjir langsung dari pengguna.
-- Chatbot informasi banjir & cuaca.
+- Chatbot informasi banjir & cuaca di indonesia.
 
 ### 🛠 Developer Friendly
 
